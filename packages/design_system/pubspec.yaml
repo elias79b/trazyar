@@ -1,0 +1,15 @@
+name: design_system
+description: Trazyar design system package.
+version: 1.0.0
+publish_to: 'none'
+
+environment:
+  sdk: ^3.7.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flex_color_scheme: ^8.2.0
+
+dev_dependencies:
+  flutter_lints: ^5.0.0
