@@ -3,16 +3,17 @@ import 'package:flutter/material.dart';
 
 abstract final class AppColors {
   static const FlexSchemeColor lightScheme = FlexSchemeColor(
-    primary: Color(0xFF1B5E88),
-    primaryContainer: Color(0xFFD0E4FF),
-    secondary: Color(0xFF4A6572),
-    secondaryContainer: Color(0xFFCDE5F0),
-    tertiary: Color(0xFF5D5B7A),
-    tertiaryContainer: Color(0xFFE2DFFF),
-    appBarColor: Color(0xFF1B5E88),
+    primary: primary,
+    primaryContainer: Color(0xFFD8F3DC),
+    secondary: Color(0xFF52796F),
+    secondaryContainer: Color(0xFFDDEDE8),
+    tertiary: Color(0xFF6C584C),
+    tertiaryContainer: Color(0xFFF2E8DF),
+    appBarColor: primary,
     error: Color(0xFFBA1A1A),
   );
 
+  static const Color primary = Color(0xFF1B4332);
   static const Color surface = Color(0xFFFCFCFF);
   static const Color onSurface = Color(0xFF1A1C1E);
   static const Color onSurfaceVariant = Color(0xFF44474E);

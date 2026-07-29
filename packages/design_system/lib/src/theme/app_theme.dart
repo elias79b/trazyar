@@ -31,10 +31,13 @@ abstract final class AppTheme {
         inputDecoratorIsFilled: true,
       ),
       useMaterial3: true,
+      fontFamily: AppTypography.persianFontFamily,
     );
 
     return theme.copyWith(
       textTheme: AppTypography.light(theme.colorScheme),
+      primaryTextTheme: AppTypography.light(theme.colorScheme),
+      typography: AppTypography.persianTypography(theme.colorScheme),
     );
   }
 }

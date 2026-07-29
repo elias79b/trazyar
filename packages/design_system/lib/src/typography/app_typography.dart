@@ -1,10 +1,17 @@
 import 'package:flutter/material.dart';
 
 abstract final class AppTypography {
+  static const String persianFontFamily = 'Vazirmatn';
+  static const List<String> persianFontFallback = [
+    'Roboto',
+    'Arial',
+    'sans-serif',
+  ];
+
   static TextTheme light(ColorScheme colorScheme) {
     final base = Typography.material2021().black;
 
-    return base.copyWith(
+    final textTheme = base.copyWith(
       displayLarge: base.displayLarge?.copyWith(
         fontWeight: FontWeight.w400,
         color: colorScheme.onSurface,
@@ -65,6 +72,20 @@ abstract final class AppTypography {
         fontWeight: FontWeight.w500,
         color: colorScheme.onSurfaceVariant,
       ),
+    );
+
+    return textTheme.apply(
+      fontFamily: persianFontFamily,
+      fontFamilyFallback: persianFontFallback,
+    );
+  }
+
+  static Typography persianTypography(ColorScheme colorScheme) {
+    final textTheme = light(colorScheme);
+
+    return Typography.material2021().copyWith(
+      black: textTheme,
+      white: textTheme,
     );
   }
 }
