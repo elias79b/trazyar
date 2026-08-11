@@ -17,18 +17,16 @@ class OwnerSidebar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 280,
+      width: 220,
       decoration: const BoxDecoration(
         color: Color(0xff183153),
       ),
       child: Column(
         children: [
-          const SizedBox(height: 30),
           Image.asset(
             'assets/images/logo.png',
-            height: 70,
+            height: 150,
           ),
-          const SizedBox(height: 20),
           const Text(
             'ترازیار',
             style: TextStyle(
@@ -37,8 +35,6 @@ class OwnerSidebar extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 40),
-
           _item(
             context,
             icon: Icons.dashboard,
@@ -59,27 +55,6 @@ class OwnerSidebar extends StatelessWidget {
             title: 'کاربران',
             route: '/owner/users',
             selected: currentRoute == '/owner/users',
-          ),
-          _item(
-            context,
-            icon: Icons.inventory,
-            title: 'محصولات',
-            route: '/owner/products',
-            selected: currentRoute == '/owner/products',
-          ),
-          _item(
-            context,
-            icon: Icons.receipt_long,
-            title: 'فاکتورها',
-            route: '/owner/invoices',
-            selected: currentRoute == '/owner/invoices',
-          ),
-          _item(
-            context,
-            icon: Icons.account_balance_wallet,
-            title: 'حسابداری',
-            route: '/owner/accounting',
-            selected: currentRoute == '/owner/accounting',
           ),
           _item(
             context,
@@ -105,7 +80,6 @@ class OwnerSidebar extends StatelessWidget {
             route: '/login',
             selected: false,
           ),
-          const SizedBox(height: 25),
         ],
       ),
     );
@@ -119,7 +93,7 @@ class OwnerSidebar extends StatelessWidget {
         required bool selected,
       }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       child: Material(
         color: selected ? Colors.white12 : Colors.transparent,
         borderRadius: BorderRadius.circular(14),
@@ -127,8 +101,8 @@ class OwnerSidebar extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
           onTap: () => _go(context, route),
           child: Container(
-            height: 54,
-            padding: const EdgeInsets.symmetric(horizontal: 18),
+            height: 40,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
               children: [
                 Icon(
