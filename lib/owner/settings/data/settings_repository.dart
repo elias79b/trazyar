@@ -11,11 +11,8 @@ class SettingsRepository {
   Future<Map<String, dynamic>> getOwnerProfile() async {
     final user = _client.auth.currentUser!;
 
-    final data = await _client
-        .from('users')
-        .select()
-        .eq('id', user.id)
-        .single();
+    final data =
+        await _client.from('users').select().eq('id', user.id).single();
 
     return Map<String, dynamic>.from(data);
   }
@@ -27,12 +24,15 @@ class SettingsRepository {
   }) async {
     final user = _client.auth.currentUser!;
 
-    await _client.from('users').update({
-      'full_name': fullName,
-      'email': email,
-      'phone': phone,
-      'updated_at': DateTime.now().toIso8601String(),
-    }).eq('id', user.id);
+    await _client
+        .from('users')
+        .update({
+          'full_name': fullName,
+          'email': email,
+          'phone': phone,
+          'updated_at': DateTime.now().toIso8601String(),
+        })
+        .eq('id', user.id);
   }
 
   //==========================
@@ -40,11 +40,8 @@ class SettingsRepository {
   //==========================
 
   Future<Map<String, dynamic>> getCompanyInfo() async {
-    final company = await _client
-        .from('companies')
-        .select()
-        .limit(1)
-        .maybeSingle();
+    final company =
+        await _client.from('companies').select().limit(1).maybeSingle();
 
     if (company == null) {
       return {};
@@ -60,58 +57,38 @@ class SettingsRepository {
     required String website,
     required String address,
   }) async {
-    final company = await _client
-        .from('companies')
-        .select('id')
-        .limit(1)
-        .single();
+    final company =
+        await _client.from('companies').select('id').limit(1).single();
 
-    await _client.from('companies').update({
-      'name': name,
-      'phone': phone,
-      'email': email,
-      'website': website,
-      'address': address,
-      'updated_at': DateTime.now().toIso8601String(),
-    }).eq('id', company['id']);
+    await _client
+        .from('companies')
+        .update({
+          'name': name,
+          'phone': phone,
+          'email': email,
+          'website': website,
+          'address': address,
+          'updated_at': DateTime.now().toIso8601String(),
+        })
+        .eq('id', company['id']);
   }
 
-  Future<String> uploadCompanyLogo(
-      XFile image,
-      ) async {
+  Future<String> uploadCompanyLogo(XFile image) async {
     final bytes = await image.readAsBytes();
 
     final user = _client.auth.currentUser!;
 
-    final path =
-        "${user.id}/logo_${DateTime.now().millisecondsSinceEpoch}.png";
+    final path = "${user.id}/logo_${DateTime.now().millisecondsSinceEpoch}.png";
 
     await _client.storage
         .from("company-logos")
         .uploadBinary(
-      path,
-      bytes,
-      fileOptions: const FileOptions(
-        upsert: true,
-      ),
-    );
+          path,
+          bytes,
+          fileOptions: const FileOptions(upsert: true),
+        );
 
-    final url = _client.storage
-        .from("company-logos")
-        .getPublicUrl(path);
-
-    final company = await _client
-        .from("companies")
-        .select("id")
-        .limit(1)
-        .single();
-
-    await _client
-        .from("companies")
-        .update({
-      "logo": url,
-    })
-        .eq("id", company["id"]);
+    final url = _client.storage.from("company-logos").getPublicUrl(path);
 
     return url;
   }
@@ -122,25 +99,25 @@ class SettingsRepository {
   Future<Map<String, dynamic>> getSettings() async {
     final user = _client.auth.currentUser!;
 
-    final data = await _client
-        .from('settings')
-        .select()
-        .eq('owner_id', user.id)
-        .maybeSingle();
+    final data =
+        await _client
+            .from('settings')
+            .select()
+            .eq('owner_id', user.id)
+            .maybeSingle();
 
     if (data != null) {
       return Map<String, dynamic>.from(data);
     }
 
-    await _client.from('settings').insert({
-      'owner_id': user.id,
-    });
+    await _client.from('settings').insert({'owner_id': user.id});
 
-    final created = await _client
-        .from('settings')
-        .select()
-        .eq('owner_id', user.id)
-        .single();
+    final created =
+        await _client
+            .from('settings')
+            .select()
+            .eq('owner_id', user.id)
+            .single();
 
     return Map<String, dynamic>.from(created);
   }
@@ -156,12 +133,12 @@ class SettingsRepository {
     await _client
         .from('settings')
         .update({
-      'language': language,
-      'currency': currency,
-      'timezone': timezone,
-      'calendar': calendar,
-      'updated_at': DateTime.now().toIso8601String(),
-    })
+          'language': language,
+          'currency': currency,
+          'timezone': timezone,
+          'calendar': calendar,
+          'updated_at': DateTime.now().toIso8601String(),
+        })
         .eq('owner_id', user.id);
   }
 
@@ -178,14 +155,14 @@ class SettingsRepository {
     await _client
         .from('settings')
         .update({
-      'email_notifications': email,
-      'sms_notifications': sms,
-      'push_notifications': push,
-      'login_notifications': login,
-      'backup_notifications': backup,
-      'update_notifications': update,
-      'updated_at': DateTime.now().toIso8601String(),
-    })
+          'email_notifications': email,
+          'sms_notifications': sms,
+          'push_notifications': push,
+          'login_notifications': login,
+          'backup_notifications': backup,
+          'update_notifications': update,
+          'updated_at': DateTime.now().toIso8601String(),
+        })
         .eq('owner_id', user.id);
   }
 
@@ -200,12 +177,12 @@ class SettingsRepository {
     await _client
         .from('settings')
         .update({
-      'auto_backup': autoBackup,
-      'cloud_backup': cloudBackup,
-      'backup_period': period,
-      'backup_time': time,
-      'updated_at': DateTime.now().toIso8601String(),
-    })
+          'auto_backup': autoBackup,
+          'cloud_backup': cloudBackup,
+          'backup_period': period,
+          'backup_time': time,
+          'updated_at': DateTime.now().toIso8601String(),
+        })
         .eq('owner_id', user.id);
   }
 
@@ -214,11 +191,12 @@ class SettingsRepository {
   //==========================
 
   Future<Map<String, dynamic>> getSubscription() async {
-    final subscription = await _client
-        .from('subscriptions')
-        .select('*,plans(*)')
-        .limit(1)
-        .maybeSingle();
+    final subscription =
+        await _client
+            .from('subscriptions')
+            .select('*,plans(*)')
+            .limit(1)
+            .maybeSingle();
 
     if (subscription == null) {
       return {};
@@ -230,14 +208,8 @@ class SettingsRepository {
   // Password
   //==========================
 
-  Future<void> changePassword(
-      String password,
-      ) async {
-    await _client.auth.updateUser(
-      UserAttributes(
-        password: password,
-      ),
-    );
+  Future<void> changePassword(String password) async {
+    await _client.auth.updateUser(UserAttributes(password: password));
   }
 
   //==========================

@@ -1,270 +1,132 @@
 import 'package:flutter/material.dart';
-import 'package:tarazyar/owner/companies/presentation/widgets/company_form_dialog.dart';
+import 'package:tarazyar/owner/companies/domain/models/company_model.dart';
 
-import '../../data/companies_repository.dart';
+/// Displays the complete, read-only information for an owner company.
+class CompanyDetailsDialog {
+  const CompanyDetailsDialog._();
 
-class CompanyFormDialog extends StatefulWidget {
-  const CompanyFormDialog({
-    super.key,
-  });
-
-  @override
-  State<CompanyFormDialog> createState() =>
-      _CompanyFormDialogState();
+  static Future<void> show(BuildContext context, CompanyModel company) {
+    return showDialog<void>(
+      context: context,
+      builder: (dialogContext) => _CompanyDetailsDialog(company: company),
+    );
+  }
 }
 
-class _CompanyFormDialogState
-    extends State<CompanyFormDialog> {
-  final _formKey = GlobalKey<FormState>();
+class _CompanyDetailsDialog extends StatelessWidget {
+  final CompanyModel company;
 
-  final _nameController = TextEditingController();
-  final _legalNameController = TextEditingController();
-  final _nationalIdController = TextEditingController();
-  final _economicCodeController = TextEditingController();
-  final _phoneController = TextEditingController();
-  final _emailController = TextEditingController();
-  final _websiteController = TextEditingController();
-  final _addressController = TextEditingController();
-  final _cityController = TextEditingController();
-  final _provinceController = TextEditingController();
-  final _postalCodeController = TextEditingController();
-  final _logoUrlController = TextEditingController();
-
-  bool _isActive = true;
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _legalNameController.dispose();
-    _nationalIdController.dispose();
-    _economicCodeController.dispose();
-    _phoneController.dispose();
-    _emailController.dispose();
-    _websiteController.dispose();
-    _addressController.dispose();
-    _cityController.dispose();
-    _provinceController.dispose();
-    _postalCodeController.dispose();
-    _logoUrlController.dispose();
-
-    super.dispose();
-  }
+  const _CompanyDetailsDialog({required this.company});
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
+    final statusColor = company.isActive ? Colors.green : Colors.grey;
 
-    final dialogWidth = width >= 1200
-        ? 980.0
-        : width >= 800
-        ? 860.0
-        : width - 24;
-
-    return Dialog(
-      insetPadding: const EdgeInsets.all(16),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: dialogWidth,
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Dialog(
+        insetPadding: const EdgeInsets.all(16),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 680),
           child: SingleChildScrollView(
-            child: Form(
-              key: _formKey,
-              child: Directionality(
-                textDirection: TextDirection.rtl,
-                child: Column(
-                  crossAxisAlignment:
-                  CrossAxisAlignment.start,
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
                   children: [
-                    Row(
-                      children: [
-                        const Expanded(
-                          child: Text(
-                            'ایجاد شرکت جدید',
-                            style: TextStyle(
-                              fontSize: 22,
+                    _buildAvatar(statusColor),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            company.name.isEmpty ? 'بدون نام' : company.name,
+                            style: const TextStyle(
+                              fontSize: 21,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
-                        ),
-                        IconButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                          icon: const Icon(Icons.close),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    const Text(
-                      'اطلاعات شرکت را وارد کنید و ذخیره را بزنید.',
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    _buildField(
-                      controller: _nameController,
-                      label: 'نام شرکت',
-                      hint: 'مثلاً شرکت آریا',
-                      required: true,
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    _ResponsiveTwoColumns(
-                      first: _buildField(
-                        controller: _legalNameController,
-                        label: 'نام رسمی',
-                        hint: 'نام حقوقی شرکت',
-                      ),
-                      second: _buildField(
-                        controller: _nationalIdController,
-                        label: 'شناسه ملی',
-                        hint: 'شناسه ملی شرکت',
-                        keyboardType:
-                        TextInputType.number,
-                      ),
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    _ResponsiveTwoColumns(
-                      first: _buildField(
-                        controller:
-                        _economicCodeController,
-                        label: 'کد اقتصادی',
-                        hint: 'کد اقتصادی',
-                        keyboardType:
-                        TextInputType.number,
-                      ),
-                      second: _buildField(
-                        controller: _phoneController,
-                        label: 'تلفن',
-                        hint: '021...',
-                        keyboardType:
-                        TextInputType.phone,
-                      ),
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    _ResponsiveTwoColumns(
-                      first: _buildField(
-                        controller: _emailController,
-                        label: 'ایمیل',
-                        hint: 'info@example.com',
-                        keyboardType:
-                        TextInputType.emailAddress,
-                      ),
-                      second: _buildField(
-                        controller: _websiteController,
-                        label: 'وب‌سایت',
-                        hint: 'https://...',
-                        keyboardType:
-                        TextInputType.url,
-                      ),
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    _ResponsiveTwoColumns(
-                      first: _buildField(
-                        controller:
-                        _provinceController,
-                        label: 'استان',
-                        hint: 'استان',
-                      ),
-                      second: _buildField(
-                        controller: _cityController,
-                        label: 'شهر',
-                        hint: 'شهر',
-                      ),
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    _ResponsiveTwoColumns(
-                      first: _buildField(
-                        controller:
-                        _postalCodeController,
-                        label: 'کد پستی',
-                        hint: 'کد پستی',
-                        keyboardType:
-                        TextInputType.number,
-                      ),
-                      second: _buildField(
-                        controller:
-                        _logoUrlController,
-                        label: 'آدرس لوگو',
-                        hint: 'https://...',
-                      ),
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    _buildField(
-                      controller: _addressController,
-                      label: 'آدرس',
-                      hint: 'آدرس کامل شرکت',
-                      maxLines: 3,
-                    ),
-
-                    const SizedBox(height: 14),
-
-                    SwitchListTile(
-                      contentPadding: EdgeInsets.zero,
-                      value: _isActive,
-                      onChanged: (value) {
-                        setState(() {
-                          _isActive = value;
-                        });
-                      },
-                      title: const Text(
-                        'فعال باشد',
-                      ),
-                      subtitle: Text(
-                        _isActive
-                            ? 'شرکت بعد از ثبت فعال خواهد بود'
-                            : 'شرکت بعد از ثبت غیرفعال خواهد بود',
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () {
-                              Navigator.pop(context);
-                            },
-                            child: const Text(
-                              'انصراف',
-                            ),
+                          const SizedBox(height: 5),
+                          Text(
+                            'شناسه: ${company.id}',
+                            style: const TextStyle(color: Colors.grey),
                           ),
-                        ),
-
-                        const SizedBox(width: 12),
-
-                        Expanded(
-                          child: FilledButton.icon(
-                            onPressed: _submit,
-                            icon: const Icon(
-                              Icons.save_outlined,
-                            ),
-                            label: const Text(
-                              'ثبت شرکت',
-                            ),
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'بستن',
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.close),
                     ),
                   ],
                 ),
-              ),
+                const SizedBox(height: 20),
+                _StatusChip(isActive: company.isActive, color: statusColor),
+                const SizedBox(height: 20),
+                const Text(
+                  'اطلاعات شرکت',
+                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 12),
+                _DetailsSection(
+                  children: [
+                    _DetailRow(
+                      label: 'ایمیل',
+                      value: company.email,
+                      icon: Icons.email_outlined,
+                    ),
+                    _DetailRow(
+                      label: 'تلفن',
+                      value: company.phone,
+                      icon: Icons.phone_outlined,
+                    ),
+                    _DetailRow(
+                      label: 'وب‌سایت',
+                      value: company.website,
+                      icon: Icons.language,
+                    ),
+                    _DetailRow(
+                      label: 'آدرس',
+                      value: company.address,
+                      icon: Icons.location_on_outlined,
+                      multiLine: true,
+                    ),
+                  ],
+                ),
+                if (company.createdAt != null || company.updatedAt != null) ...[
+                  const SizedBox(height: 20),
+                  const Text(
+                    'زمان‌بندی',
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  _DetailsSection(
+                    children: [
+                      _DetailRow(
+                        label: 'تاریخ ایجاد',
+                        value: _formatDate(company.createdAt),
+                        icon: Icons.calendar_today_outlined,
+                      ),
+                      _DetailRow(
+                        label: 'آخرین ویرایش',
+                        value: _formatDate(company.updatedAt),
+                        icon: Icons.update_outlined,
+                      ),
+                    ],
+                  ),
+                ],
+                const SizedBox(height: 24),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: FilledButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('بستن'),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -272,110 +134,127 @@ class _CompanyFormDialogState
     );
   }
 
-  Widget _buildField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    bool required = false,
-    TextInputType? keyboardType,
-    int maxLines = 1,
-  }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      maxLines: maxLines,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        border: const OutlineInputBorder(),
+  Widget _buildAvatar(Color statusColor) {
+    return Container(
+      width: 64,
+      height: 64,
+      decoration: BoxDecoration(
+        color: statusColor.withValues(alpha: .10),
+        borderRadius: BorderRadius.circular(16),
       ),
-      validator: (value) {
-        final text = value?.trim() ?? '';
-
-        if (required && text.isEmpty) {
-          return '$label را وارد کنید';
-        }
-
-        if (label == 'ایمیل' &&
-            text.isNotEmpty &&
-            !text.contains('@')) {
-          return 'ایمیل معتبر نیست';
-        }
-
-        if (label == 'وب‌سایت' &&
-            text.isNotEmpty &&
-            !(text.startsWith('http://') ||
-                text.startsWith('https://'))) {
-          return 'آدرس وب‌سایت معتبر نیست';
-        }
-
-        return null;
-      },
+      clipBehavior: Clip.antiAlias,
+      child: Icon(Icons.business_outlined, color: statusColor, size: 32),
     );
   }
 
-  void _submit() {
-    if (!(_formKey.currentState?.validate() ??
-        false)) {
-      return;
+  String? _formatDate(DateTime? date) {
+    if (date == null) {
+      return null;
     }
 
-    final input = CreateCompanyInput(
-      name: _nameController.text.trim(),
-      legalName: _legalNameController.text.trim(),
-      nationalId: _nationalIdController.text.trim(),
-      economicCode:
-      _economicCodeController.text.trim(),
-      phone: _phoneController.text.trim(),
-      email: _emailController.text.trim(),
-      website: _websiteController.text.trim(),
-      address: _addressController.text.trim(),
-      city: _cityController.text.trim(),
-      province: _provinceController.text.trim(),
-      postalCode:
-      _postalCodeController.text.trim(),
-      logoUrl: _logoUrlController.text.trim(),
-      isActive: _isActive,
-    );
-
-    Navigator.pop(context, input);
+    final localDate = date.toLocal();
+    return '${localDate.year.toString().padLeft(4, '0')}/'
+        '${localDate.month.toString().padLeft(2, '0')}/'
+        '${localDate.day.toString().padLeft(2, '0')} '
+        '${localDate.hour.toString().padLeft(2, '0')}:'
+        '${localDate.minute.toString().padLeft(2, '0')}';
   }
 }
 
-class _ResponsiveTwoColumns
-    extends StatelessWidget {
-  const _ResponsiveTwoColumns({
-    required this.first,
-    required this.second,
-  });
+class _StatusChip extends StatelessWidget {
+  final bool isActive;
+  final Color color;
 
-  final Widget first;
-  final Widget second;
+  const _StatusChip({required this.isActive, required this.color});
 
   @override
   Widget build(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: .10),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 7),
+            Text(
+              isActive ? 'فعال' : 'غیرفعال',
+              style: TextStyle(color: color, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
-    if (width >= 800) {
-      return Row(
+class _DetailsSection extends StatelessWidget {
+  final List<Widget> children;
+
+  const _DetailsSection({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.grey.withValues(alpha: .06),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(children: children),
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  final String label;
+  final String? value;
+  final IconData icon;
+  final bool multiLine;
+
+  const _DetailRow({
+    required this.label,
+    required this.value,
+    required this.icon,
+    this.multiLine = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final displayValue = value?.trim();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        crossAxisAlignment:
+            multiLine ? CrossAxisAlignment.start : CrossAxisAlignment.center,
         children: [
-          Expanded(
-            child: first,
+          Icon(icon, size: 20, color: Colors.grey.shade700),
+          const SizedBox(width: 10),
+          SizedBox(
+            width: 90,
+            child: Text(label, style: const TextStyle(color: Colors.grey)),
           ),
-          const SizedBox(width: 14),
           Expanded(
-            child: second,
+            child: Text(
+              displayValue == null || displayValue.isEmpty
+                  ? 'ثبت نشده'
+                  : displayValue,
+              maxLines: multiLine ? null : 1,
+              overflow: multiLine ? null : TextOverflow.ellipsis,
+            ),
           ),
         ],
-      );
-    }
-
-    return Column(
-      children: [
-        first,
-        const SizedBox(height: 14),
-        second,
-      ],
+      ),
     );
   }
 }

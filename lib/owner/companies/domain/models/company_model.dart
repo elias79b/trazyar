@@ -5,7 +5,6 @@ class CompanyModel {
   final String? phone;
   final String? website;
   final String? address;
-  final String? logo;
   final bool isActive;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -17,7 +16,6 @@ class CompanyModel {
     this.phone,
     this.website,
     this.address,
-    this.logo,
     required this.isActive,
     this.createdAt,
     this.updatedAt,
@@ -31,14 +29,15 @@ class CompanyModel {
       phone: map['phone']?.toString(),
       website: map['website']?.toString(),
       address: map['address']?.toString(),
-      logo: map['logo']?.toString(),
       isActive: map['is_active'] == true,
-      createdAt: map['created_at'] != null
-          ? DateTime.tryParse(map['created_at'].toString())
-          : null,
-      updatedAt: map['updated_at'] != null
-          ? DateTime.tryParse(map['updated_at'].toString())
-          : null,
+      createdAt:
+          map['created_at'] == null
+              ? null
+              : DateTime.tryParse(map['created_at'].toString()),
+      updatedAt:
+          map['updated_at'] == null
+              ? null
+              : DateTime.tryParse(map['updated_at'].toString()),
     );
   }
 
@@ -50,7 +49,6 @@ class CompanyModel {
       'phone': phone,
       'website': website,
       'address': address,
-      'logo': logo,
       'is_active': isActive,
       'created_at': createdAt?.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
@@ -64,7 +62,6 @@ class CompanyModel {
     String? phone,
     String? website,
     String? address,
-    String? logo,
     bool? isActive,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -76,7 +73,6 @@ class CompanyModel {
       phone: phone ?? this.phone,
       website: website ?? this.website,
       address: address ?? this.address,
-      logo: logo ?? this.logo,
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

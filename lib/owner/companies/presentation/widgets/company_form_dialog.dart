@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../data/companies_repository.dart';
 
 class CreateCompanyInput {
   final String name;
@@ -13,7 +12,6 @@ class CreateCompanyInput {
   final String city;
   final String province;
   final String postalCode;
-  final String logoUrl;
   final bool isActive;
 
   const CreateCompanyInput({
@@ -28,7 +26,6 @@ class CreateCompanyInput {
     this.city = '',
     this.province = '',
     this.postalCode = '',
-    this.logoUrl = '',
     this.isActive = true,
   });
 
@@ -45,7 +42,6 @@ class CreateCompanyInput {
       'city': _nullable(city),
       'province': _nullable(province),
       'postal_code': _nullable(postalCode),
-      'logo': _nullable(logoUrl),
       'is_active': isActive,
     };
   }
@@ -62,17 +58,13 @@ class CreateCompanyInput {
 }
 
 class CompanyFormDialog extends StatefulWidget {
-  const CompanyFormDialog({
-    super.key,
-  });
+  const CompanyFormDialog({super.key});
 
   @override
-  State<CompanyFormDialog> createState() =>
-      _CompanyFormDialogState();
+  State<CompanyFormDialog> createState() => _CompanyFormDialogState();
 }
 
-class _CompanyFormDialogState
-    extends State<CompanyFormDialog> {
+class _CompanyFormDialogState extends State<CompanyFormDialog> {
   final _formKey = GlobalKey<FormState>();
 
   final _nameController = TextEditingController();
@@ -86,10 +78,9 @@ class _CompanyFormDialogState
   final _cityController = TextEditingController();
   final _provinceController = TextEditingController();
   final _postalCodeController = TextEditingController();
-  final _logoUrlController = TextEditingController();
 
   bool _isActive = true;
-  bool _isSubmitting = false;
+  final bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -104,7 +95,6 @@ class _CompanyFormDialogState
     _cityController.dispose();
     _provinceController.dispose();
     _postalCodeController.dispose();
-    _logoUrlController.dispose();
     super.dispose();
   }
 
@@ -112,18 +102,17 @@ class _CompanyFormDialogState
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
 
-    final dialogWidth = width >= 1200
-        ? 980.0
-        : width >= 800
-        ? 860.0
-        : width - 24;
+    final dialogWidth =
+        width >= 1200
+            ? 980.0
+            : width >= 800
+            ? 860.0
+            : width - 24;
 
     return Dialog(
       insetPadding: const EdgeInsets.all(16),
       child: ConstrainedBox(
-        constraints: BoxConstraints(
-          maxWidth: dialogWidth,
-        ),
+        constraints: BoxConstraints(maxWidth: dialogWidth),
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: SingleChildScrollView(
@@ -132,8 +121,7 @@ class _CompanyFormDialogState
               child: Directionality(
                 textDirection: TextDirection.rtl,
                 child: Column(
-                  crossAxisAlignment:
-                  CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
@@ -147,11 +135,12 @@ class _CompanyFormDialogState
                           ),
                         ),
                         IconButton(
-                          onPressed: _isSubmitting
-                              ? null
-                              : () {
-                            Navigator.pop(context);
-                          },
+                          onPressed:
+                              _isSubmitting
+                                  ? null
+                                  : () {
+                                    Navigator.pop(context);
+                                  },
                           icon: const Icon(Icons.close),
                         ),
                       ],
@@ -159,9 +148,7 @@ class _CompanyFormDialogState
 
                     const SizedBox(height: 8),
 
-                    const Text(
-                      'اطلاعات شرکت را وارد کنید و ذخیره را بزنید.',
-                    ),
+                    const Text('اطلاعات شرکت را وارد کنید و ذخیره را بزنید.'),
 
                     const SizedBox(height: 20),
 
@@ -184,8 +171,7 @@ class _CompanyFormDialogState
                         controller: _nationalIdController,
                         label: 'شناسه ملی',
                         hint: 'شناسه ملی شرکت',
-                        keyboardType:
-                        TextInputType.number,
+                        keyboardType: TextInputType.number,
                       ),
                     ),
 
@@ -193,19 +179,16 @@ class _CompanyFormDialogState
 
                     _ResponsiveTwoColumns(
                       first: _buildField(
-                        controller:
-                        _economicCodeController,
+                        controller: _economicCodeController,
                         label: 'کد اقتصادی',
                         hint: 'کد اقتصادی',
-                        keyboardType:
-                        TextInputType.number,
+                        keyboardType: TextInputType.number,
                       ),
                       second: _buildField(
                         controller: _phoneController,
                         label: 'تلفن',
                         hint: '021...',
-                        keyboardType:
-                        TextInputType.phone,
+                        keyboardType: TextInputType.phone,
                       ),
                     ),
 
@@ -216,16 +199,13 @@ class _CompanyFormDialogState
                         controller: _emailController,
                         label: 'ایمیل',
                         hint: 'info@example.com',
-                        keyboardType:
-                        TextInputType.emailAddress,
+                        keyboardType: TextInputType.emailAddress,
                       ),
                       second: _buildField(
-                        controller:
-                        _websiteController,
+                        controller: _websiteController,
                         label: 'وب‌سایت',
                         hint: 'https://...',
-                        keyboardType:
-                        TextInputType.url,
+                        keyboardType: TextInputType.url,
                       ),
                     ),
 
@@ -233,8 +213,7 @@ class _CompanyFormDialogState
 
                     _ResponsiveTwoColumns(
                       first: _buildField(
-                        controller:
-                        _provinceController,
+                        controller: _provinceController,
                         label: 'استان',
                         hint: 'استان',
                       ),
@@ -247,23 +226,11 @@ class _CompanyFormDialogState
 
                     const SizedBox(height: 14),
 
-                    _ResponsiveTwoColumns(
-                      first: _buildField(
-                        controller:
-                        _postalCodeController,
-                        label: 'کد پستی',
-                        hint: 'کد پستی',
-                        keyboardType:
-                        TextInputType.number,
-                      ),
-                      second: _buildField(
-                        controller:
-                        _logoUrlController,
-                        label: 'آدرس لوگو',
-                        hint: 'https://...',
-                        keyboardType:
-                        TextInputType.url,
-                      ),
+                    _buildField(
+                      controller: _postalCodeController,
+                      label: 'کد پستی',
+                      hint: 'کد پستی',
+                      keyboardType: TextInputType.number,
                     ),
 
                     const SizedBox(height: 14),
@@ -278,19 +245,17 @@ class _CompanyFormDialogState
                     const SizedBox(height: 14),
 
                     SwitchListTile(
-                      contentPadding:
-                      EdgeInsets.zero,
+                      contentPadding: EdgeInsets.zero,
                       value: _isActive,
-                      onChanged: _isSubmitting
-                          ? null
-                          : (value) {
-                        setState(() {
-                          _isActive = value;
-                        });
-                      },
-                      title: const Text(
-                        'شرکت فعال باشد',
-                      ),
+                      onChanged:
+                          _isSubmitting
+                              ? null
+                              : (value) {
+                                setState(() {
+                                  _isActive = value;
+                                });
+                              },
+                      title: const Text('شرکت فعال باشد'),
                       subtitle: Text(
                         _isActive
                             ? 'شرکت بلافاصله فعال خواهد بود'
@@ -304,15 +269,13 @@ class _CompanyFormDialogState
                       children: [
                         Expanded(
                           child: OutlinedButton(
-                            onPressed: _isSubmitting
-                                ? null
-                                : () {
-                              Navigator.pop(
-                                context,
-                              );
-                            },
-                            child:
-                            const Text('انصراف'),
+                            onPressed:
+                                _isSubmitting
+                                    ? null
+                                    : () {
+                                      Navigator.pop(context);
+                                    },
+                            child: const Text('انصراف'),
                           ),
                         ),
 
@@ -320,24 +283,18 @@ class _CompanyFormDialogState
 
                         Expanded(
                           child: FilledButton(
-                            onPressed:
-                            _isSubmitting
-                                ? null
-                                : _submit,
-                            child: _isSubmitting
-                                ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child:
-                              CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color:
-                                Colors.white,
-                              ),
-                            )
-                                : const Text(
-                              'ذخیره شرکت',
-                            ),
+                            onPressed: _isSubmitting ? null : _submit,
+                            child:
+                                _isSubmitting
+                                    ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                    : const Text('ذخیره شرکت'),
                           ),
                         ),
                       ],
@@ -379,16 +336,13 @@ class _CompanyFormDialogState
 
         if (label == 'ایمیل' &&
             text.isNotEmpty &&
-            !RegExp(
-              r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-            ).hasMatch(text)) {
+            !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(text)) {
           return 'ایمیل معتبر نیست';
         }
 
         if (label == 'وب‌سایت' &&
             text.isNotEmpty &&
-            !(text.startsWith('http://') ||
-                text.startsWith('https://'))) {
+            !(text.startsWith('http://') || text.startsWith('https://'))) {
           return 'آدرس وب‌سایت معتبر نیست';
         }
 
@@ -398,32 +352,22 @@ class _CompanyFormDialogState
   }
 
   void _submit() {
-    if (!(_formKey.currentState?.validate() ??
-        false)) {
+    if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
 
     final input = CreateCompanyInput(
       name: _nameController.text.trim(),
-      legalName:
-      _legalNameController.text.trim(),
-      nationalId:
-      _nationalIdController.text.trim(),
-      economicCode:
-      _economicCodeController.text.trim(),
+      legalName: _legalNameController.text.trim(),
+      nationalId: _nationalIdController.text.trim(),
+      economicCode: _economicCodeController.text.trim(),
       phone: _phoneController.text.trim(),
       email: _emailController.text.trim(),
-      website:
-      _websiteController.text.trim(),
-      address:
-      _addressController.text.trim(),
+      website: _websiteController.text.trim(),
+      address: _addressController.text.trim(),
       city: _cityController.text.trim(),
-      province:
-      _provinceController.text.trim(),
-      postalCode:
-      _postalCodeController.text.trim(),
-      logoUrl:
-      _logoUrlController.text.trim(),
+      province: _provinceController.text.trim(),
+      postalCode: _postalCodeController.text.trim(),
       isActive: _isActive,
     );
 
@@ -431,12 +375,8 @@ class _CompanyFormDialogState
   }
 }
 
-class _ResponsiveTwoColumns
-    extends StatelessWidget {
-  const _ResponsiveTwoColumns({
-    required this.first,
-    required this.second,
-  });
+class _ResponsiveTwoColumns extends StatelessWidget {
+  const _ResponsiveTwoColumns({required this.first, required this.second});
 
   final Widget first;
   final Widget second;
@@ -455,12 +395,6 @@ class _ResponsiveTwoColumns
       );
     }
 
-    return Column(
-      children: [
-        first,
-        const SizedBox(height: 14),
-        second,
-      ],
-    );
+    return Column(children: [first, const SizedBox(height: 14), second]);
   }
 }

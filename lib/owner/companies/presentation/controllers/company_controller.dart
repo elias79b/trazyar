@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:tarazyar/owner/companies/application/companies_provider.dart';
 
-
 final companyControllerProvider =
-StateNotifierProvider<CompanyController, bool>(
+    StateNotifierProvider<CompanyController, bool>(
       (ref) => CompanyController(ref),
-);
+    );
 
 class CompanyController extends StateNotifier<bool> {
   CompanyController(this.ref) : super(false);
@@ -26,7 +25,6 @@ class CompanyController extends StateNotifier<bool> {
     String? city,
     String? province,
     String? postalCode,
-    String? logo,
     bool isActive = true,
   }) async {
     if (state) return;
@@ -34,30 +32,29 @@ class CompanyController extends StateNotifier<bool> {
     state = true;
 
     try {
-      await ref.read(companyRepositoryProvider).createCompany(
-        name: name,
-        legalName: _nullable(legalName),
-        nationalId: _nullable(nationalId),
-        economicCode: _nullable(economicCode),
-        phone: _nullable(phone),
-        email: _nullable(email),
-        website: _nullable(website),
-        address: _nullable(address),
-        city: _nullable(city),
-        province: _nullable(province),
-        postalCode: _nullable(postalCode),
-        logo: _nullable(logo),
-        isActive: isActive,
-      );
+      await ref
+          .read(companyRepositoryProvider)
+          .createCompany(
+            name: name,
+            legalName: _nullable(legalName),
+            nationalId: _nullable(nationalId),
+            economicCode: _nullable(economicCode),
+            phone: _nullable(phone),
+            email: _nullable(email),
+            website: _nullable(website),
+            address: _nullable(address),
+            city: _nullable(city),
+            province: _nullable(province),
+            postalCode: _nullable(postalCode),
+            isActive: isActive,
+          );
 
       ref.invalidate(companiesProvider);
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-              'شرکت با موفقیت ثبت شد',
-            ),
+            content: Text('شرکت با موفقیت ثبت شد'),
             backgroundColor: Colors.green,
           ),
         );
@@ -66,9 +63,7 @@ class CompanyController extends StateNotifier<bool> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              'خطا در ثبت شرکت: $e',
-            ),
+            content: Text('خطا در ثبت شرکت: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -86,31 +81,29 @@ class CompanyController extends StateNotifier<bool> {
     String? phone,
     String? website,
     String? address,
-    String? logo,
   }) async {
     if (state) return;
 
     state = true;
 
     try {
-      await ref.read(companyRepositoryProvider).updateCompany(
-        companyId: companyId,
-        name: name,
-        email: _nullable(email),
-        phone: _nullable(phone),
-        website: _nullable(website),
-        address: _nullable(address),
-        logo: _nullable(logo),
-      );
+      await ref
+          .read(companyRepositoryProvider)
+          .updateCompany(
+            companyId: companyId,
+            name: name,
+            email: _nullable(email),
+            phone: _nullable(phone),
+            website: _nullable(website),
+            address: _nullable(address),
+          );
 
       ref.invalidate(companiesProvider);
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-              'اطلاعات شرکت با موفقیت ویرایش شد',
-            ),
+            content: Text('اطلاعات شرکت با موفقیت ویرایش شد'),
             backgroundColor: Colors.green,
           ),
         );
@@ -119,9 +112,7 @@ class CompanyController extends StateNotifier<bool> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              'خطا در ویرایش شرکت: $e',
-            ),
+            content: Text('خطا در ویرایش شرکت: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -143,21 +134,14 @@ class CompanyController extends StateNotifier<bool> {
     try {
       await ref
           .read(companyRepositoryProvider)
-          .updateCompanyStatus(
-        companyId: companyId,
-        isActive: isActive,
-      );
+          .updateCompanyStatus(companyId: companyId, isActive: isActive);
 
       ref.invalidate(companiesProvider);
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              isActive
-                  ? 'شرکت فعال شد'
-                  : 'شرکت غیرفعال شد',
-            ),
+            content: Text(isActive ? 'شرکت فعال شد' : 'شرکت غیرفعال شد'),
             backgroundColor: Colors.green,
           ),
         );
@@ -166,9 +150,7 @@ class CompanyController extends StateNotifier<bool> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              'خطا در تغییر وضعیت شرکت: $e',
-            ),
+            content: Text('خطا در تغییر وضعیت شرکت: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -187,18 +169,14 @@ class CompanyController extends StateNotifier<bool> {
     state = true;
 
     try {
-      await ref
-          .read(companyRepositoryProvider)
-          .deleteCompany(companyId);
+      await ref.read(companyRepositoryProvider).deleteCompany(companyId);
 
       ref.invalidate(companiesProvider);
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-              'شرکت با موفقیت حذف شد',
-            ),
+            content: Text('شرکت با موفقیت حذف شد'),
             backgroundColor: Colors.green,
           ),
         );
@@ -207,9 +185,7 @@ class CompanyController extends StateNotifier<bool> {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              'خطا در حذف شرکت: $e',
-            ),
+            content: Text('خطا در حذف شرکت: $e'),
             backgroundColor: Colors.red,
           ),
         );
