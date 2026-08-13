@@ -19,7 +19,9 @@ class OwnerUser {
   final DateTime createdAt;
   final String? avatarUrl;
 
-  factory OwnerUser.fromMap(Map<String, dynamic> map) {
+  factory OwnerUser.fromMap(
+      Map<String, dynamic> map,
+      ) {
     return OwnerUser(
       id: (map['id'] ?? '').toString(),
       fullName: (map['full_name'] ?? '').toString(),
@@ -27,13 +29,16 @@ class OwnerUser {
       role: (map['role'] ?? 'company_user').toString(),
       isActive: map['is_active'] == true,
       createdAt:
-      DateTime.tryParse((map['created_at'] ?? '').toString()) ??
+      DateTime.tryParse(
+        (map['created_at'] ?? '').toString(),
+      ) ??
           DateTime.fromMillisecondsSinceEpoch(0),
       avatarUrl: map['avatar_url']?.toString(),
     );
   }
 
-  String get statusLabel => isActive ? 'فعال' : 'غیرفعال';
+  String get statusLabel =>
+      isActive ? 'فعال' : 'غیرفعال';
 
   String get roleLabel {
     return switch (role) {
@@ -63,23 +68,58 @@ class OwnerUserUpdateInput {
     required this.fullName,
     required this.role,
     required this.isActive,
+    this.companyIds = const [],
   });
 
   final String fullName;
   final String role;
   final bool isActive;
+
+  /// فقط برای کاربرانی که role = consultant هستند.
+  final List<String> companyIds;
+}
+
+class UserInvitationResult {
+  const UserInvitationResult({
+    required this.userId,
+    required this.email,
+  });
+
+  final String userId;
+  final String email;
+}
+
+class CompanyOption {
+  const CompanyOption({
+    required this.id,
+    required this.name,
+  });
+
+  final String id;
+  final String name;
 }
 
 class UsersRepository {
-  UsersRepository() : _client = Supabase.instance.client;
+  UsersRepository()
+      : _client = Supabase.instance.client;
 
   final SupabaseClient _client;
+
+  // ============================================================
+  // USERS
+  // ============================================================
 
   Future<List<OwnerUser>> fetchUsers() async {
     final data = await _client
         .from('users')
-        .select('id, full_name, email, role, is_active, avatar_url, created_at')
-        .order('created_at', ascending: false);
+        .select(
+      'id, full_name, email, role, '
+          'is_active, avatar_url, created_at',
+    )
+        .order(
+      'created_at',
+      ascending: false,
+    );
 
     return (data as List)
         .cast<Map<String, dynamic>>()
@@ -87,14 +127,354 @@ class UsersRepository {
         .toList();
   }
 
+  // ============================================================
+  // UPDATE USER + CONSULTANT COMPANIES
+  // ============================================================
+
   Future<void> updateUser({
     required String id,
     required OwnerUserUpdateInput input,
   }) async {
-    await _client.from('users').update({
+    // ----------------------------------------------------------
+    // 1. بروزرسانی اطلاعات اصلی کاربر
+    // ----------------------------------------------------------
+
+    await _client
+        .from('users')
+        .update({
       'full_name': input.fullName.trim(),
       'role': input.role,
       'is_active': input.isActive,
-    }).eq('id', id);
+    })
+        .eq('id', id);
+
+    // ----------------------------------------------------------
+    // 2. اگر کاربر مشاور است،
+    //    شرکت‌های تحت پوشش را هم هماهنگ کن
+    // ----------------------------------------------------------
+
+    if (input.role == 'consultant') {
+      await syncConsultantCompanies(
+        consultantUserId: id,
+        companyIds: input.companyIds,
+      );
+    }
+  }
+
+  // ============================================================
+  // COMPANIES
+  // ============================================================
+
+  Future<List<CompanyOption>> fetchCompanies() async {
+    final data = await _client
+        .from('companies')
+        .select('id, name')
+        .eq('is_active', true)
+        .order(
+      'name',
+      ascending: true,
+    );
+
+    return (data as List).map(
+          (row) {
+        final map =
+        Map<String, dynamic>.from(row);
+
+        return CompanyOption(
+          id: (map['id'] ?? '').toString(),
+          name: (map['name'] ?? 'بدون نام').toString(),
+        );
+      },
+    ).toList();
+  }
+
+  // ============================================================
+  // شرکت‌های فعلی مشاور
+  // ============================================================
+
+  Future<List<String>> fetchConsultantCompanyIds(
+      String consultantUserId,
+      ) async {
+    final data = await _client
+        .from('consultant_company_assignments')
+        .select('company_id')
+        .eq(
+      'consultant_user_id',
+      consultantUserId,
+    )
+        .eq(
+      'is_active',
+      true,
+    );
+
+    return (data as List)
+        .map(
+          (row) =>
+          (row['company_id'] ?? '').toString(),
+    )
+        .where(
+          (id) => id.isNotEmpty,
+    )
+        .toList();
+  }
+
+  // ============================================================
+  // هماهنگ‌سازی شرکت‌های مشاور
+  // ============================================================
+
+  Future<void> syncConsultantCompanies({
+    required String consultantUserId,
+    required List<String> companyIds,
+  }) async {
+    final uniqueCompanyIds =
+    companyIds
+        .where(
+          (id) => id.trim().isNotEmpty,
+    )
+        .map(
+          (id) => id.trim(),
+    )
+        .toSet()
+        .toList();
+
+    // ----------------------------------------------------------
+    // شرکت‌های فعلی
+    // ----------------------------------------------------------
+
+    final existingData = await _client
+        .from('consultant_company_assignments')
+        .select(
+      'id, company_id, is_active',
+    )
+        .eq(
+      'consultant_user_id',
+      consultantUserId,
+    );
+
+    final existing =
+    (existingData as List)
+        .map(
+          (row) =>
+      Map<String, dynamic>.from(row),
+    )
+        .toList();
+
+    final existingByCompanyId =
+    <String, Map<String, dynamic>>{};
+
+    for (final row in existing) {
+      final companyId =
+      (row['company_id'] ?? '').toString();
+
+      if (companyId.isNotEmpty) {
+        existingByCompanyId[companyId] = row;
+      }
+    }
+
+    // ----------------------------------------------------------
+    // 1. شرکت‌هایی که باید فعال باشند
+    // ----------------------------------------------------------
+
+    for (final companyId in uniqueCompanyIds) {
+      final existingRow =
+      existingByCompanyId[companyId];
+
+      if (existingRow == null) {
+        // شرکت جدید برای مشاور
+        await _client
+            .from(
+          'consultant_company_assignments',
+        )
+            .insert({
+          'consultant_user_id':
+          consultantUserId,
+          'company_id': companyId,
+          'is_active': true,
+        });
+      } else {
+        // اگر قبلاً وجود داشته ولی غیرفعال شده،
+        // دوباره فعالش می‌کنیم.
+        if (existingRow['is_active'] != true) {
+          await _client
+              .from(
+            'consultant_company_assignments',
+          )
+              .update({
+            'is_active': true,
+            'end_date': null,
+          })
+              .eq(
+            'id',
+            existingRow['id'],
+          );
+        }
+      }
+    }
+
+    // ----------------------------------------------------------
+    // 2. شرکت‌هایی که از انتخاب حذف شده‌اند
+    // ----------------------------------------------------------
+
+    for (final row in existing) {
+      final companyId =
+      (row['company_id'] ?? '').toString();
+
+      if (companyId.isEmpty) {
+        continue;
+      }
+
+      if (!uniqueCompanyIds.contains(companyId) &&
+          row['is_active'] == true) {
+        await _client
+            .from(
+          'consultant_company_assignments',
+        )
+            .update({
+          'is_active': false,
+          'end_date':
+          DateTime.now()
+              .toUtc()
+              .toIso8601String()
+              .split('T')
+              .first,
+        })
+            .eq(
+          'id',
+          row['id'],
+        );
+      }
+    }
+  }
+
+  // ============================================================
+  // ایجاد دعوت مشاور
+  // ============================================================
+
+  Future<UserInvitationResult>
+  createUserInvitation({
+    required String fullName,
+    required String email,
+    String? phone,
+    required String role,
+    required List<String> companyIds,
+  }) async {
+    if (role != 'consultant') {
+      throw Exception(
+        'این عملیات فقط برای ایجاد مشاور است.',
+      );
+    }
+
+    if (companyIds.isEmpty) {
+      throw Exception(
+        'حداقل یک شرکت باید انتخاب شود.',
+      );
+    }
+
+    // final response =
+    // await _client.functions.invoke(
+    //   'create-consultant-invitation',
+    //   body: {
+    //     'fullName': fullName.trim(),
+    //     'email':
+    //     email.trim().toLowerCase(),
+    //     'phone': phone?.trim(),
+    //     'role': role,
+    //     'companyIds': companyIds,
+    //   },
+    // );
+    final response =
+    await _client.functions.invoke(
+      'smooth-action',
+      body: {
+        'action': 'create_consultant',
+        'fullName': fullName.trim(),
+        'email': email.trim().toLowerCase(),
+        'role': role,
+        'companyIds': companyIds,
+      },
+    );
+
+    final data = response.data;
+
+    if (response.status < 200 ||
+        response.status >= 300) {
+      throw Exception(
+        _extractError(
+          data,
+          'خطا در ایجاد دعوت‌نامه.',
+        ),
+      );
+    }
+
+    if (data is! Map) {
+      throw Exception(
+        'پاسخ نامعتبر از Supabase دریافت شد.',
+      );
+    }
+
+    final result =
+    Map<String, dynamic>.from(data);
+
+    if (result['success'] != true) {
+      throw Exception(
+        _extractError(
+          result,
+          'ایجاد مشاور انجام نشد.',
+        ),
+      );
+    }
+
+    final userId =
+    result['userId']?.toString();
+
+    final resultEmail =
+    result['email']?.toString();
+
+    if (userId == null ||
+        userId.isEmpty ||
+        resultEmail == null ||
+        resultEmail.isEmpty) {
+      throw Exception(
+        'پاسخ Supabase اطلاعات کاربر را ندارد.',
+      );
+    }
+
+    return UserInvitationResult(
+      userId: userId,
+      email: resultEmail,
+    );
+  }
+
+  // ============================================================
+  // ERROR
+  // ============================================================
+
+  String _extractError(
+      dynamic data,
+      String fallback,
+      ) {
+    if (data is Map) {
+      final error = data['error'];
+
+      if (error != null &&
+          error
+              .toString()
+              .trim()
+              .isNotEmpty) {
+        return error.toString();
+      }
+
+      final message = data['message'];
+
+      if (message != null &&
+          message
+              .toString()
+              .trim()
+              .isNotEmpty) {
+        return message.toString();
+      }
+    }
+
+    return fallback;
   }
 }

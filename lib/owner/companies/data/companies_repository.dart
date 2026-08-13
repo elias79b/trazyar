@@ -23,6 +23,45 @@ class CompanyRepository {
         .toList();
   }
 
+  // Future<CompanyModel> createCompany({
+  //   required String name,
+  //   String? legalName,
+  //   String? nationalId,
+  //   String? economicCode,
+  //   String? phone,
+  //   String? email,
+  //   String? website,
+  //   String? address,
+  //   String? city,
+  //   String? province,
+  //   String? postalCode,
+  //   bool isActive = true,
+  // }) async {
+  //
+  //   final response =
+  //       await _client
+  //           .from('companies')
+  //           .insert({
+  //             'name': name,
+  //             'legal_name': legalName,
+  //             'national_id': nationalId,
+  //             'economic_code': economicCode,
+  //             'phone': phone,
+  //             'email': email,
+  //             'website': website,
+  //             'address': address,
+  //             'city': city,
+  //             'province': province,
+  //             'postal_code': postalCode,
+  //             'is_active': isActive,
+  //           })
+  //           .select(
+  //             'id, name, email, phone, website, address, is_active, created_at, updated_at',
+  //           )
+  //           .single();
+  //
+  //   return CompanyModel.fromMap(Map<String, dynamic>.from(response));
+  // }
   Future<CompanyModel> createCompany({
     required String name,
     String? legalName,
@@ -37,31 +76,78 @@ class CompanyRepository {
     String? postalCode,
     bool isActive = true,
   }) async {
-    final response =
-        await _client
-            .from('companies')
-            .insert({
-              'name': name,
-              'legal_name': legalName,
-              'national_id': nationalId,
-              'economic_code': economicCode,
-              'phone': phone,
-              'email': email,
-              'website': website,
-              'address': address,
-              'city': city,
-              'province': province,
-              'postal_code': postalCode,
-              'is_active': isActive,
-            })
-            .select(
-              'id, name, email, phone, website, address, is_active, created_at, updated_at',
-            )
-            .single();
+    // ==========================================
+    // DEBUG: بررسی کاربر فعلی قبل از ثبت شرکت
+    // ==========================================
 
-    return CompanyModel.fromMap(Map<String, dynamic>.from(response));
+    final authUser = _client.auth.currentUser;
+
+    print('========== COMPANY DEBUG ==========');
+
+    print(
+      'AUTH USER ID: ${authUser?.id}',
+    );
+
+    print(
+      'AUTH USER EMAIL: ${authUser?.email}',
+    );
+
+    print(
+      'SESSION EXISTS: '
+          '${_client.auth.currentSession != null}',
+    );
+
+    // بررسی کاربر در public.users
+    if (authUser != null) {
+      final publicUser = await _client
+          .from('users')
+          .select(
+        'id, email, role, is_active',
+      )
+          .eq(
+        'id',
+        authUser.id,
+      )
+          .maybeSingle();
+
+      print(
+        'PUBLIC USERS ROW: $publicUser',
+      );
+    }
+
+    print('===================================');
+
+    // ==========================================
+    // ثبت شرکت
+    // ==========================================
+
+    final response = await _client
+        .from('companies')
+        .insert({
+      'name': name,
+      'legal_name': legalName,
+      'national_id': nationalId,
+      'economic_code': economicCode,
+      'phone': phone,
+      'email': email,
+      'website': website,
+      'address': address,
+      'city': city,
+      'province': province,
+      'postal_code': postalCode,
+      'is_active': isActive,
+    })
+        .select(
+      'id, name, email, phone, website, address, is_active, created_at, updated_at',
+    )
+        .single();
+
+    return CompanyModel.fromMap(
+      Map<String, dynamic>.from(
+        response,
+      ),
+    );
   }
-
   Future<CompanyModel> updateCompany({
     required String companyId,
     required String name,

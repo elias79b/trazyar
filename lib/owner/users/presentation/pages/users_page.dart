@@ -4,7 +4,7 @@ import 'package:tarazyar/owner/dashboard/presentation/widgets/owner_scaffold.dar
 import '../../application/users_provider.dart';
 import '../../data/users_repository.dart';
 import '../widgets/user_edit_dialog.dart';
-
+import '../widgets/user_create_dialog.dart';
 class UsersPage extends ConsumerStatefulWidget {
   const UsersPage({super.key});
 
@@ -39,7 +39,33 @@ class _UsersPageState extends ConsumerState<UsersPage> {
     _searchController.dispose();
     super.dispose();
   }
+  Future<void> _createUser() async {
+    final companies = await ref.read(
+      ownerCompaniesForUserProvider.future,
+    );
 
+    if (!mounted) return;
+
+    final result = await showDialog<UserInvitationResult>(
+      context: context,
+      builder: (_) => UserCreateDialog(
+        companies: companies,
+        initialRole: 'consultant',
+      ),
+    );
+
+    if (result == null || !mounted) return;
+
+    ref.invalidate(ownerUsersProvider);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'دعوت‌نامه برای ${result.email} ارسال شد.',
+        ),
+      ),
+    );
+  }
   List<OwnerUser> _filteredUsers(List<OwnerUser> users) {
     final q = _searchController.text.trim().toLowerCase();
 
@@ -137,8 +163,10 @@ class _UsersPageState extends ConsumerState<UsersPage> {
             children: [
               _PageHeader(
                 title: 'مدیریت کاربران',
-                subtitle: 'مشاهده و ویرایش کاربران و نقش‌ها',
-                onRefreshPressed: () => ref.invalidate(ownerUsersProvider),
+                subtitle: 'مشاهده و مدیریت کاربران و نقش‌ها',
+                onRefreshPressed: () =>
+                    ref.invalidate(ownerUsersProvider),
+                onAddPressed: _createUser,
               ),
               const SizedBox(height: 20),
               _StatsRow(
@@ -191,11 +219,13 @@ class _PageHeader extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.onRefreshPressed,
+    required this.onAddPressed,
   });
 
   final String title;
   final String subtitle;
   final VoidCallback onRefreshPressed;
+  final VoidCallback onAddPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -204,53 +234,154 @@ class _PageHeader extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF1B4332), Color(0xFF2D6A4F)],
+          colors: [
+            Color(0xFF1B4332),
+            Color(0xFF2D6A4F),
+          ],
           begin: Alignment.topRight,
           end: Alignment.bottomLeft,
         ),
         borderRadius: BorderRadius.circular(22),
       ),
-      child: Row(
-        children: [
-          const CircleAvatar(
-            radius: 28,
-            backgroundColor: Colors.white,
-            child: Icon(
-              Icons.people_alt_rounded,
-              color: Color(0xFF1B4332),
-              size: 30,
-            ),
-          ),
-          const SizedBox(width: 18),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 700;
+
+          if (compact) {
+            return Column(
+              crossAxisAlignment:
+              CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.w800,
+                Row(
+                  children: [
+                    const CircleAvatar(
+                      radius: 25,
+                      backgroundColor: Colors.white,
+                      child: Icon(
+                        Icons.people_alt_rounded,
+                        color: Color(0xFF1B4332),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment:
+                        CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 22,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            subtitle,
+                            style: TextStyle(
+                              color: Colors.white
+                                  .withValues(alpha: .9),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                FilledButton.icon(
+                  onPressed: onAddPressed,
+                  icon: const Icon(
+                    Icons.person_add_alt_1,
+                  ),
+                  label: const Text(
+                    'افزودن کاربر',
                   ),
                 ),
-                const SizedBox(height: 6),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    fontSize: 14,
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: onRefreshPressed,
+                  icon: const Icon(
+                    Icons.refresh,
+                    color: Colors.white,
+                  ),
+                  label: const Text(
+                    'تازه‌سازی',
+                    style: TextStyle(
+                      color: Colors.white,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(
+                      color: Colors.white54,
+                    ),
                   ),
                 ),
               ],
-            ),
-          ),
-          FilledButton.icon(
-            onPressed: onRefreshPressed,
-            icon: const Icon(Icons.refresh),
-            label: const Text('تازه‌سازی'),
-          ),
-        ],
+            );
+          }
+
+          return Row(
+            children: [
+              const CircleAvatar(
+                radius: 28,
+                backgroundColor: Colors.white,
+                child: Icon(
+                  Icons.people_alt_rounded,
+                  color: Color(0xFF1B4332),
+                  size: 30,
+                ),
+              ),
+              const SizedBox(width: 18),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: Colors.white
+                            .withValues(alpha: .9),
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              FilledButton.icon(
+                onPressed: onAddPressed,
+                icon: const Icon(
+                  Icons.person_add_alt_1,
+                ),
+                label: const Text(
+                  'افزودن کاربر',
+                ),
+              ),
+              const SizedBox(width: 8),
+              IconButton(
+                tooltip: 'تازه‌سازی',
+                onPressed: onRefreshPressed,
+                icon: const Icon(
+                  Icons.refresh,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
