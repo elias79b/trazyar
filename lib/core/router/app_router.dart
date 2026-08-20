@@ -9,8 +9,23 @@ import 'package:tarazyar/authentication/application/auth_service.dart';
 import 'package:tarazyar/authentication/presentation/pages/invite_acceptance_page.dart';
 import 'package:tarazyar/authentication/presentation/pages/login_page.dart';
 import 'package:tarazyar/authentication/presentation/pages/splash_page.dart';
+import 'package:tarazyar/consultant/companies/banking/presentation/pages/banking_dashboard_page.dart';
+import 'package:tarazyar/consultant/dashboard/analytics/pages/consultant_analytics_page.dart';
+import 'package:tarazyar/consultant/dashboard/history/presentation/pages/consultant_history_page.dart';
+import 'package:tarazyar/consultant/dashboard/presentation/pages/company_actions_page.dart';
+import 'package:tarazyar/consultant/dashboard/presentation/pages/company_analytics_page.dart';
+import 'package:tarazyar/consultant/companies/presentation/pages/company_dashboard_page.dart'
+    show CompanyDashboardPage;
+import 'package:tarazyar/consultant/dashboard/presentation/pages/company_documents_page.dart';
+import 'package:tarazyar/consultant/dashboard/presentation/pages/company_notes_page.dart';
+import 'package:tarazyar/consultant/dashboard/presentation/pages/company_reports_page.dart';
+import 'package:tarazyar/consultant/dashboard/presentation/pages/company_workflow_page.dart';
+import 'package:tarazyar/consultant/dashboard/presentation/pages/consultant_companies_page.dart';
 
 import 'package:tarazyar/consultant/dashboard/presentation/pages/consultant_page.dart';
+import 'package:tarazyar/consultant/dashboard/reports/presentation/pages/consultant_reports_page.dart';
+import 'package:tarazyar/consultant/dashboard/settings/presentation/pages/consultant_settings_page.dart';
+import 'package:tarazyar/consultant/dashboard/workflow/presentation/pages/consultant_workflow_page.dart';
 
 import 'package:tarazyar/owner/companies/presentation/pages/companies_page.dart';
 import 'package:tarazyar/owner/dashboard/presentation/pages/owner_page.dart';
@@ -36,7 +51,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     // ============================================================
     // شروع برنامه
     // ============================================================
-
     initialLocation: '/login',
 
     // ============================================================
@@ -44,24 +58,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     //
     // بعد از Login یا Logout، Router دوباره بررسی می‌شود.
     // ============================================================
-
-    refreshListenable: GoRouterRefreshStream(
-      client.auth.onAuthStateChange,
-    ),
+    refreshListenable: GoRouterRefreshStream(client.auth.onAuthStateChange),
 
     // ============================================================
     // REDIRECT
     // ============================================================
-
     redirect: (context, state) async {
       final path = state.uri.path;
 
       debugPrint('====================================');
       debugPrint('ROUTER REDIRECT');
       debugPrint('PATH: $path');
-      debugPrint(
-        'SESSION: ${client.auth.currentSession != null}',
-      );
+      debugPrint('SESSION: ${client.auth.currentSession != null}');
       debugPrint('FIRST REDIRECT: $firstRedirect');
       debugPrint('====================================');
 
@@ -90,9 +98,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         if (firstRedirect) {
           firstRedirect = false;
 
-          debugPrint(
-            'FIRST APP START -> STAY ON LOGIN',
-          );
+          debugPrint('FIRST APP START -> STAY ON LOGIN');
 
           return null;
         }
@@ -104,49 +110,31 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         // این قسمت هنگام AuthStateChange بعد از Login اجرا می‌شود.
         // --------------------------------------------------------
 
-        final session =
-            client.auth.currentSession;
+        final session = client.auth.currentSession;
 
         if (session == null) {
-          debugPrint(
-            'NO SESSION -> STAY ON LOGIN',
-          );
+          debugPrint('NO SESSION -> STAY ON LOGIN');
 
           return null;
         }
 
-        debugPrint(
-          'LOGIN SUCCESS -> FETCH ROLE',
-        );
+        debugPrint('LOGIN SUCCESS -> FETCH ROLE');
 
-        final authService =
-        AuthService(client);
+        final authService = AuthService(client);
 
-        final role =
-        await authService.fetchRole(
-          session.user.id,
-        );
+        final role = await authService.fetchRole(session.user.id);
 
-        debugPrint(
-          'FETCHED ROLE: $role',
-        );
+        debugPrint('FETCHED ROLE: $role');
 
         if (role == null) {
-          debugPrint(
-            'INVALID ROLE -> LOGIN',
-          );
+          debugPrint('INVALID ROLE -> LOGIN');
 
           return null;
         }
 
-        final target =
-        AuthService.routeForRole(
-          role,
-        );
+        final target = AuthService.routeForRole(role);
 
-        debugPrint(
-          'LOGIN TARGET: $target',
-        );
+        debugPrint('LOGIN TARGET: $target');
 
         return target;
       }
@@ -155,17 +143,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // SESSION
       // ==========================================================
 
-      final session =
-          client.auth.currentSession;
+      final session = client.auth.currentSession;
 
       // ==========================================================
       // کاربر وارد نشده
       // ==========================================================
 
       if (session == null) {
-        debugPrint(
-          'NO SESSION -> REDIRECT TO LOGIN',
-        );
+        debugPrint('NO SESSION -> REDIRECT TO LOGIN');
 
         if (path == '/splash') {
           return '/login';
@@ -178,26 +163,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // کاربر وارد شده
       // ==========================================================
 
-      final authService =
-      AuthService(client);
+      final authService = AuthService(client);
 
-      final role =
-      await authService.fetchRole(
-        session.user.id,
-      );
+      final role = await authService.fetchRole(session.user.id);
 
-      debugPrint(
-        'FETCHED ROLE: $role',
-      );
+      debugPrint('FETCHED ROLE: $role');
 
       // ==========================================================
       // پروفایل نامعتبر
       // ==========================================================
 
       if (role == null) {
-        debugPrint(
-          'ROLE NULL -> LOGIN',
-        );
+        debugPrint('ROLE NULL -> LOGIN');
 
         return '/login';
       }
@@ -206,25 +183,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // TARGET
       // ==========================================================
 
-      final target =
-      AuthService.routeForRole(
-        role,
-      );
+      final target = AuthService.routeForRole(role);
 
-      debugPrint(
-        'ROLE: $role',
-      );
+      debugPrint('ROLE: $role');
 
-      debugPrint(
-        'TARGET: $target',
-      );
+      debugPrint('TARGET: $target');
 
       // ==========================================================
       // ROOT / SPLASH
       // ==========================================================
 
-      if (path == '/' ||
-          path == '/splash') {
+      if (path == '/' || path == '/splash') {
         return target;
       }
 
@@ -233,8 +202,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ==========================================================
 
       if (role == 'owner') {
-        if (path == '/owner' ||
-            path.startsWith('/owner/')) {
+        if (path == '/owner' || path.startsWith('/owner/')) {
           return null;
         }
 
@@ -246,8 +214,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ==========================================================
 
       if (role == 'consultant') {
-        if (path == '/consultant' ||
-            path.startsWith('/consultant/')) {
+        if (path == '/consultant' || path.startsWith('/consultant/')) {
           return null;
         }
 
@@ -258,9 +225,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ROLE ناشناخته
       // ==========================================================
 
-      debugPrint(
-        'UNKNOWN ROLE -> LOGIN',
-      );
+      debugPrint('UNKNOWN ROLE -> LOGIN');
 
       return '/login';
     },
@@ -268,21 +233,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     // ============================================================
     // ROUTES
     // ============================================================
-
     routes: [
       // ==========================================================
       // ROOT
       // ==========================================================
-
-      GoRoute(
-        path: '/',
-        redirect: (_, __) => '/login',
-      ),
+      GoRoute(path: '/', redirect: (_, __) => '/login'),
 
       // ==========================================================
       // SPLASH
       // ==========================================================
-
       GoRoute(
         path: '/splash',
         builder: (context, state) {
@@ -293,7 +252,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ==========================================================
       // LOGIN
       // ==========================================================
-
       GoRoute(
         path: '/login',
         builder: (context, state) {
@@ -304,7 +262,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ==========================================================
       // INVITE
       // ==========================================================
-
       GoRoute(
         path: '/auth/invite',
         builder: (context, state) {
@@ -315,18 +272,122 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ==========================================================
       // CONSULTANT
       // ==========================================================
-
       GoRoute(
         path: '/consultant',
         builder: (context, state) {
           return const ConsultantPage();
         },
       ),
+      GoRoute(
+        path: '/consultant/companies',
+        builder: (context, state) {
+          return const ConsultantCompaniesPage();
+        },
+      ),
 
+      GoRoute(
+        path: '/consultant/companies/:id',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+
+          return CompanyDashboardPage(companyId: id);
+        },
+      ),
+      GoRoute(
+        path: '/consultant/companies/:id/reports',
+
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+
+          return CompanyReportsPage(companyId: id);
+        },
+      ),
+      GoRoute(
+        path: '/consultant/companies/:id/actions',
+
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+
+          return CompanyActionsPage(companyId: id);
+        },
+      ),
+      GoRoute(
+        path: '/consultant/companies/:id/workflow',
+
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+
+          return CompanyWorkflowPage(companyId: id);
+        },
+      ),
+      GoRoute(
+        path: '/consultant/companies/:id/documents',
+
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+
+          return CompanyDocumentsPage(companyId: id);
+        },
+      ),
+      GoRoute(
+        path: '/consultant/companies/:id/notes',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return CompanyNotesPage(companyId: id);
+        },
+      ),
+      GoRoute(
+        path: '/consultant/companies/:id/analytics',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return CompanyAnalyticsPage(companyId: id);
+        },
+      ),
+      GoRoute(
+        path: '/consultant/analytics',
+
+        builder: (context, state) {
+          return const ConsultantAnalyticsPage();
+        },
+      ),
+      GoRoute(
+        path: '/consultant/reports',
+
+        builder: (context, state) {
+          return const ConsultantReportsPage();
+        },
+      ),
+      GoRoute(
+        path: '/consultant/workflow',
+        builder: (context, state) {
+          return const ConsultantWorkflowPage();
+        },
+      ),
+      GoRoute(
+        path: '/consultant/history',
+
+        builder: (context, state) {
+          return const ConsultantHistoryPage();
+        },
+      ),
+      GoRoute(
+        path: '/consultant/settings',
+        builder: (context, state) {
+          return const ConsultantSettingsPage();
+        },
+      ),
+      GoRoute(
+        path: '/consultant/companies/:id/banking',
+        builder: (context, state) {
+          final id = state.pathParameters['id']!;
+          return BankingDashboardPage(
+            companyId: id,
+          );
+        },
+      ),
       // ==========================================================
       // OWNER
       // ==========================================================
-
       GoRoute(
         path: '/owner',
         builder: (context, state) {
@@ -337,7 +398,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ==========================================================
       // OWNER / COMPANIES
       // ==========================================================
-
       GoRoute(
         path: '/owner/companies',
         builder: (context, state) {
@@ -348,7 +408,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ==========================================================
       // OWNER / USERS
       // ==========================================================
-
       GoRoute(
         path: '/owner/users',
         builder: (context, state) {
@@ -359,7 +418,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ==========================================================
       // OWNER / REPORTS
       // ==========================================================
-
       GoRoute(
         path: '/owner/reports',
         builder: (context, state) {
@@ -370,7 +428,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ==========================================================
       // OWNER / SETTINGS
       // ==========================================================
-
       GoRoute(
         path: '/owner/settings',
         builder: (context, state) {
@@ -386,18 +443,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 // ================================================================
 
 class GoRouterRefreshStream extends ChangeNotifier {
-  GoRouterRefreshStream(
-      Stream<dynamic> stream,
-      ) {
-    _subscription = stream
-        .asBroadcastStream()
-        .listen((_) {
+  GoRouterRefreshStream(Stream<dynamic> stream) {
+    _subscription = stream.asBroadcastStream().listen((_) {
       notifyListeners();
     });
   }
 
-  late final StreamSubscription<dynamic>
-  _subscription;
+  late final StreamSubscription<dynamic> _subscription;
 
   @override
   void dispose() {

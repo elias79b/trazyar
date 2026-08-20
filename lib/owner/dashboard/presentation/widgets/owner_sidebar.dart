@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class OwnerSidebar extends StatelessWidget {
   const OwnerSidebar({
@@ -14,6 +15,14 @@ class OwnerSidebar extends StatelessWidget {
     context.go(route);
   }
 
+  Future<void> _logout(BuildContext context) async {
+    await Supabase.instance.client.auth.signOut();
+
+    if (context.mounted) {
+      context.go('/login');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -23,10 +32,12 @@ class OwnerSidebar extends StatelessWidget {
       ),
       child: Column(
         children: [
+
           Image.asset(
             'assets/images/logo.png',
             height: 150,
           ),
+
           const Text(
             'ترازیار',
             style: TextStyle(
@@ -35,6 +46,8 @@ class OwnerSidebar extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
+
+
           _item(
             context,
             icon: Icons.dashboard,
@@ -42,6 +55,8 @@ class OwnerSidebar extends StatelessWidget {
             route: '/owner',
             selected: currentRoute == '/owner',
           ),
+
+
           _item(
             context,
             icon: Icons.business,
@@ -49,6 +64,8 @@ class OwnerSidebar extends StatelessWidget {
             route: '/owner/companies',
             selected: currentRoute == '/owner/companies',
           ),
+
+
           _item(
             context,
             icon: Icons.people,
@@ -56,6 +73,8 @@ class OwnerSidebar extends StatelessWidget {
             route: '/owner/users',
             selected: currentRoute == '/owner/users',
           ),
+
+
           _item(
             context,
             icon: Icons.bar_chart,
@@ -63,6 +82,8 @@ class OwnerSidebar extends StatelessWidget {
             route: '/owner/reports',
             selected: currentRoute == '/owner/reports',
           ),
+
+
           _item(
             context,
             icon: Icons.settings,
@@ -71,19 +92,76 @@ class OwnerSidebar extends StatelessWidget {
             selected: currentRoute == '/owner/settings',
           ),
 
+
           const Spacer(),
-          const Divider(color: Colors.white24),
+
+          const Divider(
+            color: Colors.white24,
+          ),
+
+
+          // ورود به پنل مشاور
           _item(
             context,
-            icon: Icons.logout,
-            title: 'خروج',
-            route: '/login',
+            icon: Icons.support_agent,
+            title: 'پنل مشاور',
+            route: '/consultant',
             selected: false,
           ),
+
+
+          // خروج واقعی
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 6,
+            ),
+            child: Material(
+              color: Colors.transparent,
+              borderRadius:
+              BorderRadius.circular(14),
+              child: InkWell(
+                borderRadius:
+                BorderRadius.circular(14),
+                onTap: () => _logout(context),
+                child: Container(
+                  height: 40,
+                  padding:
+                  const EdgeInsets.symmetric(
+                    horizontal: 12,
+                  ),
+                  child: const Row(
+                    children: [
+
+                      Icon(
+                        Icons.logout,
+                        color: Colors.white,
+                      ),
+
+                      SizedBox(width: 15),
+
+                      Text(
+                        'خروج',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 15,
+                          fontWeight:
+                          FontWeight.w600,
+                        ),
+                      ),
+
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
         ],
       ),
     );
   }
+
 
   Widget _item(
       BuildContext context, {
@@ -92,32 +170,61 @@ class OwnerSidebar extends StatelessWidget {
         required String route,
         required bool selected,
       }) {
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding:
+      const EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: 6,
+      ),
+
       child: Material(
-        color: selected ? Colors.white12 : Colors.transparent,
-        borderRadius: BorderRadius.circular(14),
+        color: selected
+            ? Colors.white12
+            : Colors.transparent,
+
+        borderRadius:
+        BorderRadius.circular(14),
+
         child: InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: () => _go(context, route),
+          borderRadius:
+          BorderRadius.circular(14),
+
+          onTap: () => _go(
+            context,
+            route,
+          ),
+
           child: Container(
             height: 40,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+
+            padding:
+            const EdgeInsets.symmetric(
+              horizontal: 12,
+            ),
+
             child: Row(
               children: [
+
                 Icon(
                   icon,
                   color: Colors.white,
                 ),
-                const SizedBox(width: 15),
+
+                const SizedBox(
+                  width: 15,
+                ),
+
                 Text(
                   title,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 15,
-                    fontWeight: FontWeight.w600,
+                    fontWeight:
+                    FontWeight.w600,
                   ),
                 ),
+
               ],
             ),
           ),

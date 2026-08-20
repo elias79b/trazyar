@@ -197,13 +197,6 @@ class ConsultantSidebar extends StatelessWidget {
                       currentRoute: currentRoute,
                     ),
 
-                    _SidebarItem(
-                      icon: Icons.task_alt_rounded,
-                      title: 'اقدامات',
-                      route: '/consultant/actions',
-                      currentRoute: currentRoute,
-                    ),
-
                     const _SidebarDivider(),
 
                     _SidebarItem(
