@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/banking_provider.dart';
 import '../../data/banking_repository.dart';
+import 'banking_form_helpers.dart';
 
-class PettyCashFormDialog extends ConsumerStatefulWidget {
+class PettyCashFormDialog
+    extends ConsumerStatefulWidget {
   const PettyCashFormDialog({
     super.key,
     required this.companyId,
@@ -14,27 +16,49 @@ class PettyCashFormDialog extends ConsumerStatefulWidget {
   final String companyId;
   final PettyCashModel? pettyCash;
 
-  bool get isEdit => pettyCash != null;
+  bool get isEdit =>
+      pettyCash != null;
 
   @override
-  ConsumerState<PettyCashFormDialog> createState() =>
+  ConsumerState<PettyCashFormDialog>
+  createState() =>
       _PettyCashFormDialogState();
 }
 
 class _PettyCashFormDialogState
     extends ConsumerState<PettyCashFormDialog> {
-  final _formKey = GlobalKey<FormState>();
+  final _formKey =
+  GlobalKey<FormState>();
 
-  late final TextEditingController _nameController;
-  late final TextEditingController _responsibleUserController;
-  late final TextEditingController _openingBalanceController;
-  late final TextEditingController _totalReceiptsController;
-  late final TextEditingController _totalPaymentsController;
-  late final TextEditingController _closingBalanceController;
-  late final TextEditingController _ledgerBalanceController;
-  late final TextEditingController _discrepancyController;
-  late final TextEditingController _fiscalYearController;
-  late final TextEditingController _fiscalMonthController;
+  late final TextEditingController
+  _nameController;
+
+  late final TextEditingController
+  _responsibleUserController;
+
+  late final TextEditingController
+  _openingBalanceController;
+
+  late final TextEditingController
+  _totalReceiptsController;
+
+  late final TextEditingController
+  _totalPaymentsController;
+
+  late final TextEditingController
+  _closingBalanceController;
+
+  late final TextEditingController
+  _ledgerBalanceController;
+
+  late final TextEditingController
+  _discrepancyController;
+
+  late final TextEditingController
+  _fiscalYearController;
+
+  late final TextEditingController
+  _fiscalMonthController;
 
   bool _saving = false;
 
@@ -42,111 +66,145 @@ class _PettyCashFormDialogState
   void initState() {
     super.initState();
 
-    final pettyCash = widget.pettyCash;
+    final pettyCash =
+        widget.pettyCash;
 
-    _nameController = TextEditingController(
-      text: pettyCash?.name ?? '',
-    );
+    _nameController =
+        TextEditingController(
+          text:
+          pettyCash?.name ?? '',
+        );
 
-    _responsibleUserController = TextEditingController(
-      text: pettyCash?.responsibleUserId ?? '',
-    );
+    _responsibleUserController =
+        TextEditingController(
+          text:
+          pettyCash
+              ?.responsibleUserId ??
+              '',
+        );
 
     _openingBalanceController =
         TextEditingController(
-          text: pettyCash == null
+          text:
+          pettyCash == null
               ? ''
-              : _formatNumber(
-            pettyCash.openingBalance,
+              : formatMoneyInput(
+            pettyCash
+                .openingBalance,
           ),
         );
 
     _totalReceiptsController =
         TextEditingController(
-          text: pettyCash == null
+          text:
+          pettyCash == null
               ? ''
-              : _formatNumber(
-            pettyCash.totalReceipts,
+              : formatMoneyInput(
+            pettyCash
+                .totalReceipts,
           ),
         );
 
     _totalPaymentsController =
         TextEditingController(
-          text: pettyCash == null
+          text:
+          pettyCash == null
               ? ''
-              : _formatNumber(
-            pettyCash.totalPayments,
+              : formatMoneyInput(
+            pettyCash
+                .totalPayments,
           ),
         );
 
     _closingBalanceController =
         TextEditingController(
-          text: pettyCash == null
+          text:
+          pettyCash == null
               ? ''
-              : _formatNumber(
-            pettyCash.closingBalance,
+              : formatMoneyInput(
+            pettyCash
+                .closingBalance,
           ),
         );
 
     _ledgerBalanceController =
         TextEditingController(
-          text: pettyCash == null
+          text:
+          pettyCash == null
               ? ''
-              : _formatNumber(
-            pettyCash.ledgerBalance,
+              : formatMoneyInput(
+            pettyCash
+                .ledgerBalance,
           ),
         );
 
     _discrepancyController =
         TextEditingController(
-          text: pettyCash == null
+          text:
+          pettyCash == null
               ? ''
-              : _formatNumber(
-            pettyCash.discrepancy,
+              : formatMoneyInput(
+            pettyCash
+                .discrepancy,
           ),
         );
 
     _fiscalYearController =
         TextEditingController(
           text:
-          pettyCash?.fiscalYear?.toString() ??
+          pettyCash?.fiscalYear
+              ?.toString() ??
               '',
         );
 
     _fiscalMonthController =
         TextEditingController(
           text:
-          pettyCash?.fiscalMonth?.toString() ??
+          pettyCash?.fiscalMonth
+              ?.toString() ??
               '',
         );
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+      BuildContext context,
+      ) {
     return AlertDialog(
-      title: Text(
+      title:
+      Text(
         widget.isEdit
             ? 'ویرایش تنخواه'
             : 'ثبت تنخواه',
-        style: const TextStyle(
-          fontWeight: FontWeight.w900,
+        style:
+        const TextStyle(
+          fontWeight:
+          FontWeight.w900,
         ),
       ),
 
-      content: SizedBox(
-        width: 650,
+      content:
+      SizedBox(
+        width:
+        650,
 
-        child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
+        child:
+        SingleChildScrollView(
+          child:
+          Form(
+            key:
+            _formKey,
 
-            child: Column(
+            child:
+            Column(
               children: [
                 _textField(
                   controller:
                   _nameController,
-                  label: 'نام تنخواه',
-                  requiredField: true,
+                  label:
+                  'نام تنخواه',
+                  requiredField:
+                  true,
                 ),
 
                 _responsibleUserField(),
@@ -154,61 +212,50 @@ class _PettyCashFormDialogState
                 _numberField(
                   controller:
                   _openingBalanceController,
-                  label: 'مانده اول دوره',
+                  label:
+                  'مانده اول دوره',
                 ),
 
                 _numberField(
                   controller:
                   _totalReceiptsController,
-                  label: 'مجموع دریافت',
+                  label:
+                  'مجموع دریافت',
                 ),
 
                 _numberField(
                   controller:
                   _totalPaymentsController,
-                  label: 'مجموع پرداخت',
+                  label:
+                  'مجموع پرداخت',
                 ),
 
                 _numberField(
                   controller:
                   _closingBalanceController,
-                  label: 'مانده پایان دوره',
+                  label:
+                  'مانده پایان دوره',
                 ),
 
                 _numberField(
                   controller:
                   _ledgerBalanceController,
-                  label: 'مانده دفتر',
+                  label:
+                  'مانده دفتر',
                 ),
 
                 _numberField(
                   controller:
                   _discrepancyController,
-                  label: 'مغایرت',
+                  label:
+                  'مغایرت',
                 ),
 
-                Row(
-                  children: [
-                    Expanded(
-                      child: _integerField(
-                        controller:
-                        _fiscalYearController,
-                        label: 'سال مالی',
-                      ),
-                    ),
-
-                    const SizedBox(
-                      width: 12,
-                    ),
-
-                    Expanded(
-                      child: _integerField(
-                        controller:
-                        _fiscalMonthController,
-                        label: 'ماه',
-                      ),
-                    ),
-                  ],
+                BankingFiscalPeriodField(
+                  yearController:
+                  _fiscalYearController,
+                  monthController:
+                  _fiscalMonthController,
                 ),
               ],
             ),
@@ -218,35 +265,48 @@ class _PettyCashFormDialogState
 
       actions: [
         TextButton(
-          onPressed: _saving
+          onPressed:
+          _saving
               ? null
               : () {
-            Navigator.of(context).pop();
+            Navigator.of(
+              context,
+            ).pop();
           },
-          child: const Text(
+          child:
+          const Text(
             'انصراف',
           ),
         ),
 
         FilledButton.icon(
           onPressed:
-          _saving ? null : _save,
+          _saving
+              ? null
+              : _save,
 
-          icon: _saving
+          icon:
+          _saving
               ? const SizedBox(
-            width: 18,
-            height: 18,
+            width:
+            18,
+            height:
+            18,
             child:
             CircularProgressIndicator(
-              strokeWidth: 2,
-              color: Colors.white,
+              strokeWidth:
+              2,
+              color:
+              Colors.white,
             ),
           )
               : const Icon(
-            Icons.save_rounded,
+            Icons
+                .save_rounded,
           ),
 
-          label: Text(
+          label:
+          Text(
             widget.isEdit
                 ? 'ذخیره تغییرات'
                 : 'ثبت تنخواه',
@@ -256,34 +316,27 @@ class _PettyCashFormDialogState
     );
   }
 
-  // ============================================================
-  // RESPONSIBLE USER
-  // ============================================================
-
   Widget _responsibleUserField() {
     return Padding(
-      padding: const EdgeInsets.only(
+      padding:
+      const EdgeInsets.only(
         bottom: 12,
       ),
-      child: TextFormField(
+      child:
+      TextFormField(
         controller:
         _responsibleUserController,
-
         decoration:
-        InputDecoration(
+        const InputDecoration(
           labelText:
           'شناسه مسئول تنخواه',
           hintText:
           'اختیاری - UUID کاربر',
-
-          helperText:
-          'این مقدار باید UUID معتبر باشد. در صورت خالی بودن، مسئول ثبت نمی‌شود.',
-
           border:
-          const OutlineInputBorder(),
+          OutlineInputBorder(),
         ),
-
-        validator: (value) {
+        validator:
+            (value) {
           final text =
               value?.trim() ?? '';
 
@@ -301,12 +354,9 @@ class _PettyCashFormDialogState
     );
   }
 
-  // ============================================================
-  // TEXT FIELD
-  // ============================================================
-
   Widget _textField({
-    required TextEditingController controller,
+    required TextEditingController
+    controller,
     required String label,
     required bool requiredField,
   }) {
@@ -315,18 +365,19 @@ class _PettyCashFormDialogState
       const EdgeInsets.only(
         bottom: 12,
       ),
-
-      child: TextFormField(
-        controller: controller,
-
+      child:
+      TextFormField(
+        controller:
+        controller,
         decoration:
         InputDecoration(
-          labelText: label,
+          labelText:
+          label,
           border:
           const OutlineInputBorder(),
         ),
-
-        validator: (value) {
+        validator:
+            (value) {
           if (!requiredField) {
             return null;
           }
@@ -342,12 +393,9 @@ class _PettyCashFormDialogState
     );
   }
 
-  // ============================================================
-  // NUMBER FIELD
-  // ============================================================
-
   Widget _numberField({
-    required TextEditingController controller,
+    required TextEditingController
+    controller,
     required String label,
   }) {
     return Padding(
@@ -355,30 +403,40 @@ class _PettyCashFormDialogState
       const EdgeInsets.only(
         bottom: 12,
       ),
-
-      child: TextFormField(
-        controller: controller,
-
+      child:
+      TextFormField(
+        controller:
+        controller,
         keyboardType:
-        const TextInputType.numberWithOptions(
-          decimal: true,
-          signed: true,
+        const TextInputType
+            .numberWithOptions(
+          decimal:
+          true,
+          signed:
+          true,
         ),
-
+        textDirection:
+        TextDirection.ltr,
+        inputFormatters: const [
+          ThousandsSeparatorFormatter(),
+        ],
         decoration:
         InputDecoration(
-          labelText: label,
+          labelText:
+          label,
           border:
           const OutlineInputBorder(),
         ),
-
-        validator: (value) {
+        validator:
+            (value) {
           if (value == null ||
               value.trim().isEmpty) {
             return null;
           }
 
-          if (_parseDouble(value) ==
+          if (parseFormattedDouble(
+            value,
+          ) ==
               null) {
             return 'مقدار عددی معتبر وارد کنید.';
           }
@@ -389,58 +447,9 @@ class _PettyCashFormDialogState
     );
   }
 
-  // ============================================================
-  // INTEGER FIELD
-  // ============================================================
-
-  Widget _integerField({
-    required TextEditingController controller,
-    required String label,
-  }) {
-    return Padding(
-      padding:
-      const EdgeInsets.only(
-        bottom: 12,
-      ),
-
-      child: TextFormField(
-        controller: controller,
-
-        keyboardType:
-        TextInputType.number,
-
-        decoration:
-        InputDecoration(
-          labelText: label,
-          border:
-          const OutlineInputBorder(),
-        ),
-
-        validator: (value) {
-          if (value == null ||
-              value.trim().isEmpty) {
-            return null;
-          }
-
-          if (int.tryParse(
-            value.trim(),
-          ) ==
-              null) {
-            return 'عدد صحیح معتبر وارد کنید.';
-          }
-
-          return null;
-        },
-      ),
-    );
-  }
-
-  // ============================================================
-  // SAVE
-  // ============================================================
-
   Future<void> _save() async {
-    if (!_formKey.currentState!
+    if (!_formKey
+        .currentState!
         .validate()) {
       return;
     }
@@ -463,63 +472,56 @@ class _PettyCashFormDialogState
             .updatePettyCash(
           id:
           widget.pettyCash!.id,
-
           name:
-          _nameController.text.trim(),
-
+          _nameController.text
+              .trim(),
           responsibleUserId:
           responsibleUserId,
-
           openingBalance:
-          _parseDouble(
+          parseFormattedDouble(
             _openingBalanceController
                 .text,
           ) ??
               0,
-
           totalReceipts:
-          _parseDouble(
+          parseFormattedDouble(
             _totalReceiptsController
                 .text,
           ) ??
               0,
-
           totalPayments:
-          _parseDouble(
+          parseFormattedDouble(
             _totalPaymentsController
                 .text,
           ) ??
               0,
-
           closingBalance:
-          _parseDouble(
+          parseFormattedDouble(
             _closingBalanceController
                 .text,
           ) ??
               0,
-
           ledgerBalance:
-          _parseDouble(
+          parseFormattedDouble(
             _ledgerBalanceController
                 .text,
           ) ??
               0,
-
           discrepancy:
-          _parseDouble(
+          parseFormattedDouble(
             _discrepancyController
                 .text,
           ) ??
               0,
-
           fiscalYear:
-          _parseInt(
-            _fiscalYearController.text,
+          parseFormattedInt(
+            _fiscalYearController
+                .text,
           ),
-
           fiscalMonth:
-          _parseInt(
-            _fiscalMonthController.text,
+          parseFormattedInt(
+            _fiscalMonthController
+                .text,
           ),
         );
       } else {
@@ -527,63 +529,56 @@ class _PettyCashFormDialogState
             .createPettyCash(
           companyId:
           widget.companyId,
-
           name:
-          _nameController.text.trim(),
-
+          _nameController.text
+              .trim(),
           responsibleUserId:
           responsibleUserId,
-
           openingBalance:
-          _parseDouble(
+          parseFormattedDouble(
             _openingBalanceController
                 .text,
           ) ??
               0,
-
           totalReceipts:
-          _parseDouble(
+          parseFormattedDouble(
             _totalReceiptsController
                 .text,
           ) ??
               0,
-
           totalPayments:
-          _parseDouble(
+          parseFormattedDouble(
             _totalPaymentsController
                 .text,
           ) ??
               0,
-
           closingBalance:
-          _parseDouble(
+          parseFormattedDouble(
             _closingBalanceController
                 .text,
           ) ??
               0,
-
           ledgerBalance:
-          _parseDouble(
+          parseFormattedDouble(
             _ledgerBalanceController
                 .text,
           ) ??
               0,
-
           discrepancy:
-          _parseDouble(
+          parseFormattedDouble(
             _discrepancyController
                 .text,
           ) ??
               0,
-
           fiscalYear:
-          _parseInt(
-            _fiscalYearController.text,
+          parseFormattedInt(
+            _fiscalYearController
+                .text,
           ),
-
           fiscalMonth:
-          _parseInt(
-            _fiscalMonthController.text,
+          parseFormattedInt(
+            _fiscalMonthController
+                .text,
           ),
         );
       }
@@ -600,10 +595,12 @@ class _PettyCashFormDialogState
 
       Navigator.of(context).pop();
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(
         SnackBar(
-          content: Text(
+          content:
+          Text(
             widget.isEdit
                 ? 'تنخواه با موفقیت ویرایش شد.'
                 : 'تنخواه با موفقیت ثبت شد.',
@@ -615,13 +612,16 @@ class _PettyCashFormDialogState
         return;
       }
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(
         SnackBar(
           backgroundColor:
           Colors.red.shade700,
           content:
-          Text(error.toString()),
+          Text(
+            error.toString(),
+          ),
         ),
       );
     } finally {
@@ -632,10 +632,6 @@ class _PettyCashFormDialogState
       }
     }
   }
-
-  // ============================================================
-  // VALIDATE / READ UUID
-  // ============================================================
 
   String? _getValidatedResponsibleUserId() {
     final value =
@@ -657,7 +653,8 @@ class _PettyCashFormDialogState
   bool _isValidUuid(
       String value,
       ) {
-    final uuidRegex = RegExp(
+    final regex =
+    RegExp(
       r'^[0-9a-fA-F]{8}-'
       r'[0-9a-fA-F]{4}-'
       r'[1-5][0-9a-fA-F]{3}-'
@@ -665,60 +662,10 @@ class _PettyCashFormDialogState
       r'[0-9a-fA-F]{12}$',
     );
 
-    return uuidRegex.hasMatch(
+    return regex.hasMatch(
       value,
     );
   }
-
-  // ============================================================
-  // PARSERS
-  // ============================================================
-
-  double? _parseDouble(
-      String value,
-      ) {
-    final cleaned =
-    value
-        .replaceAll(',', '')
-        .trim();
-
-    if (cleaned.isEmpty) {
-      return null;
-    }
-
-    return double.tryParse(
-      cleaned,
-    );
-  }
-
-  int? _parseInt(
-      String value,
-      ) {
-    final cleaned =
-    value.trim();
-
-    if (cleaned.isEmpty) {
-      return null;
-    }
-
-    return int.tryParse(
-      cleaned,
-    );
-  }
-
-  // ============================================================
-  // FORMAT
-  // ============================================================
-
-  String _formatNumber(
-      double value,
-      ) {
-    return value.toStringAsFixed(0);
-  }
-
-  // ============================================================
-  // DISPOSE
-  // ============================================================
 
   @override
   void dispose() {

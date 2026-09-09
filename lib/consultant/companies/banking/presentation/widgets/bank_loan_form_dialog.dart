@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/banking_provider.dart';
 import '../../data/banking_repository.dart';
+import 'banking_form_helpers.dart';
 
 class BankLoanFormDialog extends ConsumerStatefulWidget {
   const BankLoanFormDialog({super.key, required this.companyId, this.loan});
@@ -20,13 +21,23 @@ class _BankLoanFormDialogState extends ConsumerState<BankLoanFormDialog> {
   final _formKey = GlobalKey<FormState>();
 
   late final TextEditingController _bankNameController;
+
   late final TextEditingController _loanTypeController;
+
   late final TextEditingController _principalAmountController;
+
   late final TextEditingController _remainingAmountController;
+
   late final TextEditingController _interestRateController;
+
   late final TextEditingController _startDateController;
+
   late final TextEditingController _endDateController;
+
   late final TextEditingController _monthlyInstallmentController;
+
+  DateTime? _startDate;
+  DateTime? _endDate;
 
   bool _saving = false;
 
@@ -41,27 +52,31 @@ class _BankLoanFormDialogState extends ConsumerState<BankLoanFormDialog> {
     _loanTypeController = TextEditingController(text: loan?.loanType ?? '');
 
     _principalAmountController = TextEditingController(
-      text: loan == null ? '' : _formatNumber(loan.principalAmount),
+      text: loan == null ? '' : formatMoneyInput(loan.principalAmount),
     );
 
     _remainingAmountController = TextEditingController(
-      text: loan == null ? '' : _formatNumber(loan.remainingAmount),
+      text: loan == null ? '' : formatMoneyInput(loan.remainingAmount),
     );
 
     _interestRateController = TextEditingController(
-      text: loan == null ? '' : _formatNumber(loan.interestRate),
+      text: loan == null ? '' : formatMoneyInput(loan.interestRate),
     );
 
+    _startDate = loan?.startDate;
+
+    _endDate = loan?.endDate;
+
     _startDateController = TextEditingController(
-      text: _formatDate(loan?.startDate),
+      text: loan?.startDate == null ? '' : formatShamsiDate(loan!.startDate!),
     );
 
     _endDateController = TextEditingController(
-      text: _formatDate(loan?.endDate),
+      text: loan?.endDate == null ? '' : formatShamsiDate(loan!.endDate!),
     );
 
     _monthlyInstallmentController = TextEditingController(
-      text: loan == null ? '' : _formatNumber(loan.monthlyInstallment),
+      text: loan == null ? '' : formatMoneyInput(loan.monthlyInstallment),
     );
   }
 
@@ -72,11 +87,14 @@ class _BankLoanFormDialogState extends ConsumerState<BankLoanFormDialog> {
         widget.isEdit ? 'ویرایش تسهیلات بانکی' : 'ثبت تسهیلات بانکی',
         style: const TextStyle(fontWeight: FontWeight.w900),
       ),
+
       content: SizedBox(
         width: 650,
+
         child: SingleChildScrollView(
           child: Form(
             key: _formKey,
+
             child: Column(
               children: [
                 _textField(
@@ -84,31 +102,66 @@ class _BankLoanFormDialogState extends ConsumerState<BankLoanFormDialog> {
                   label: 'نام بانک',
                   requiredField: true,
                 ),
+
                 _textField(
                   controller: _loanTypeController,
                   label: 'نوع تسهیلات',
                   requiredField: true,
                 ),
+
                 _numberField(
                   controller: _principalAmountController,
                   label: 'مبلغ اولیه تسهیلات',
                 ),
+
                 _numberField(
                   controller: _remainingAmountController,
                   label: 'مانده تسهیلات',
                 ),
+
                 _numberField(
                   controller: _interestRateController,
                   label: 'نرخ سود',
                 ),
-                _dateField(
+
+                BankingDateField(
                   controller: _startDateController,
                   label: 'تاریخ شروع',
+                  initialDate: _startDate,
+                  requiredField: false,
+                  onDateSelected: (date) {
+                    setState(() {
+                      _startDate = date;
+
+                      _startDateController.value = TextEditingValue(
+                        text: formatShamsiDate(date),
+                        selection: TextSelection.collapsed(
+                          offset: formatShamsiDate(date).length,
+                        ),
+                      );
+                    });
+                  },
                 ),
-                _dateField(
+
+                BankingDateField(
                   controller: _endDateController,
                   label: 'تاریخ پایان',
+                  initialDate: _endDate,
+                  requiredField: false,
+                  onDateSelected: (date) {
+                    setState(() {
+                      _endDate = date;
+
+                      _endDateController.value = TextEditingValue(
+                        text: formatShamsiDate(date),
+                        selection: TextSelection.collapsed(
+                          offset: formatShamsiDate(date).length,
+                        ),
+                      );
+                    });
+                  },
                 ),
+
                 _numberField(
                   controller: _monthlyInstallmentController,
                   label: 'قسط ماهانه',
@@ -118,11 +171,18 @@ class _BankLoanFormDialogState extends ConsumerState<BankLoanFormDialog> {
           ),
         ),
       ),
+
       actions: [
         TextButton(
-          onPressed: _saving ? null : () => Navigator.of(context).pop(),
+          onPressed:
+              _saving
+                  ? null
+                  : () {
+                    Navigator.of(context).pop();
+                  },
           child: const Text('انصراف'),
         ),
+
         FilledButton.icon(
           onPressed: _saving ? null : _save,
           icon:
@@ -151,6 +211,7 @@ class _BankLoanFormDialogState extends ConsumerState<BankLoanFormDialog> {
       padding: const EdgeInsets.only(bottom: 12),
       child: TextFormField(
         controller: controller,
+        textDirection: TextDirection.rtl,
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(),
@@ -182,6 +243,8 @@ class _BankLoanFormDialogState extends ConsumerState<BankLoanFormDialog> {
           decimal: true,
           signed: true,
         ),
+        textDirection: TextDirection.ltr,
+        inputFormatters: const [ThousandsSeparatorFormatter()],
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(),
@@ -191,38 +254,8 @@ class _BankLoanFormDialogState extends ConsumerState<BankLoanFormDialog> {
             return null;
           }
 
-          if (_parseDouble(value) == null) {
+          if (parseFormattedDouble(value) == null) {
             return 'مقدار عددی معتبر وارد کنید.';
-          }
-
-          return null;
-        },
-      ),
-    );
-  }
-
-  Widget _dateField({
-    required TextEditingController controller,
-    required String label,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: TextInputType.datetime,
-        decoration: InputDecoration(
-          labelText: '$label (YYYY-MM-DD)',
-          border: const OutlineInputBorder(),
-        ),
-        validator: (value) {
-          if (value == null || value.trim().isEmpty) {
-            return null;
-          }
-
-          final parsed = DateTime.tryParse(value.trim());
-
-          if (parsed == null) {
-            return 'فرمت تاریخ باید YYYY-MM-DD باشد.';
           }
 
           return null;
@@ -236,16 +269,15 @@ class _BankLoanFormDialogState extends ConsumerState<BankLoanFormDialog> {
       return;
     }
 
-    final startDate = _parseDate(_startDateController.text);
-
-    final endDate = _parseDate(_endDateController.text);
-
-    if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
+    if (_startDate != null &&
+        _endDate != null &&
+        _endDate!.isBefore(_startDate!)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('تاریخ پایان نمی‌تواند قبل از تاریخ شروع باشد.'),
         ),
       );
+
       return;
     }
 
@@ -256,31 +288,41 @@ class _BankLoanFormDialogState extends ConsumerState<BankLoanFormDialog> {
     try {
       final repository = ref.read(bankingRepositoryProvider);
 
+      final principalAmount =
+          parseFormattedDouble(_principalAmountController.text) ?? 0;
+
+      final remainingAmount =
+          parseFormattedDouble(_remainingAmountController.text) ?? 0;
+
+      final interestRate =
+          parseFormattedDouble(_interestRateController.text) ?? 0;
+
+      final monthlyInstallment =
+          parseFormattedDouble(_monthlyInstallmentController.text) ?? 0;
+
       if (widget.isEdit) {
         await repository.updateBankLoan(
           id: widget.loan!.id,
           bankName: _bankNameController.text.trim(),
           loanType: _loanTypeController.text.trim(),
-          principalAmount: _parseDouble(_principalAmountController.text) ?? 0,
-          remainingAmount: _parseDouble(_remainingAmountController.text) ?? 0,
-          interestRate: _parseDouble(_interestRateController.text) ?? 0,
-          startDate: startDate,
-          endDate: endDate,
-          monthlyInstallment:
-              _parseDouble(_monthlyInstallmentController.text) ?? 0,
+          principalAmount: principalAmount,
+          remainingAmount: remainingAmount,
+          interestRate: interestRate,
+          startDate: _startDate,
+          endDate: _endDate,
+          monthlyInstallment: monthlyInstallment,
         );
       } else {
         await repository.createBankLoan(
           companyId: widget.companyId,
           bankName: _bankNameController.text.trim(),
           loanType: _loanTypeController.text.trim(),
-          principalAmount: _parseDouble(_principalAmountController.text) ?? 0,
-          remainingAmount: _parseDouble(_remainingAmountController.text) ?? 0,
-          interestRate: _parseDouble(_interestRateController.text) ?? 0,
-          startDate: startDate,
-          endDate: endDate,
-          monthlyInstallment:
-              _parseDouble(_monthlyInstallmentController.text) ?? 0,
+          principalAmount: principalAmount,
+          remainingAmount: remainingAmount,
+          interestRate: interestRate,
+          startDate: _startDate,
+          endDate: _endDate,
+          monthlyInstallment: monthlyInstallment,
         );
       }
 
@@ -319,42 +361,6 @@ class _BankLoanFormDialogState extends ConsumerState<BankLoanFormDialog> {
         });
       }
     }
-  }
-
-  double? _parseDouble(String value) {
-    final cleaned = value.replaceAll(',', '').trim();
-
-    if (cleaned.isEmpty) {
-      return null;
-    }
-
-    return double.tryParse(cleaned);
-  }
-
-  DateTime? _parseDate(String value) {
-    final cleaned = value.trim();
-
-    if (cleaned.isEmpty) {
-      return null;
-    }
-
-    return DateTime.tryParse(cleaned);
-  }
-
-  String _formatDate(DateTime? value) {
-    if (value == null) {
-      return '';
-    }
-
-    final month = value.month.toString().padLeft(2, '0');
-
-    final day = value.day.toString().padLeft(2, '0');
-
-    return '${value.year}-$month-$day';
-  }
-
-  String _formatNumber(double value) {
-    return value.toStringAsFixed(0);
   }
 
   @override

@@ -1,314 +1,84 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:tarazyar/consultant/companies/banking/presentation/widgets/create_bank_account_dialog.dart';
 
 import 'package:tarazyar/consultant/dashboard/presentation/widgets/company_scaffold.dart';
 
 import '../../application/banking_provider.dart';
-
-import '../widgets/banking_kpi_cards.dart';
-import '../widgets/bank_balance_bar_chart.dart';
-import '../widgets/bank_accounts_table.dart';
-import '../widgets/banking_alerts_card.dart';
-import '../widgets/cash_box_form_dialog.dart';
-import '../widgets/cash_boxes_table.dart';
-import '../widgets/bank_loan_form_dialog.dart';
-import '../widgets/bank_loans_table.dart';
-import '../widgets/bank_loan_kpi_cards.dart';
-import '../widgets/check_form_dialog.dart';
-import '../widgets/received_checks_table.dart';
-import '../widgets/paid_checks_table.dart';
-import '../widgets/banking_check_alerts.dart';
-import '../widgets/petty_cash_form_dialog.dart';
-import '../widgets/petty_cash_table.dart';
+import '../../data/banking_repository.dart';
 
 class BankingDashboardPage extends ConsumerWidget {
-  const BankingDashboardPage({
-    super.key,
-    required this.companyId,
-  });
+  const BankingDashboardPage({super.key, required this.companyId});
 
   final String companyId;
 
   @override
-  Widget build(
-      BuildContext context,
-      WidgetRef ref,
-      ) {
-    final dashboardAsync = ref.watch(
-      bankingDashboardProvider(companyId),
-    );
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dashboardAsync = ref.watch(bankingDashboardProvider(companyId));
 
     return CompanyScaffold(
       companyId: companyId,
-      currentRoute:
-      '/consultant/companies/$companyId/banking',
+      currentRoute: '/consultant/companies/$companyId/banking',
       title: 'بانک و نقد',
       body: dashboardAsync.when(
         loading: () {
-          return const Center(
-            child: CircularProgressIndicator(),
-          );
+          return const Center(child: CircularProgressIndicator());
         },
-
         error: (error, stackTrace) {
           return Center(
             child: Padding(
               padding: const EdgeInsets.all(24),
-              child: Text(
-                error.toString(),
-                textAlign: TextAlign.center,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.error_outline_rounded,
+                    size: 44,
+                    color: Colors.red.shade700,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(error.toString(), textAlign: TextAlign.center),
+                ],
               ),
             ),
           );
         },
-
         data: (data) {
+          final analytics = BankingAnalytics(data.bankAccounts);
+
           return RefreshIndicator(
             onRefresh: () async {
-              ref.invalidate(
-                bankingDashboardProvider(companyId),
-              );
+              ref.invalidate(bankingDashboardProvider(companyId));
 
-              await ref.read(
-                bankingDashboardProvider(companyId).future,
-              );
+              await ref.read(bankingDashboardProvider(companyId).future);
             },
-
             child: SingleChildScrollView(
-              physics:
-              const AlwaysScrollableScrollPhysics(),
-
-              padding:
-              const EdgeInsets.all(24),
-
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.all(24),
               child: Column(
-                crossAxisAlignment:
-                CrossAxisAlignment.start,
-
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _Header(
-                    totalLiquidity:
-                    data.totalLiquidity,
-                    companyId:
-                    companyId,
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // =====================================================
-                  // BANK / CASH / CHECK KPI
-                  // =====================================================
-
-                  BankingKpiCards(
-                    totalBankBalance:
-                    data.totalBankBalance,
-                    totalCashBalance:
-                    data.totalCashBalance,
-                    receivedChecks:
-                    data.receivedChecks.totalAmount,
-                    paidChecks:
-                    data.paidChecks.totalAmount,
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // =====================================================
-                  // PETTY CASH OVERVIEW
-                  // =====================================================
-
-                  _PettyCashOverview(
-                    count:
-                    data.pettyCashAccounts.length,
-                    balance:
-                    data.totalPettyCashBalance,
-                    receipts:
-                    data.totalPettyCashReceipts,
-                    payments:
-                    data.totalPettyCashPayments,
-                    discrepancy:
-                    data.totalPettyCashDiscrepancy,
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // =====================================================
-                  // BANK CHART
-                  // =====================================================
-
-                  BankBalanceBarChart(
-                    accounts:
-                    data.bankAccounts,
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // =====================================================
-                  // GENERAL ALERTS
-                  // =====================================================
-
-                  BankingAlertsCard(
-                    data: data,
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // =====================================================
-                  // DISCREPANCY
-                  // =====================================================
-
-                  _DiscrepancyCard(
-                    bankDiscrepancy:
-                    data.totalBankDiscrepancy,
-                    cashDiscrepancy:
-                    data.totalCashDiscrepancy,
-                    bankCount:
-                    data.bankDiscrepancyCount,
-                    cashCount:
-                    data.cashDiscrepancyCount,
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // =====================================================
-                  // CHECK ALERTS
-                  // =====================================================
-
-                  BankingCheckAlerts(
-                    receivedChecks:
-                    data.receivedChecks.checks,
-                    paidChecks:
-                    data.paidChecks.checks,
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // =====================================================
-                  // BANK ACCOUNTS
-                  // =====================================================
-
-                  BankAccountsTable(
-                    companyId:
-                    companyId,
-                    accounts:
-                    data.bankAccounts,
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // =====================================================
-                  // CASH BOXES
-                  // =====================================================
-
-                  CashBoxesTable(
-                    companyId:
-                    companyId,
-                    cashBoxes:
-                    data.cashBoxes,
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // =====================================================
-                  // PETTY CASH
-                  // =====================================================
-
-                  _SectionHeader(
-                    title:
-                    'تنخواه',
-                    icon:
-                    Icons.account_balance_wallet_rounded,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  PettyCashTable(
-                    companyId:
-                    companyId,
-                    pettyCashAccounts:
-                    data.pettyCashAccounts,
-                  ),
-
-                  const SizedBox(height: 32),
-
-                  // =====================================================
-                  // LOANS
-                  // =====================================================
-
-                  _SectionHeader(
-                    title:
-                    'تسهیلات بانکی',
-                    icon:
-                    Icons.account_balance_rounded,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  BankLoanKpiCards(
-                    loanCount:
-                    data.loanCount,
-                    totalPrincipal:
-                    data.totalLoanPrincipal,
-                    totalRemaining:
-                    data.totalLoanRemaining,
-                    totalMonthlyInstallments:
-                    data.totalMonthlyInstallments,
+                  _DashboardHeader(
+                    totalLiquidity: data.totalLiquidity,
+                    bankBalance: data.totalBankBalance,
                   ),
 
                   const SizedBox(height: 20),
 
-                  BankLoansTable(
-                    companyId:
-                    companyId,
-                    loans:
-                    data.bankLoans,
+                  _TopKpis(
+                    totalLiquidity: data.totalLiquidity,
+                    bankBalance: data.totalBankBalance,
+                    loanRemaining: data.totalLoanRemaining,
+                    receivedChecks: data.receivedChecks.totalAmount,
+                    paidChecks: data.paidChecks.totalAmount,
                   ),
+
+                  const SizedBox(height: 24),
+
+                  _AnalyticsGrid(analytics: analytics),
 
                   const SizedBox(height: 32),
-
-                  // =====================================================
-                  // CHECKS
-                  // =====================================================
-
-                  _SectionHeader(
-                    title:
-                    'چک‌ها',
-                    icon:
-                    Icons.receipt_long_rounded,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  _ChecksOverview(
-                    receivedCount:
-                    data.receivedChecks.count,
-                    receivedAmount:
-                    data.receivedChecks.totalAmount,
-                    paidCount:
-                    data.paidChecks.count,
-                    paidAmount:
-                    data.paidChecks.totalAmount,
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  ReceivedChecksTable(
-                    companyId:
-                    companyId,
-                    checks:
-                    data.receivedChecks.checks,
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  PaidChecksTable(
-                    companyId:
-                    companyId,
-                    checks:
-                    data.paidChecks.checks,
-                  ),
-
-                  const SizedBox(height: 40),
                 ],
               ),
             ),
@@ -318,721 +88,96 @@ class BankingDashboardPage extends ConsumerWidget {
     );
   }
 }
-
 
 // ============================================================
 // HEADER
 // ============================================================
 
-class _Header extends StatelessWidget {
-  const _Header({
+class _DashboardHeader extends StatelessWidget {
+  const _DashboardHeader({
     required this.totalLiquidity,
-    required this.companyId,
+    required this.bankBalance,
   });
 
   final double totalLiquidity;
-  final String companyId;
+  final double bankBalance;
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
+  Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
-
+      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [
-            Color(0xFF1B4332),
-            Color(0xFF40916C),
-          ],
+          colors: [Color(0xFF1B4332), Color(0xFF40916C)],
         ),
-
-        borderRadius:
-        BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
       ),
-
-      child: LayoutBuilder(
-        builder: (
-            context,
-            constraints,
-            ) {
-          final compact =
-              constraints.maxWidth < 900;
-
-          final actions = Wrap(
-            spacing: 10,
-            runSpacing: 10,
-
-            children: [
-              _BankActionButton(
-                label:
-                'ثبت حساب بانکی',
-                icon:
-                Icons.add_business_rounded,
-                onPressed: () {
-                  showDialog<void>(
-                    context: context,
-                    builder: (_) {
-                      return BankAccountFormDialog(
-                        companyId:
-                        companyId,
-                      );
-                    },
-                  );
-                },
-              ),
-
-              _BankActionButton(
-                label:
-                'ثبت صندوق',
-                icon:
-                Icons.point_of_sale_rounded,
-                onPressed: () {
-                  showDialog<void>(
-                    context: context,
-                    builder: (_) {
-                      return CashBoxFormDialog(
-                        companyId:
-                        companyId,
-                      );
-                    },
-                  );
-                },
-              ),
-
-              _BankActionButton(
-                label:
-                'ثبت تنخواه',
-                icon:
-                Icons.account_balance_wallet_rounded,
-                onPressed: () {
-                  showDialog<void>(
-                    context: context,
-                    builder: (_) {
-                      return PettyCashFormDialog(
-                        companyId:
-                        companyId,
-                      );
-                    },
-                  );
-                },
-              ),
-
-              _BankActionButton(
-                label:
-                'ثبت تسهیلات',
-                icon:
-                Icons.request_quote_rounded,
-                onPressed: () {
-                  showDialog<void>(
-                    context: context,
-                    builder: (_) {
-                      return BankLoanFormDialog(
-                        companyId:
-                        companyId,
-                      );
-                    },
-                  );
-                },
-              ),
-
-              _BankActionButton(
-                label:
-                'ثبت چک دریافتی',
-                icon:
-                Icons.call_received_rounded,
-                onPressed: () {
-                  showDialog<void>(
-                    context: context,
-                    builder: (_) {
-                      return CheckFormDialog(
-                        companyId:
-                        companyId,
-                        type:
-                        CheckType.received,
-                      );
-                    },
-                  );
-                },
-              ),
-
-              _BankActionButton(
-                label:
-                'ثبت چک پرداختی',
-                icon:
-                Icons.call_made_rounded,
-                onPressed: () {
-                  showDialog<void>(
-                    context: context,
-                    builder: (_) {
-                      return CheckFormDialog(
-                        companyId:
-                        companyId,
-                        type:
-                        CheckType.paid,
-                      );
-                    },
-                  );
-                },
-              ),
-            ],
-          );
-
-          if (compact) {
-            return Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
-
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 58,
-                      height: 58,
-
-                      decoration:
-                      BoxDecoration(
-                        color:
-                        Colors.white,
-                        borderRadius:
-                        BorderRadius.circular(16),
-                      ),
-
-                      child: const Icon(
-                        Icons.account_balance_rounded,
-                        color:
-                        Color(0xFF1B4332),
-                        size:
-                        31,
-                      ),
-                    ),
-
-                    const SizedBox(width: 16),
-
-                    Expanded(
-                      child:
-                      _HeaderTitle(
-                        totalLiquidity:
-                        totalLiquidity,
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 18),
-
-                actions,
-              ],
-            );
-          }
-
-          return Row(
-            crossAxisAlignment:
-            CrossAxisAlignment.center,
-
-            children: [
-              Container(
-                width: 58,
-                height: 58,
-
-                decoration:
-                BoxDecoration(
-                  color:
-                  Colors.white,
-                  borderRadius:
-                  BorderRadius.circular(16),
-                ),
-
-                child: const Icon(
-                  Icons.account_balance_rounded,
-                  color:
-                  Color(0xFF1B4332),
-                  size:
-                  31,
-                ),
-              ),
-
-              const SizedBox(width: 16),
-
-              Expanded(
-                child:
-                _HeaderTitle(
-                  totalLiquidity:
-                  totalLiquidity,
-                ),
-              ),
-
-              const SizedBox(width: 16),
-
-              Expanded(
-                flex: 3,
-                child: Align(
-                  alignment:
-                  Alignment.centerRight,
-                  child: actions,
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-}
-
-
-// ============================================================
-// HEADER TITLE
-// ============================================================
-
-class _HeaderTitle
-    extends StatelessWidget {
-  const _HeaderTitle({
-    required this.totalLiquidity,
-  });
-
-  final double totalLiquidity;
-
-  @override
-  Widget build(
-      BuildContext context,
-      ) {
-    return Column(
-      crossAxisAlignment:
-      CrossAxisAlignment.start,
-
-      children: [
-        const Text(
-          'داشبورد بانک و نقد',
-          style: TextStyle(
-            color:
-            Colors.white,
-            fontSize:
-            21,
-            fontWeight:
-            FontWeight.w900,
-          ),
-        ),
-
-        const SizedBox(height: 6),
-
-        Text(
-          'نقدینگی کل: '
-              '${totalLiquidity.toStringAsFixed(0)}',
-
-          style: const TextStyle(
-            color:
-            Colors.white70,
-            fontSize:
-            12,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-
-// ============================================================
-// ACTION BUTTON
-// ============================================================
-
-class _BankActionButton
-    extends StatelessWidget {
-  const _BankActionButton({
-    required this.label,
-    required this.icon,
-    required this.onPressed,
-  });
-
-  final String label;
-  final IconData icon;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(
-      BuildContext context,
-      ) {
-    return FilledButton.icon(
-      style:
-      FilledButton.styleFrom(
-        backgroundColor:
-        Colors.white,
-        foregroundColor:
-        const Color(0xFF1B4332),
-        padding:
-        const EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: 11,
-        ),
-      ),
-
-      onPressed:
-      onPressed,
-
-      icon:
-      Icon(icon),
-
-      label:
-      Text(label),
-    );
-  }
-}
-
-
-// ============================================================
-// SECTION HEADER
-// ============================================================
-
-class _SectionHeader
-    extends StatelessWidget {
-  const _SectionHeader({
-    required this.title,
-    required this.icon,
-  });
-
-  final String title;
-  final IconData icon;
-
-  @override
-  Widget build(
-      BuildContext context,
-      ) {
-    return Row(
-      children: [
-        Container(
-          width: 44,
-          height: 44,
-
-          decoration:
-          BoxDecoration(
-            color:
-            const Color(0xFF1B4332)
-                .withOpacity(.10),
-            borderRadius:
-            BorderRadius.circular(13),
-          ),
-
-          child: Icon(
-            icon,
-            color:
-            const Color(0xFF1B4332),
-          ),
-        ),
-
-        const SizedBox(width: 12),
-
-        Text(
-          title,
-          style:
-          const TextStyle(
-            fontSize:
-            18,
-            fontWeight:
-            FontWeight.w900,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-
-// ============================================================
-// PETTY CASH OVERVIEW
-// ============================================================
-
-class _PettyCashOverview
-    extends StatelessWidget {
-  const _PettyCashOverview({
-    required this.count,
-    required this.balance,
-    required this.receipts,
-    required this.payments,
-    required this.discrepancy,
-  });
-
-  final int count;
-  final double balance;
-  final double receipts;
-  final double payments;
-  final double discrepancy;
-
-  String _money(double value) {
-    return value.toStringAsFixed(0);
-  }
-
-  @override
-  Widget build(
-      BuildContext context,
-      ) {
-    return Container(
-      width:
-      double.infinity,
-
-      padding:
-      const EdgeInsets.all(22),
-
-      decoration:
-      BoxDecoration(
-        color:
-        Colors.white,
-
-        borderRadius:
-        BorderRadius.circular(22),
-
-        border:
-        Border.all(
-          color:
-          Colors.grey.shade200,
-        ),
-      ),
-
-      child: Column(
-        crossAxisAlignment:
-        CrossAxisAlignment.start,
-
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-
-                decoration:
-                BoxDecoration(
-                  color:
-                  const Color(0xFF1B4332)
-                      .withOpacity(.10),
-
-                  borderRadius:
-                  BorderRadius.circular(13),
-                ),
-
-                child: const Icon(
-                  Icons.account_balance_wallet_rounded,
-                  color:
-                  Color(0xFF1B4332),
-                ),
-              ),
-
-              const SizedBox(width: 12),
-
-              const Expanded(
-                child: Text(
-                  'خلاصه تنخواه',
-                  style:
-                  TextStyle(
-                    fontSize:
-                    17,
-                    fontWeight:
-                    FontWeight.w900,
-                  ),
-                ),
-              ),
-
-              Text(
-                '$count تنخواه',
-                style:
-                TextStyle(
-                  color:
-                  Colors.grey.shade600,
-                  fontSize:
-                  12,
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 18),
-
-          LayoutBuilder(
-            builder:
-                (context, constraints) {
-              int countColumns;
-
-              if (constraints.maxWidth >= 1000) {
-                countColumns = 4;
-              } else if (constraints.maxWidth >= 650) {
-                countColumns = 2;
-              } else {
-                countColumns = 1;
-              }
-
-              return GridView.count(
-                shrinkWrap:
-                true,
-
-                physics:
-                const NeverScrollableScrollPhysics(),
-
-                crossAxisCount:
-                countColumns,
-
-                crossAxisSpacing:
-                14,
-
-                mainAxisSpacing:
-                14,
-
-                childAspectRatio:
-                2.6,
-
-                children: [
-                  _PettyKpi(
-                    title:
-                    'مانده تنخواه',
-                    value:
-                    _money(balance),
-                    icon:
-                    Icons.account_balance_wallet_outlined,
-                  ),
-
-                  _PettyKpi(
-                    title:
-                    'دریافت‌ها',
-                    value:
-                    _money(receipts),
-                    icon:
-                    Icons.arrow_downward_rounded,
-                  ),
-
-                  _PettyKpi(
-                    title:
-                    'پرداخت‌ها',
-                    value:
-                    _money(payments),
-                    icon:
-                    Icons.arrow_upward_rounded,
-                  ),
-
-                  _PettyKpi(
-                    title:
-                    'مغایرت',
-                    value:
-                    _money(discrepancy),
-                    icon:
-                    discrepancy != 0
-                        ? Icons.warning_amber_rounded
-                        : Icons.verified_rounded,
-                    danger:
-                    discrepancy != 0,
-                  ),
-                ],
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-
-// ============================================================
-// PETTY CASH KPI
-// ============================================================
-
-class _PettyKpi
-    extends StatelessWidget {
-  const _PettyKpi({
-    required this.title,
-    required this.value,
-    required this.icon,
-    this.danger = false,
-  });
-
-  final String title;
-  final String value;
-  final IconData icon;
-  final bool danger;
-
-  @override
-  Widget build(
-      BuildContext context,
-      ) {
-    final iconColor =
-    danger
-        ? Colors.orange.shade700
-        : const Color(0xFF1B4332);
-
-    return Container(
-      padding:
-      const EdgeInsets.all(16),
-
-      decoration:
-      BoxDecoration(
-        color:
-        Colors.grey.shade50,
-
-        borderRadius:
-        BorderRadius.circular(16),
-
-        border:
-        Border.all(
-          color:
-          Colors.grey.shade200,
-        ),
-      ),
-
       child: Row(
         children: [
           Container(
-            width: 42,
-            height: 42,
-
-            decoration:
-            BoxDecoration(
-              color:
-              iconColor.withOpacity(.10),
-
-              borderRadius:
-              BorderRadius.circular(12),
+            width: 54,
+            height: 54,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(15),
             ),
-
-            child: Icon(
-              icon,
-              color:
-              iconColor,
+            child: const Icon(
+              Icons.account_balance_rounded,
+              color: Color(0xFF1B4332),
+              size: 29,
             ),
           ),
 
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
 
           Expanded(
             child: Column(
-              mainAxisAlignment:
-              MainAxisAlignment.center,
-
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
-
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-
-                  style:
-                  TextStyle(
-                    color:
-                    Colors.grey.shade600,
-                    fontSize:
-                    11,
+                const Text(
+                  'داشبورد بانک و نقد',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
 
                 const SizedBox(height: 5),
 
                 Text(
-                  value,
+                  'نقدینگی کل: ${_money(totalLiquidity)}',
+                  style: const TextStyle(color: Colors.white70, fontSize: 11),
+                ),
+              ],
+            ),
+          ),
 
-                  style:
-                  const TextStyle(
-                    fontSize:
-                    16,
-                    fontWeight:
-                    FontWeight.w900,
+          const SizedBox(width: 20),
+
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'مانده بانک',
+                  style: TextStyle(color: Colors.white70, fontSize: 10),
+                ),
+
+                const SizedBox(height: 3),
+
+                Text(
+                  _money(bankBalance),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
               ],
@@ -1044,101 +189,73 @@ class _PettyKpi
   }
 }
 
-
 // ============================================================
-// CHECKS OVERVIEW
+// KPI
 // ============================================================
 
-class _ChecksOverview
-    extends StatelessWidget {
-  const _ChecksOverview({
-    required this.receivedCount,
-    required this.receivedAmount,
-    required this.paidCount,
-    required this.paidAmount,
+class _TopKpis extends StatelessWidget {
+  const _TopKpis({
+    required this.totalLiquidity,
+    required this.bankBalance,
+    required this.loanRemaining,
+    required this.receivedChecks,
+    required this.paidChecks,
   });
 
-  final int receivedCount;
-  final double receivedAmount;
-
-  final int paidCount;
-  final double paidAmount;
-
-  String _money(double value) {
-    return value.toStringAsFixed(0);
-  }
+  final double totalLiquidity;
+  final double bankBalance;
+  final double loanRemaining;
+  final double receivedChecks;
+  final double paidChecks;
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
+  Widget build(BuildContext context) {
     return LayoutBuilder(
-      builder:
-          (context, constraints) {
+      builder: (context, constraints) {
         int count;
 
-        if (constraints.maxWidth >= 1000) {
-          count = 4;
-        } else if (constraints.maxWidth >= 650) {
+        if (constraints.maxWidth >= 1200) {
+          count = 5;
+        } else if (constraints.maxWidth >= 850) {
+          count = 3;
+        } else if (constraints.maxWidth >= 550) {
           count = 2;
         } else {
           count = 1;
         }
 
         return GridView.count(
-          shrinkWrap:
-          true,
-
-          physics:
-          const NeverScrollableScrollPhysics(),
-
-          crossAxisCount:
-          count,
-
-          crossAxisSpacing:
-          16,
-
-          mainAxisSpacing:
-          16,
-
-          childAspectRatio:
-          2.3,
-
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: count,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 2.8,
           children: [
-            _CheckKpi(
-              title:
-              'تعداد چک دریافتی',
-              value:
-              receivedCount.toString(),
-              icon:
-              Icons.receipt_long_rounded,
+            _KpiCard(
+              title: 'نقدینگی کل',
+              value: _money(totalLiquidity),
+              icon: Icons.account_balance_wallet_rounded,
             ),
-
-            _CheckKpi(
-              title:
-              'مبلغ چک دریافتی',
-              value:
-              _money(receivedAmount),
-              icon:
-              Icons.call_received_rounded,
+            _KpiCard(
+              title: 'مانده بانک',
+              value: _money(bankBalance),
+              icon: Icons.account_balance_rounded,
             ),
-
-            _CheckKpi(
-              title:
-              'تعداد چک پرداختی',
-              value:
-              paidCount.toString(),
-              icon:
-              Icons.receipt_rounded,
+            _KpiCard(
+              title: 'مانده تسهیلات',
+              value: _money(loanRemaining),
+              icon: Icons.request_quote_rounded,
             ),
-
-            _CheckKpi(
-              title:
-              'مبلغ چک پرداختی',
-              value:
-              _money(paidAmount),
-              icon:
-              Icons.call_made_rounded,
+            _KpiCard(
+              title: 'چک‌های دریافتی',
+              value: _money(receivedChecks),
+              icon: Icons.call_received_rounded,
+            ),
+            _KpiCard(
+              title: 'چک‌های پرداختی',
+              value: _money(paidChecks),
+              icon: Icons.call_made_rounded,
             ),
           ],
         );
@@ -1147,14 +264,8 @@ class _ChecksOverview
   }
 }
 
-
-// ============================================================
-// CHECK KPI
-// ============================================================
-
-class _CheckKpi
-    extends StatelessWidget {
-  const _CheckKpi({
+class _KpiCard extends StatelessWidget {
+  const _KpiCard({
     required this.title,
     required this.value,
     required this.icon,
@@ -1165,85 +276,47 @@ class _CheckKpi
   final IconData icon;
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
+  Widget build(BuildContext context) {
     return Container(
-      padding:
-      const EdgeInsets.all(18),
-
-      decoration:
-      BoxDecoration(
-        color:
-        Colors.white,
-
-        borderRadius:
-        BorderRadius.circular(20),
-
-        border:
-        Border.all(
-          color:
-          Colors.grey.shade200,
-        ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
       ),
-
       child: Row(
         children: [
           Container(
-            width: 48,
-            height: 48,
-
-            decoration:
-            BoxDecoration(
-              color:
-              const Color(0xFF1B4332)
-                  .withOpacity(.10),
-
-              borderRadius:
-              BorderRadius.circular(14),
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: const Color(0xFF1B4332).withOpacity(.08),
+              borderRadius: BorderRadius.circular(11),
             ),
-
-            child: Icon(
-              icon,
-              color:
-              const Color(0xFF1B4332),
-            ),
+            child: Icon(icon, size: 20, color: const Color(0xFF1B4332)),
           ),
 
-          const SizedBox(width: 14),
+          const SizedBox(width: 10),
 
           Expanded(
             child: Column(
-              mainAxisAlignment:
-              MainAxisAlignment.center,
-
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
-
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
-
-                  style:
-                  TextStyle(
-                    color:
-                    Colors.grey.shade600,
-                    fontSize:
-                    12,
-                  ),
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 10),
                 ),
 
-                const SizedBox(height: 7),
+                const SizedBox(height: 4),
 
                 Text(
                   value,
-
-                  style:
-                  const TextStyle(
-                    fontSize:
-                    18,
-                    fontWeight:
-                    FontWeight.w900,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
               ],
@@ -1255,130 +328,1042 @@ class _CheckKpi
   }
 }
 
-
 // ============================================================
-// DISCREPANCY CARD
+// ANALYTICS GRID
 // ============================================================
 
-class _DiscrepancyCard
-    extends StatelessWidget {
-  const _DiscrepancyCard({
-    required this.bankDiscrepancy,
-    required this.cashDiscrepancy,
-    required this.bankCount,
-    required this.cashCount,
-  });
+class _AnalyticsGrid extends StatelessWidget {
+  const _AnalyticsGrid({required this.analytics});
 
-  final double bankDiscrepancy;
-  final double cashDiscrepancy;
-
-  final int bankCount;
-  final int cashCount;
+  final BankingAnalytics analytics;
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
-    final hasDiscrepancy =
-        bankDiscrepancy != 0 ||
-            cashDiscrepancy != 0;
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 1050;
 
+        if (wide) {
+          return Column(
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _NetTurnoverCard(data: analytics.monthlyNetTurnover),
+                  ),
+
+                  const SizedBox(width: 16),
+
+                  Expanded(
+                    child: _ConcentrationCard(
+                      data: analytics.bankConcentration,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _DiscrepancyCard(data: analytics.monthlyDiscrepancy),
+                  ),
+
+                  const SizedBox(width: 16),
+
+                  Expanded(
+                    child: _BalanceTrendCard(
+                      data: analytics.monthlyBalance,
+                      monthOverMonth: analytics.monthOverMonth,
+                      yearOverYear: analytics.yearOverYear,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          );
+        }
+
+        return Column(
+          children: [
+            _NetTurnoverCard(data: analytics.monthlyNetTurnover),
+
+            const SizedBox(height: 16),
+
+            _ConcentrationCard(data: analytics.bankConcentration),
+
+            const SizedBox(height: 16),
+
+            _DiscrepancyCard(data: analytics.monthlyDiscrepancy),
+
+            const SizedBox(height: 16),
+
+            _BalanceTrendCard(
+              data: analytics.monthlyBalance,
+              monthOverMonth: analytics.monthOverMonth,
+              yearOverYear: analytics.yearOverYear,
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+// ============================================================
+// CHART CARD
+// ============================================================
+
+class _ChartCard extends StatelessWidget {
+  const _ChartCard({
+    required this.title,
+    required this.subtitle,
+    required this.child,
+    this.trailing,
+  });
+
+  final String title;
+  final String subtitle;
+  final Widget child;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      width:
-      double.infinity,
-
-      padding:
-      const EdgeInsets.all(22),
-
-      decoration:
-      BoxDecoration(
-        color:
-        Colors.white,
-
-        borderRadius:
-        BorderRadius.circular(22),
-
-        border:
-        Border.all(
-          color:
-          hasDiscrepancy
-              ? Colors.orange.shade200
-              : Colors.grey.shade200,
-        ),
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 15, 16, 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5E8EB)),
       ),
-
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 48,
-            height: 48,
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
 
-            decoration:
-            BoxDecoration(
-              color:
-              hasDiscrepancy
-                  ? Colors.orange.withOpacity(.12)
-                  : Colors.green.withOpacity(.12),
+                    const SizedBox(height: 3),
 
-              borderRadius:
-              BorderRadius.circular(14),
-            ),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 9,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
-            child: Icon(
-              hasDiscrepancy
-                  ? Icons.warning_amber_rounded
-                  : Icons.verified_rounded,
-
-              color:
-              hasDiscrepancy
-                  ? Colors.orange.shade700
-                  : Colors.green.shade700,
-            ),
+              if (trailing != null) trailing!,
+            ],
           ),
 
-          const SizedBox(width: 14),
+          const SizedBox(height: 10),
 
+          SizedBox(height: 235, width: double.infinity, child: child),
+        ],
+      ),
+    );
+  }
+}
+
+// ============================================================
+// NET TURNOVER
+// ============================================================
+
+class _NetTurnoverCard extends StatelessWidget {
+  const _NetTurnoverCard({required this.data});
+
+  final List<MonthlyBankMetric> data;
+
+  @override
+  Widget build(BuildContext context) {
+    return _ChartCard(
+      title: 'خالص گردش بانک (خطی)',
+      subtitle: 'خالص گردش = بستانکار − بدهکار',
+      child: _LineChart(
+        data: data,
+        lineColor: const Color(0xFF7048C8),
+        zeroLine: true,
+      ),
+    );
+  }
+}
+
+// ============================================================
+// CONCENTRATION
+// ============================================================
+
+class _ConcentrationCard extends StatelessWidget {
+  const _ConcentrationCard({required this.data});
+
+  final List<BankConcentrationItem> data;
+
+  @override
+  Widget build(BuildContext context) {
+    return _ChartCard(
+      title: 'تمرکز موجودی بانکی (میله‌ای افقی)',
+      subtitle: 'سهم هر بانک از کل موجودی بانکی',
+      child: _HorizontalBankChart(data: data),
+    );
+  }
+}
+
+// ============================================================
+// DISCREPANCY
+// ============================================================
+
+class _DiscrepancyCard extends StatelessWidget {
+  const _DiscrepancyCard({required this.data});
+
+  final List<MonthlyBankMetric> data;
+
+  @override
+  Widget build(BuildContext context) {
+    return _ChartCard(
+      title: 'روند مغایرت‌ها (خطی)',
+      subtitle: 'مجموع مغایرت حساب‌های بانکی',
+      child: _LineChart(
+        data: data,
+        lineColor: const Color(0xFFE53935),
+        zeroLine: true,
+      ),
+    );
+  }
+}
+
+// ============================================================
+// BALANCE TREND
+// ============================================================
+
+class _BalanceTrendCard extends StatelessWidget {
+  const _BalanceTrendCard({
+    required this.data,
+    required this.monthOverMonth,
+    required this.yearOverYear,
+  });
+
+  final List<MonthlyBankMetric> data;
+  final double? monthOverMonth;
+  final double? yearOverYear;
+
+  @override
+  Widget build(BuildContext context) {
+    return _ChartCard(
+      title: 'روند مانده بانکی (خطی)',
+      subtitle: 'مجموع مانده حساب‌های بانکی',
+
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _ChangeBadge(title: 'ماه قبل', value: monthOverMonth),
+
+          const SizedBox(width: 5),
+
+          _ChangeBadge(title: 'سال قبل', value: yearOverYear),
+        ],
+      ),
+
+      child: _LineChart(data: data, lineColor: const Color(0xFF2D6CDF)),
+    );
+  }
+}
+
+// ============================================================
+// ANALYTICS ENGINE
+// ============================================================
+
+class BankingAnalytics {
+  BankingAnalytics(List<BankAccountModel> accounts) : _accounts = accounts;
+
+  final List<BankAccountModel> _accounts;
+
+  List<MonthlyBankMetric> get monthlyNetTurnover {
+    final map = <String, MonthlyBankMetric>{};
+
+    for (final account in _accounts) {
+      final year = account.fiscalYear;
+
+      final month = account.fiscalMonth;
+
+      if (year == null || month == null || month < 1 || month > 12) {
+        continue;
+      }
+
+      final key = '$year-$month';
+
+      final value = (account.creditTurnover - account.debitTurnover).toDouble();
+
+      final old = map[key];
+
+      if (old == null) {
+        map[key] = MonthlyBankMetric(year: year, month: month, value: value);
+      } else {
+        map[key] = old.copyWith(value: (old.value + value).toDouble());
+      }
+    }
+
+    return _sort(map.values.toList());
+  }
+
+  List<MonthlyBankMetric> get monthlyDiscrepancy {
+    final map = <String, MonthlyBankMetric>{};
+
+    for (final account in _accounts) {
+      final year = account.fiscalYear;
+
+      final month = account.fiscalMonth;
+
+      if (year == null || month == null || month < 1 || month > 12) {
+        continue;
+      }
+
+      final key = '$year-$month';
+
+      final value = account.discrepancy.toDouble();
+
+      final old = map[key];
+
+      if (old == null) {
+        map[key] = MonthlyBankMetric(year: year, month: month, value: value);
+      } else {
+        map[key] = old.copyWith(value: (old.value + value).toDouble());
+      }
+    }
+
+    return _sort(map.values.toList());
+  }
+
+  List<MonthlyBankMetric> get monthlyBalance {
+    final map = <String, MonthlyBankMetric>{};
+
+    for (final account in _accounts) {
+      final year = account.fiscalYear;
+
+      final month = account.fiscalMonth;
+
+      if (year == null || month == null || month < 1 || month > 12) {
+        continue;
+      }
+
+      final key = '$year-$month';
+
+      final value = account.closingBalance.toDouble();
+
+      final old = map[key];
+
+      if (old == null) {
+        map[key] = MonthlyBankMetric(year: year, month: month, value: value);
+      } else {
+        map[key] = old.copyWith(value: (old.value + value).toDouble());
+      }
+    }
+
+    return _sort(map.values.toList());
+  }
+
+  List<BankConcentrationItem> get bankConcentration {
+    final map = <String, double>{};
+
+    for (final account in _accounts) {
+      final name = account.bankName.trim();
+
+      if (name.isEmpty) {
+        continue;
+      }
+
+      final amount = account.closingBalance.toDouble();
+
+      map[name] = ((map[name] ?? 0.0) + amount).toDouble();
+    }
+
+    final total = map.values.fold<double>(
+      0.0,
+      (sum, value) => (sum + value).toDouble(),
+    );
+
+    final result =
+        map.entries.map((entry) {
+          final percentage =
+              total == 0.0 ? 0.0 : ((entry.value / total) * 100.0).toDouble();
+
+          return BankConcentrationItem(
+            label: entry.key,
+            value: entry.value.toDouble(),
+            percentage: percentage,
+          );
+        }).toList();
+
+    result.sort((a, b) => b.value.compareTo(a.value));
+
+    if (result.length > 5) {
+      return result.sublist(0, 5);
+    }
+
+    return result;
+  }
+
+  double? get monthOverMonth {
+    final values = monthlyBalance;
+
+    if (values.length < 2) {
+      return null;
+    }
+
+    final current = values[values.length - 1];
+
+    final previous = values[values.length - 2];
+
+    return _percentageChange(previous.value, current.value);
+  }
+
+  double? get yearOverYear {
+    final values = monthlyBalance;
+
+    if (values.isEmpty) {
+      return null;
+    }
+
+    final current = values.last;
+
+    for (final item in values) {
+      if (item.month == current.month && item.year == current.year - 1) {
+        return _percentageChange(item.value, current.value);
+      }
+    }
+
+    return null;
+  }
+
+  List<MonthlyBankMetric> _sort(List<MonthlyBankMetric> values) {
+    values.sort((a, b) => a.sortKey.compareTo(b.sortKey));
+
+    if (values.length > 8) {
+      return values.sublist(values.length - 8);
+    }
+
+    return values;
+  }
+
+  double? _percentageChange(double previous, double current) {
+    if (previous == 0.0) {
+      return null;
+    }
+
+    return (((current - previous) / previous) * 100.0).toDouble();
+  }
+}
+
+// ============================================================
+// DATA MODELS
+// ============================================================
+
+class MonthlyBankMetric {
+  const MonthlyBankMetric({
+    required this.year,
+    required this.month,
+    required this.value,
+  });
+
+  final int year;
+  final int month;
+  final double value;
+
+  int get sortKey => year * 100 + month;
+
+  String get monthLabel {
+    const labels = [
+      'فروردین',
+      'اردیبهشت',
+      'خرداد',
+      'تیر',
+      'مرداد',
+      'شهریور',
+      'مهر',
+      'آبان',
+      'آذر',
+      'دی',
+      'بهمن',
+      'اسفند',
+    ];
+
+    if (month < 1 || month > 12) {
+      return '$year/$month';
+    }
+
+    return labels[month - 1];
+  }
+
+  MonthlyBankMetric copyWith({double? value}) {
+    return MonthlyBankMetric(
+      year: year,
+      month: month,
+      value: value ?? this.value,
+    );
+  }
+}
+
+class BankConcentrationItem {
+  const BankConcentrationItem({
+    required this.label,
+    required this.value,
+    required this.percentage,
+  });
+
+  final String label;
+  final double value;
+  final double percentage;
+}
+
+// ============================================================
+// LINE CHART
+// ============================================================
+
+class _LineChart extends StatelessWidget {
+  const _LineChart({
+    required this.data,
+    required this.lineColor,
+    this.zeroLine = false,
+  });
+
+  final List<MonthlyBankMetric> data;
+  final Color lineColor;
+  final bool zeroLine;
+
+  @override
+  Widget build(BuildContext context) {
+    if (data.isEmpty) {
+      return const Center(
+        child: Text(
+          'داده دوره‌ای کافی برای نمایش نمودار وجود ندارد.',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 11),
+        ),
+      );
+    }
+
+    return SizedBox(
+      width: double.infinity,
+      height: double.infinity,
+      child: CustomPaint(
+        painter: _LineChartPainter(
+          data: data,
+          lineColor: lineColor,
+          zeroLine: zeroLine,
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================================
+// LINE PAINTER
+// ============================================================
+
+class _LineChartPainter extends CustomPainter {
+  _LineChartPainter({
+    required this.data,
+    required this.lineColor,
+    required this.zeroLine,
+  });
+
+  final List<MonthlyBankMetric> data;
+  final Color lineColor;
+  final bool zeroLine;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (data.isEmpty || size.width <= 0 || size.height <= 0) {
+      return;
+    }
+
+    const left = 44.0;
+
+    const right = 12.0;
+
+    const top = 14.0;
+
+    const bottom = 34.0;
+
+    final chartWidth = math.max(1.0, size.width - left - right);
+
+    final chartHeight = math.max(1.0, size.height - top - bottom);
+
+    double minValue = data.first.value;
+
+    double maxValue = data.first.value;
+
+    for (final item in data) {
+      minValue = math.min(minValue, item.value);
+
+      maxValue = math.max(maxValue, item.value);
+    }
+
+    // ========================================================
+    // ZERO-CENTERED MODE
+    //
+    // برای مغایرت:
+    // صفر دقیقاً وسط قرار می‌گیرد.
+    // ========================================================
+
+    if (zeroLine) {
+      final maxAbs = math.max(minValue.abs(), maxValue.abs());
+
+      final padded = maxAbs == 0.0 ? 1.0 : maxAbs * 1.15;
+
+      minValue = -padded;
+
+      maxValue = padded;
+    }
+
+    if ((maxValue - minValue).abs() < 0.000001) {
+      final padding = maxValue.abs() * .15 + 1.0;
+
+      minValue -= padding;
+
+      maxValue += padding;
+    }
+
+    final range = maxValue - minValue;
+
+    // ========================================================
+    // GRID
+    // ========================================================
+
+    final gridPaint =
+        Paint()
+          ..color = const Color(0xFFE9ECEF)
+          ..strokeWidth = 1.0;
+
+    for (var i = 0; i <= 4; i++) {
+      final y = top + chartHeight * i / 4.0;
+
+      canvas.drawLine(Offset(left, y), Offset(left + chartWidth, y), gridPaint);
+    }
+
+    // ========================================================
+    // ZERO LINE
+    // ========================================================
+
+    if (zeroLine && minValue <= 0.0 && maxValue >= 0.0) {
+      final zeroRatio = (0.0 - minValue) / range;
+
+      final zeroY = top + chartHeight * (1.0 - zeroRatio);
+
+      final zeroPaint =
+          Paint()
+            ..color = const Color(0xFF626B75)
+            ..strokeWidth = 1.7;
+
+      canvas.drawLine(
+        Offset(left, zeroY),
+        Offset(left + chartWidth, zeroY),
+        zeroPaint,
+      );
+
+      // برچسب صفر
+      _drawYAxisText(canvas, '0', left, zeroY);
+    }
+
+    // ========================================================
+    // POINTS
+    // ========================================================
+
+    final points = <Offset>[];
+
+    for (var i = 0; i < data.length; i++) {
+      final normalized = (data[i].value - minValue) / range;
+
+      final x =
+          data.length == 1
+              ? left + chartWidth / 2.0
+              : left + chartWidth * i / (data.length - 1);
+
+      final y = top + chartHeight * (1.0 - normalized);
+
+      points.add(Offset(x, y));
+    }
+
+    // ========================================================
+    // FILL
+    // ========================================================
+
+    final fillPath = Path();
+
+    if (zeroLine) {
+      final zeroRatio = (0.0 - minValue) / range;
+
+      final zeroY = top + chartHeight * (1.0 - zeroRatio);
+
+      fillPath.moveTo(points.first.dx, zeroY);
+
+      for (final point in points) {
+        fillPath.lineTo(point.dx, point.dy);
+      }
+
+      fillPath.lineTo(points.last.dx, zeroY);
+
+      fillPath.close();
+    } else {
+      fillPath.moveTo(points.first.dx, top + chartHeight);
+
+      for (final point in points) {
+        fillPath.lineTo(point.dx, point.dy);
+      }
+
+      fillPath.lineTo(points.last.dx, top + chartHeight);
+
+      fillPath.close();
+    }
+
+    final fillPaint =
+        Paint()
+          ..color = lineColor.withOpacity(.055)
+          ..style = PaintingStyle.fill;
+
+    canvas.drawPath(fillPath, fillPaint);
+
+    // ========================================================
+    // LINE
+    // ========================================================
+
+    final linePath = Path();
+
+    for (var i = 0; i < points.length; i++) {
+      if (i == 0) {
+        linePath.moveTo(points[i].dx, points[i].dy);
+      } else {
+        linePath.lineTo(points[i].dx, points[i].dy);
+      }
+    }
+
+    final linePaint =
+        Paint()
+          ..color = lineColor
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.4
+          ..strokeCap = StrokeCap.round
+          ..strokeJoin = StrokeJoin.round;
+
+    canvas.drawPath(linePath, linePaint);
+
+    // ========================================================
+    // DOTS
+    // ========================================================
+
+    final dotPaint = Paint()..color = lineColor;
+
+    for (final point in points) {
+      canvas.drawCircle(point, 3.5, dotPaint);
+    }
+
+    // ========================================================
+    // X LABELS
+    // ========================================================
+
+    for (var i = 0; i < data.length; i++) {
+      _drawBottomText(
+        canvas,
+        data[i].monthLabel,
+        points[i].dx,
+        top + chartHeight + 7,
+      );
+    }
+
+    // ========================================================
+    // Y LABELS
+    // ========================================================
+
+    for (var i = 0; i <= 4; i++) {
+      final ratio = i / 4.0;
+
+      final value = maxValue - range * ratio;
+
+      final y = top + chartHeight * ratio;
+
+      // در حالت مغایرت، صفر را قبلاً
+      // جداگانه کشیده‌ایم.
+      if (zeroLine && value.abs() < range * .001) {
+        continue;
+      }
+
+      _drawYAxisText(canvas, _compactNumber(value), left, y);
+    }
+  }
+
+  void _drawBottomText(Canvas canvas, String text, double x, double y) {
+    final painter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: const TextStyle(color: Color(0xFF626A73), fontSize: 8),
+      ),
+      textDirection: TextDirection.rtl,
+      textAlign: TextAlign.center,
+    );
+
+    painter.layout(maxWidth: 70);
+
+    painter.paint(canvas, Offset(x - painter.width / 2, y));
+  }
+
+  void _drawYAxisText(Canvas canvas, String text, double left, double y) {
+    final painter = TextPainter(
+      text: TextSpan(
+        text: text,
+        style: const TextStyle(color: Color(0xFF747C85), fontSize: 8),
+      ),
+      textDirection: TextDirection.ltr,
+    );
+
+    painter.layout();
+
+    painter.paint(
+      canvas,
+      Offset(left - painter.width - 7, y - painter.height / 2),
+    );
+  }
+
+  String _compactNumber(double value) {
+    final absolute = value.abs();
+
+    if (absolute >= 1000000000) {
+      return '${(value / 1000000000).toStringAsFixed(1)}B';
+    }
+
+    if (absolute >= 1000000) {
+      return '${(value / 1000000).toStringAsFixed(1)}M';
+    }
+
+    if (absolute >= 1000) {
+      return '${(value / 1000).toStringAsFixed(1)}K';
+    }
+
+    return value.toStringAsFixed(0);
+  }
+
+  @override
+  bool shouldRepaint(covariant _LineChartPainter oldDelegate) {
+    return true;
+  }
+}
+
+// ============================================================
+// HORIZONTAL BANK CHART
+// ============================================================
+
+class _HorizontalBankChart extends StatelessWidget {
+  const _HorizontalBankChart({required this.data});
+
+  final List<BankConcentrationItem> data;
+
+  @override
+  Widget build(BuildContext context) {
+    if (data.isEmpty) {
+      return const Center(
+        child: Text(
+          'اطلاعات موجودی بانکی وجود ندارد.',
+          style: TextStyle(fontSize: 11),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        for (var i = 0; i < data.length; i++)
           Expanded(
-            child: Column(
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
-
-              children: [
-                Text(
-                  hasDiscrepancy
-                      ? 'مغایرت‌های نیازمند بررسی'
-                      : 'مغایرت بانکی و صندوقی وجود ندارد',
-
-                  style:
-                  const TextStyle(
-                    fontSize:
-                    15,
-                    fontWeight:
-                    FontWeight.w900,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 3),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 84,
+                    child: Text(
+                      data[i].label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
-                ),
 
-                const SizedBox(height: 6),
+                  const SizedBox(width: 8),
 
-                Text(
-                  hasDiscrepancy
-                      ? 'بانک: $bankCount مورد | '
-                      'صندوق: $cashCount مورد'
-                      : 'وضعیت فعلی تایید شده است',
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        Container(
+                          height: 18,
+                          decoration: BoxDecoration(
+                            color: Colors.grey.shade100,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                        ),
 
-                  style:
-                  TextStyle(
-                    color:
-                    Colors.grey.shade600,
-                    fontSize:
-                    12,
+                        FractionallySizedBox(
+                          widthFactor: (data[i].percentage / 100.0).clamp(
+                            0.0,
+                            1.0,
+                          ),
+                          child: Container(
+                            height: 18,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2D6CDF),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+
+                  const SizedBox(width: 8),
+
+                  SizedBox(
+                    width: 36,
+                    child: Text(
+                      '${data[i].percentage.toStringAsFixed(0)}%',
+                      textAlign: TextAlign.end,
+                      style: const TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
+          ),
+      ],
+    );
+  }
+}
+
+// ============================================================
+// CHANGE BADGE
+// ============================================================
+
+class _ChangeBadge extends StatelessWidget {
+  const _ChangeBadge({required this.title, required this.value});
+
+  final String title;
+  final double? value;
+
+  @override
+  Widget build(BuildContext context) {
+    if (value == null) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(7),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 7),
+            ),
+            const SizedBox(height: 2),
+            const Text(
+              '--',
+              style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
+            ),
+          ],
+        ),
+      );
+    }
+
+    final positive = value! >= 0;
+
+    // در این داشبورد:
+    // افزایش موجودی = مثبت/سبز
+    // کاهش موجودی = منفی/قرمز
+    final color = positive ? Colors.green.shade700 : Colors.red.shade700;
+
+    final icon =
+        positive ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withOpacity(.07),
+        borderRadius: BorderRadius.circular(7),
+        border: Border.all(color: color.withOpacity(.15)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 10, color: color),
+
+          const SizedBox(width: 2),
+
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 7),
+              ),
+
+              Text(
+                '${value!.abs().toStringAsFixed(1)}%',
+                style: TextStyle(
+                  color: color,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+
+String _money(double value) {
+  final rounded = value.round();
+
+  final negative = rounded < 0;
+
+  final digits = rounded.abs().toString();
+
+  final buffer = StringBuffer();
+
+  for (var i = 0; i < digits.length; i++) {
+    if (i > 0 && (digits.length - i) % 3 == 0) {
+      buffer.write(',');
+    }
+
+    buffer.write(digits[i]);
+  }
+
+  final result = buffer.toString();
+
+  return negative ? '-$result' : result;
 }

@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../application/banking_provider.dart';
 import '../../data/banking_repository.dart';
+import 'banking_form_helpers.dart';
 
-class BankAccountFormDialog extends ConsumerStatefulWidget {
+class BankAccountFormDialog
+    extends ConsumerStatefulWidget {
   const BankAccountFormDialog({
     super.key,
     required this.companyId,
@@ -14,27 +16,49 @@ class BankAccountFormDialog extends ConsumerStatefulWidget {
   final String companyId;
   final BankAccountModel? account;
 
-  bool get isEdit => account != null;
+  bool get isEdit =>
+      account != null;
 
   @override
-  ConsumerState<BankAccountFormDialog> createState() =>
+  ConsumerState<BankAccountFormDialog>
+  createState() =>
       _BankAccountFormDialogState();
 }
 
 class _BankAccountFormDialogState
     extends ConsumerState<BankAccountFormDialog> {
-  final _formKey = GlobalKey<FormState>();
+  final _formKey =
+  GlobalKey<FormState>();
 
-  late final TextEditingController _bankNameController;
-  late final TextEditingController _accountNumberController;
-  late final TextEditingController _openingBalanceController;
-  late final TextEditingController _debitTurnoverController;
-  late final TextEditingController _creditTurnoverController;
-  late final TextEditingController _closingBalanceController;
-  late final TextEditingController _ledgerBalanceController;
-  late final TextEditingController _discrepancyController;
-  late final TextEditingController _fiscalYearController;
-  late final TextEditingController _fiscalMonthController;
+  late final TextEditingController
+  _bankNameController;
+
+  late final TextEditingController
+  _accountNumberController;
+
+  late final TextEditingController
+  _openingBalanceController;
+
+  late final TextEditingController
+  _debitTurnoverController;
+
+  late final TextEditingController
+  _creditTurnoverController;
+
+  late final TextEditingController
+  _closingBalanceController;
+
+  late final TextEditingController
+  _ledgerBalanceController;
+
+  late final TextEditingController
+  _discrepancyController;
+
+  late final TextEditingController
+  _fiscalYearController;
+
+  late final TextEditingController
+  _fiscalMonthController;
 
   bool _saving = false;
 
@@ -42,165 +66,246 @@ class _BankAccountFormDialogState
   void initState() {
     super.initState();
 
-    final account = widget.account;
+    final account =
+        widget.account;
 
-    _bankNameController = TextEditingController(
-      text: account?.bankName ?? '',
-    );
+    _bankNameController =
+        TextEditingController(
+          text:
+          account?.bankName ?? '',
+        );
 
-    _accountNumberController = TextEditingController(
-      text: account?.accountNumber ?? '',
-    );
+    _accountNumberController =
+        TextEditingController(
+          text:
+          account?.accountNumber ?? '',
+        );
 
-    _openingBalanceController = TextEditingController(
-      text: account == null
-          ? ''
-          : _formatNumber(account.openingBalance),
-    );
+    _openingBalanceController =
+        TextEditingController(
+          text:
+          account == null
+              ? ''
+              : formatMoneyInput(
+            account.openingBalance,
+          ),
+        );
 
-    _debitTurnoverController = TextEditingController(
-      text: account == null
-          ? ''
-          : _formatNumber(account.debitTurnover),
-    );
+    _debitTurnoverController =
+        TextEditingController(
+          text:
+          account == null
+              ? ''
+              : formatMoneyInput(
+            account.debitTurnover,
+          ),
+        );
 
-    _creditTurnoverController = TextEditingController(
-      text: account == null
-          ? ''
-          : _formatNumber(account.creditTurnover),
-    );
+    _creditTurnoverController =
+        TextEditingController(
+          text:
+          account == null
+              ? ''
+              : formatMoneyInput(
+            account.creditTurnover,
+          ),
+        );
 
-    _closingBalanceController = TextEditingController(
-      text: account == null
-          ? ''
-          : _formatNumber(account.closingBalance),
-    );
+    _closingBalanceController =
+        TextEditingController(
+          text:
+          account == null
+              ? ''
+              : formatMoneyInput(
+            account.closingBalance,
+          ),
+        );
 
-    _ledgerBalanceController = TextEditingController(
-      text: account == null
-          ? ''
-          : _formatNumber(account.ledgerBalance),
-    );
+    _ledgerBalanceController =
+        TextEditingController(
+          text:
+          account == null
+              ? ''
+              : formatMoneyInput(
+            account.ledgerBalance,
+          ),
+        );
 
-    _discrepancyController = TextEditingController(
-      text: account == null
-          ? ''
-          : _formatNumber(account.discrepancy),
-    );
+    _discrepancyController =
+        TextEditingController(
+          text:
+          account == null
+              ? ''
+              : formatMoneyInput(
+            account.discrepancy,
+          ),
+        );
 
-    _fiscalYearController = TextEditingController(
-      text: account?.fiscalYear?.toString() ?? '',
-    );
+    _fiscalYearController =
+        TextEditingController(
+          text:
+          account?.fiscalYear
+              ?.toString() ??
+              '',
+        );
 
-    _fiscalMonthController = TextEditingController(
-      text: account?.fiscalMonth?.toString() ?? '',
-    );
+    _fiscalMonthController =
+        TextEditingController(
+          text:
+          account?.fiscalMonth
+              ?.toString() ??
+              '',
+        );
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+      BuildContext context,
+      ) {
     return AlertDialog(
-      title: Text(
+      title:
+      Text(
         widget.isEdit
             ? 'ویرایش حساب بانکی'
             : 'ثبت حساب بانکی',
-        style: const TextStyle(
-          fontWeight: FontWeight.w900,
+        style:
+        const TextStyle(
+          fontWeight:
+          FontWeight.w900,
         ),
       ),
-      content: SizedBox(
-        width: 650,
-        child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
+
+      content:
+      SizedBox(
+        width:
+        650,
+
+        child:
+        SingleChildScrollView(
+          child:
+          Form(
+            key:
+            _formKey,
+
+            child:
+            Column(
               children: [
                 _textField(
-                  controller: _bankNameController,
-                  label: 'نام بانک',
-                  required: true,
+                  controller:
+                  _bankNameController,
+                  label:
+                  'نام بانک',
+                  required:
+                  true,
                 ),
 
                 _textField(
-                  controller: _accountNumberController,
-                  label: 'شماره حساب',
-                  required: true,
+                  controller:
+                  _accountNumberController,
+                  label:
+                  'شماره حساب',
+                  required:
+                  true,
                 ),
 
                 _numberField(
-                  controller: _openingBalanceController,
-                  label: 'مانده اول دوره',
+                  controller:
+                  _openingBalanceController,
+                  label:
+                  'مانده اول دوره',
                 ),
 
                 _numberField(
-                  controller: _debitTurnoverController,
-                  label: 'گردش بدهکار',
+                  controller:
+                  _debitTurnoverController,
+                  label:
+                  'گردش بدهکار',
                 ),
 
                 _numberField(
-                  controller: _creditTurnoverController,
-                  label: 'گردش بستانکار',
+                  controller:
+                  _creditTurnoverController,
+                  label:
+                  'گردش بستانکار',
                 ),
 
                 _numberField(
-                  controller: _closingBalanceController,
-                  label: 'مانده پایان دوره',
+                  controller:
+                  _closingBalanceController,
+                  label:
+                  'مانده پایان دوره',
                 ),
 
                 _numberField(
-                  controller: _ledgerBalanceController,
-                  label: 'مانده دفتر',
+                  controller:
+                  _ledgerBalanceController,
+                  label:
+                  'مانده دفتر',
                 ),
 
                 _numberField(
-                  controller: _discrepancyController,
-                  label: 'مغایرت',
+                  controller:
+                  _discrepancyController,
+                  label:
+                  'مغایرت',
                 ),
 
-                Row(
-                  children: [
-                    Expanded(
-                      child: _integerField(
-                        controller: _fiscalYearController,
-                        label: 'سال مالی',
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _integerField(
-                        controller: _fiscalMonthController,
-                        label: 'ماه',
-                      ),
-                    ),
-                  ],
+                BankingFiscalPeriodField(
+                  yearController:
+                  _fiscalYearController,
+                  monthController:
+                  _fiscalMonthController,
                 ),
               ],
             ),
           ),
         ),
       ),
+
       actions: [
         TextButton(
-          onPressed: _saving
+          onPressed:
+          _saving
               ? null
               : () {
-            Navigator.of(context).pop();
+            Navigator.of(
+              context,
+            ).pop();
           },
-          child: const Text('انصراف'),
+          child:
+          const Text(
+            'انصراف',
+          ),
         ),
+
         FilledButton.icon(
-          onPressed: _saving ? null : _save,
-          icon: _saving
+          onPressed:
+          _saving
+              ? null
+              : _save,
+
+          icon:
+          _saving
               ? const SizedBox(
-            width: 18,
-            height: 18,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: Colors.white,
+            width:
+            18,
+            height:
+            18,
+            child:
+            CircularProgressIndicator(
+              strokeWidth:
+              2,
+              color:
+              Colors.white,
             ),
           )
-              : const Icon(Icons.save_rounded),
-          label: Text(
+              : const Icon(
+            Icons
+                .save_rounded,
+          ),
+
+          label:
+          Text(
             widget.isEdit
                 ? 'ذخیره تغییرات'
                 : 'ثبت حساب',
@@ -211,20 +316,31 @@ class _BankAccountFormDialogState
   }
 
   Widget _textField({
-    required TextEditingController controller,
+    required TextEditingController
+    controller,
     required String label,
     required bool required,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: TextFormField(
-        controller: controller,
-        textDirection: TextDirection.rtl,
-        decoration: InputDecoration(
-          labelText: label,
-          border: const OutlineInputBorder(),
+      padding:
+      const EdgeInsets.only(
+        bottom: 12,
+      ),
+      child:
+      TextFormField(
+        controller:
+        controller,
+        textDirection:
+        TextDirection.rtl,
+        decoration:
+        InputDecoration(
+          labelText:
+          label,
+          border:
+          const OutlineInputBorder(),
         ),
-        validator: (value) {
+        validator:
+            (value) {
           if (!required) {
             return null;
           }
@@ -241,32 +357,50 @@ class _BankAccountFormDialogState
   }
 
   Widget _numberField({
-    required TextEditingController controller,
+    required TextEditingController
+    controller,
     required String label,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: TextFormField(
-        controller: controller,
+      padding:
+      const EdgeInsets.only(
+        bottom: 12,
+      ),
+      child:
+      TextFormField(
+        controller:
+        controller,
         keyboardType:
-        const TextInputType.numberWithOptions(
-          decimal: true,
-          signed: true,
+        const TextInputType
+            .numberWithOptions(
+          decimal:
+          true,
+          signed:
+          true,
         ),
-        textDirection: TextDirection.ltr,
-        decoration: InputDecoration(
-          labelText: label,
-          border: const OutlineInputBorder(),
+        textDirection:
+        TextDirection.ltr,
+        inputFormatters: const [
+          ThousandsSeparatorFormatter(),
+        ],
+        decoration:
+        InputDecoration(
+          labelText:
+          label,
+          border:
+          const OutlineInputBorder(),
         ),
-        validator: (value) {
+        validator:
+            (value) {
           if (value == null ||
               value.trim().isEmpty) {
             return null;
           }
 
-          final parsed = _parseDouble(value);
-
-          if (parsed == null) {
+          if (parseFormattedDouble(
+            value,
+          ) ==
+              null) {
             return 'مقدار عددی معتبر وارد کنید.';
           }
 
@@ -276,38 +410,10 @@ class _BankAccountFormDialogState
     );
   }
 
-  Widget _integerField({
-    required TextEditingController controller,
-    required String label,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: TextFormField(
-        controller: controller,
-        keyboardType: TextInputType.number,
-        textDirection: TextDirection.ltr,
-        decoration: InputDecoration(
-          labelText: label,
-          border: const OutlineInputBorder(),
-        ),
-        validator: (value) {
-          if (value == null ||
-              value.trim().isEmpty) {
-            return null;
-          }
-
-          if (int.tryParse(value.trim()) == null) {
-            return 'عدد صحیح معتبر وارد کنید.';
-          }
-
-          return null;
-        },
-      ),
-    );
-  }
-
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) {
+    if (!_formKey
+        .currentState!
+        .validate()) {
       return;
     }
 
@@ -317,97 +423,123 @@ class _BankAccountFormDialogState
 
     try {
       final repository =
-      ref.read(bankingRepositoryProvider);
+      ref.read(
+        bankingRepositoryProvider,
+      );
+
+      final opening =
+          parseFormattedDouble(
+            _openingBalanceController
+                .text,
+          ) ??
+              0;
+
+      final debit =
+          parseFormattedDouble(
+            _debitTurnoverController
+                .text,
+          ) ??
+              0;
+
+      final credit =
+          parseFormattedDouble(
+            _creditTurnoverController
+                .text,
+          ) ??
+              0;
+
+      final closing =
+          parseFormattedDouble(
+            _closingBalanceController
+                .text,
+          ) ??
+              0;
+
+      final ledger =
+          parseFormattedDouble(
+            _ledgerBalanceController
+                .text,
+          ) ??
+              0;
+
+      final discrepancy =
+          parseFormattedDouble(
+            _discrepancyController
+                .text,
+          ) ??
+              0;
+
+      final fiscalYear =
+      parseFormattedInt(
+        _fiscalYearController
+            .text,
+      );
+
+      final fiscalMonth =
+      parseFormattedInt(
+        _fiscalMonthController
+            .text,
+      );
 
       if (widget.isEdit) {
-        await repository.updateBankAccount(
-          id: widget.account!.id,
-          bankName: _bankNameController.text.trim(),
+        await repository
+            .updateBankAccount(
+          id:
+          widget.account!.id,
+          bankName:
+          _bankNameController
+              .text
+              .trim(),
           accountNumber:
-          _accountNumberController.text.trim(),
+          _accountNumberController
+              .text
+              .trim(),
           openingBalance:
-          _parseDouble(
-            _openingBalanceController.text,
-          ) ??
-              0,
+          opening,
           debitTurnover:
-          _parseDouble(
-            _debitTurnoverController.text,
-          ) ??
-              0,
+          debit,
           creditTurnover:
-          _parseDouble(
-            _creditTurnoverController.text,
-          ) ??
-              0,
+          credit,
           closingBalance:
-          _parseDouble(
-            _closingBalanceController.text,
-          ) ??
-              0,
+          closing,
           ledgerBalance:
-          _parseDouble(
-            _ledgerBalanceController.text,
-          ) ??
-              0,
+          ledger,
           discrepancy:
-          _parseDouble(
-            _discrepancyController.text,
-          ) ??
-              0,
+          discrepancy,
           fiscalYear:
-          _parseInt(
-            _fiscalYearController.text,
-          ),
+          fiscalYear,
           fiscalMonth:
-          _parseInt(
-            _fiscalMonthController.text,
-          ),
+          fiscalMonth,
         );
       } else {
-        await repository.createBankAccount(
-          companyId: widget.companyId,
-          bankName: _bankNameController.text.trim(),
+        await repository
+            .createBankAccount(
+          companyId:
+          widget.companyId,
+          bankName:
+          _bankNameController
+              .text
+              .trim(),
           accountNumber:
-          _accountNumberController.text.trim(),
+          _accountNumberController
+              .text
+              .trim(),
           openingBalance:
-          _parseDouble(
-            _openingBalanceController.text,
-          ) ??
-              0,
+          opening,
           debitTurnover:
-          _parseDouble(
-            _debitTurnoverController.text,
-          ) ??
-              0,
+          debit,
           creditTurnover:
-          _parseDouble(
-            _creditTurnoverController.text,
-          ) ??
-              0,
+          credit,
           closingBalance:
-          _parseDouble(
-            _closingBalanceController.text,
-          ) ??
-              0,
+          closing,
           ledgerBalance:
-          _parseDouble(
-            _ledgerBalanceController.text,
-          ) ??
-              0,
+          ledger,
           discrepancy:
-          _parseDouble(
-            _discrepancyController.text,
-          ) ??
-              0,
+          discrepancy,
           fiscalYear:
-          _parseInt(
-            _fiscalYearController.text,
-          ),
+          fiscalYear,
           fiscalMonth:
-          _parseInt(
-            _fiscalMonthController.text,
-          ),
+          fiscalMonth,
         );
       }
 
@@ -423,9 +555,12 @@ class _BankAccountFormDialogState
 
       Navigator.of(context).pop();
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(
         SnackBar(
-          content: Text(
+          content:
+          Text(
             widget.isEdit
                 ? 'حساب بانکی با موفقیت ویرایش شد.'
                 : 'حساب بانکی با موفقیت ثبت شد.',
@@ -437,10 +572,14 @@ class _BankAccountFormDialogState
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(
         SnackBar(
-          backgroundColor: Colors.red.shade700,
-          content: Text(
+          backgroundColor:
+          Colors.red.shade700,
+          content:
+          Text(
             error.toString(),
           ),
         ),
@@ -452,32 +591,6 @@ class _BankAccountFormDialogState
         });
       }
     }
-  }
-
-  double? _parseDouble(String value) {
-    final cleaned = value
-        .replaceAll(',', '')
-        .trim();
-
-    if (cleaned.isEmpty) {
-      return null;
-    }
-
-    return double.tryParse(cleaned);
-  }
-
-  int? _parseInt(String value) {
-    final cleaned = value.trim();
-
-    if (cleaned.isEmpty) {
-      return null;
-    }
-
-    return int.tryParse(cleaned);
-  }
-
-  String _formatNumber(double value) {
-    return value.toStringAsFixed(0);
   }
 
   @override
