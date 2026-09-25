@@ -175,50 +175,6 @@ class ConsultantSidebar extends StatelessWidget {
                     ),
 
                     const _SidebarDivider(),
-                    //
-                    // _SidebarItem(
-                    //   icon: Icons.analytics_rounded,
-                    //   title: 'تحلیل عملکرد',
-                    //   route: '/consultant/analytics',
-                    //   currentRoute: currentRoute,
-                    // ),
-                    //
-                    // _SidebarItem(
-                    //   icon: Icons.bar_chart_rounded,
-                    //   title: 'گزارش‌ها',
-                    //   route: '/consultant/reports',
-                    //   currentRoute: currentRoute,
-                    // ),
-                    //
-                    // _SidebarItem(
-                    //   icon: Icons.account_tree_rounded,
-                    //   title: 'گردش کار',
-                    //   route: '/consultant/workflow',
-                    //   currentRoute: currentRoute,
-                    // ),
-                    //
-                    // const _SidebarDivider(),
-                    //
-                    // _SidebarItem(
-                    //   icon: Icons.notifications_none_rounded,
-                    //   title: 'اعلان‌ها',
-                    //   route: '/consultant/notifications',
-                    //   currentRoute: currentRoute,
-                    // ),
-                    //
-                    // _SidebarItem(
-                    //   icon: Icons.history_rounded,
-                    //   title: 'تاریخچه فعالیت',
-                    //   route: '/consultant/history',
-                    //   currentRoute: currentRoute,
-                    // ),
-                    //
-                    // _SidebarItem(
-                    //   icon: Icons.settings_outlined,
-                    //   title: 'تنظیمات',
-                    //   route: '/consultant/settings',
-                    //   currentRoute: currentRoute,
-                    // ),
                   ],
                 ),
               ),

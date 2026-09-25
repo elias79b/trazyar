@@ -19,20 +19,18 @@ import 'package:tarazyar/authentication/presentation/pages/splash_page.dart';
 // ============================================================
 
 import 'package:tarazyar/consultant/companies/banking/presentation/pages/bank_accounts_page.dart';
-import 'package:tarazyar/consultant/companies/banking/presentation/pages/bank_loans_page.dart';
+import 'package:tarazyar/consultant/companies/banking/presentation/pages/bank_loans_report_page.dart';
+import 'package:tarazyar/consultant/companies/banking/presentation/pages/banking_alerts_page.dart';
 import 'package:tarazyar/consultant/companies/banking/presentation/pages/banking_dashboard_page.dart';
+import 'package:tarazyar/consultant/companies/banking/presentation/pages/banking_reports_page.dart';
 import 'package:tarazyar/consultant/companies/banking/presentation/pages/cash_boxes_page.dart';
-import 'package:tarazyar/consultant/companies/banking/presentation/pages/paid_checks_page.dart';
-import 'package:tarazyar/consultant/companies/banking/presentation/pages/petty_cash_page.dart';
-import 'package:tarazyar/consultant/companies/banking/presentation/pages/received_checks_page.dart';
-
-// ============================================================
-// EXPENSES
-// ============================================================
-
-import 'package:tarazyar/consultant/companies/expenses/presentation/pages/expense_categories_page.dart';
-import 'package:tarazyar/consultant/companies/expenses/presentation/pages/expense_dashboard_page.dart';
-import 'package:tarazyar/consultant/companies/expenses/presentation/pages/expense_records_page.dart';
+import 'package:tarazyar/consultant/companies/banking/presentation/pages/cash_ceo_review_page.dart';
+import 'package:tarazyar/consultant/companies/banking/presentation/pages/cash_consultant_review_page.dart';
+import 'package:tarazyar/consultant/companies/banking/presentation/pages/cash_fiscal_periods_page.dart';
+import 'package:tarazyar/consultant/companies/banking/presentation/pages/paid_checks_report_page.dart';
+import 'package:tarazyar/consultant/companies/banking/presentation/pages/petty_cash_accounts_page.dart';
+import 'package:tarazyar/consultant/companies/banking/presentation/pages/received_checks_report_page.dart';
+import 'package:tarazyar/consultant/companies/expenses/presentation/pages/expense_monthly_report_page.dart';
 
 // ============================================================
 // PAYROLL
@@ -50,7 +48,20 @@ import 'package:tarazyar/consultant/companies/payroll/presentation/pages/payroll
 
 import 'package:tarazyar/consultant/companies/income/presentation/pages/income_categories_page.dart';
 import 'package:tarazyar/consultant/companies/income/presentation/pages/income_dashboard_page.dart';
-import 'package:tarazyar/consultant/companies/income/presentation/pages/income_records_page.dart';
+import 'package:tarazyar/consultant/companies/income/presentation/pages/income_fiscal_periods_page.dart';
+import 'package:tarazyar/consultant/companies/income/presentation/pages/income_monthly_report_page.dart';
+import 'package:tarazyar/consultant/companies/income/presentation/pages/income_receivables_page.dart';
+import 'package:tarazyar/consultant/companies/income/presentation/pages/income_recognition_page.dart';
+
+// ============================================================
+// EXPENSES
+// ============================================================
+
+import 'package:tarazyar/consultant/companies/expenses/presentation/pages/expense_categories_page.dart';
+import 'package:tarazyar/consultant/companies/expenses/presentation/pages/expense_dashboard_page.dart';
+import 'package:tarazyar/consultant/companies/expenses/presentation/pages/expense_fiscal_periods_page.dart';
+import 'package:tarazyar/consultant/companies/expenses/presentation/pages/expense_recognition_page.dart';
+import 'package:tarazyar/consultant/companies/expenses/presentation/pages/expense_records_page.dart';
 
 // ============================================================
 // COMPANY
@@ -102,11 +113,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     // ========================================================
     // AUTH REFRESH
     // ========================================================
-    refreshListenable: GoRouterRefreshStream(client.auth.onAuthStateChange),
+
+    refreshListenable: GoRouterRefreshStream(
+      client.auth.onAuthStateChange,
+    ),
 
     // ========================================================
     // REDIRECT
     // ========================================================
+
     redirect: (context, state) async {
       final path = state.uri.path;
       final session = client.auth.currentSession;
@@ -204,15 +219,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     // ========================================================
     // ROUTES
     // ========================================================
+
     routes: [
       // ======================================================
       // ROOT
       // ======================================================
-      GoRoute(path: '/', redirect: (_, __) => '/login'),
+
+      GoRoute(
+        path: '/',
+        redirect: (_, __) => '/login',
+      ),
 
       // ======================================================
       // SPLASH
       // ======================================================
+
       GoRoute(
         path: '/splash',
         builder: (context, state) {
@@ -223,6 +244,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ======================================================
       // LOGIN
       // ======================================================
+
       GoRoute(
         path: '/login',
         builder: (context, state) {
@@ -233,6 +255,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ======================================================
       // INVITE
       // ======================================================
+
       GoRoute(
         path: '/auth/invite',
         builder: (context, state) {
@@ -243,6 +266,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ======================================================
       // CONSULTANT
       // ======================================================
+
       GoRoute(
         path: '/consultant',
         builder: (context, state) {
@@ -250,9 +274,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
-      // CONSULTANT COMPANIES
-      // ======================================================
       GoRoute(
         path: '/consultant/companies',
         builder: (context, state) {
@@ -263,279 +284,387 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ======================================================
       // COMPANY DASHBOARD
       // ======================================================
+
       GoRoute(
         path: '/consultant/companies/:id',
         builder: (context, state) {
-          final id = state.pathParameters['id']!;
-
-          return CompanyOverviewPage(companyId: id);
+          return CompanyOverviewPage(
+            companyId: state.pathParameters['id']!,
+          );
         },
       ),
 
-      // ======================================================
       // ======================================================
       // BANKING
       // ======================================================
-      // ======================================================
+
       GoRoute(
         path: '/consultant/companies/:id/banking',
         builder: (context, state) {
-          final id = state.pathParameters['id']!;
-
-          return BankingDashboardPage(companyId: id);
+          return BankingDashboardPage(
+            companyId: state.pathParameters['id']!,
+          );
         },
       ),
 
       GoRoute(
-        path: '/consultant/companies/:id/banking/accounts',
+        path: '/consultant/companies/:companyId/banking/fiscal-periods',
         builder: (context, state) {
-          final id = state.pathParameters['id']!;
-
-          return BankAccountsPage(companyId: id);
+          return CashFiscalPeriodsPage(
+            companyId: state.pathParameters['companyId']!,
+          );
         },
       ),
 
       GoRoute(
-        path: '/consultant/companies/:id/banking/cash-boxes',
+        path: '/consultant/companies/:companyId/banking/accounts',
         builder: (context, state) {
-          final id = state.pathParameters['id']!;
-
-          return CashBoxesPage(companyId: id);
+          return BankAccountsPage(
+            companyId: state.pathParameters['companyId']!,
+          );
         },
       ),
 
       GoRoute(
-        path: '/consultant/companies/:id/banking/received-checks',
+        path: '/consultant/companies/:companyId/banking/cash-boxes',
         builder: (context, state) {
-          final id = state.pathParameters['id']!;
-
-          return ReceivedChecksPage(companyId: id);
+          return CashBoxesPage(
+            companyId: state.pathParameters['companyId']!,
+          );
         },
       ),
 
       GoRoute(
-        path: '/consultant/companies/:id/banking/paid-checks',
+        path: '/consultant/companies/:companyId/banking/petty-cash',
         builder: (context, state) {
-          final id = state.pathParameters['id']!;
-
-          return PaidChecksPage(companyId: id);
+          return PettyCashAccountsPage(
+            companyId: state.pathParameters['companyId']!,
+          );
         },
       ),
 
       GoRoute(
-        path: '/consultant/companies/:id/banking/petty-cash',
+        path: '/consultant/companies/:companyId/banking/ceo-review/:periodId',
         builder: (context, state) {
-          final id = state.pathParameters['id']!;
-
-          return PettyCashPage(companyId: id);
+          return CashCeoReviewPage(
+            companyId: state.pathParameters['companyId']!,
+            periodId: state.pathParameters['periodId']!,
+          );
         },
       ),
 
       GoRoute(
-        path: '/consultant/companies/:id/banking/loans',
+        path:
+        '/consultant/companies/:companyId/banking/consultant-review/:periodId',
         builder: (context, state) {
-          final id = state.pathParameters['id']!;
-
-          return BankLoansPage(companyId: id);
+          return CashConsultantReviewPage(
+            companyId: state.pathParameters['companyId']!,
+            periodId: state.pathParameters['periodId']!,
+          );
         },
       ),
 
-      // ======================================================
+      GoRoute(
+        path: '/consultant/companies/:companyId/banking/reports',
+        builder: (context, state) {
+          return BankingReportsPage(
+            companyId: state.pathParameters['companyId']!,
+          );
+        },
+      ),
+
+      GoRoute(
+        path: '/consultant/companies/:companyId/banking/alerts',
+        builder: (context, state) {
+          return BankingAlertsPage(
+            companyId: state.pathParameters['companyId']!,
+          );
+        },
+      ),
+
+      GoRoute(
+        path: '/consultant/companies/:companyId/banking/loans',
+        builder: (context, state) {
+          return BankLoansReportPage(
+            companyId: state.pathParameters['companyId']!,
+          );
+        },
+      ),
+
+      GoRoute(
+        path: '/consultant/companies/:companyId/banking/received-checks',
+        builder: (context, state) {
+          return ReceivedChecksReportPage(
+            companyId: state.pathParameters['companyId']!,
+          );
+        },
+      ),
+
+      GoRoute(
+        path: '/consultant/companies/:companyId/banking/paid-checks',
+        builder: (context, state) {
+          return PaidChecksReportPage(
+            companyId: state.pathParameters['companyId']!,
+          );
+        },
+      ),
+
       // ======================================================
       // PAYROLL
       // ======================================================
-      // ======================================================
+
       GoRoute(
         path: '/consultant/companies/:id/payroll',
         builder: (context, state) {
-          final id = state.pathParameters['id']!;
-
-          return PayrollDashboardPage(companyId: id);
+          return PayrollDashboardPage(
+            companyId: state.pathParameters['id']!,
+          );
         },
       ),
 
       GoRoute(
         path: '/consultant/companies/:id/payroll/employees',
         builder: (context, state) {
-          final id = state.pathParameters['id']!;
-
-          return EmployeesPage(companyId: id);
+          return EmployeesPage(
+            companyId: state.pathParameters['id']!,
+          );
         },
       ),
 
       GoRoute(
         path: '/consultant/companies/:id/payroll/contracts',
         builder: (context, state) {
-          final id = state.pathParameters['id']!;
-
-          return EmploymentContractsPage(companyId: id);
+          return EmploymentContractsPage(
+            companyId: state.pathParameters['id']!,
+          );
         },
       ),
 
       GoRoute(
         path: '/consultant/companies/:id/payroll/periods',
         builder: (context, state) {
-          final id = state.pathParameters['id']!;
-
-          return PayrollPeriodsPage(companyId: id);
+          return PayrollPeriodsPage(
+            companyId: state.pathParameters['id']!,
+          );
         },
       ),
 
       GoRoute(
         path: '/consultant/companies/:id/payroll/cost-centers',
         builder: (context, state) {
-          final id = state.pathParameters['id']!;
-
-          return CostCentersPage(companyId: id);
+          return CostCentersPage(
+            companyId: state.pathParameters['id']!,
+          );
         },
       ),
 
-      // ======================================================
       // ======================================================
       // INCOME
       // ======================================================
-      // ======================================================
+
       GoRoute(
         path: '/consultant/companies/:id/income',
         builder: (context, state) {
-          final id = state.pathParameters['id']!;
-
-          return IncomeDashboardPage(companyId: id);
+          return IncomeDashboardPage(
+            companyId: state.pathParameters['id']!,
+          );
         },
       ),
 
       GoRoute(
-        path: '/consultant/companies/:id/income/records',
+        path: '/consultant/companies/:companyId/income/periods',
         builder: (context, state) {
-          final id = state.pathParameters['id']!;
-
-          return IncomeRecordsPage(companyId: id);
+          return IncomeFiscalPeriodsPage(
+            companyId: state.pathParameters['companyId']!,
+          );
         },
       ),
 
       GoRoute(
-        path: '/consultant/companies/:id/income/categories',
+        path: '/consultant/companies/:companyId/income/categories',
         builder: (context, state) {
-          final id = state.pathParameters['id']!;
-
-          return IncomeCategoriesPage(companyId: id);
+          return IncomeCategoriesPage(
+            companyId: state.pathParameters['companyId']!,
+          );
         },
       ),
 
-      // ======================================================
+      GoRoute(
+        path: '/consultant/companies/:companyId/income/recognition/:periodId',
+        builder: (context, state) {
+          return IncomeRecognitionPage(
+            companyId: state.pathParameters['companyId']!,
+            periodId: state.pathParameters['periodId']!,
+          );
+        },
+      ),
+
+      GoRoute(
+        path: '/consultant/companies/:companyId/income/receivables/:periodId',
+        builder: (context, state) {
+          return IncomeReceivablesPage(
+            companyId: state.pathParameters['companyId']!,
+            periodId: state.pathParameters['periodId']!,
+          );
+        },
+      ),
+
+      GoRoute(
+        path: '/consultant/companies/:companyId/income/reports',
+        builder: (context, state) {
+          return IncomeMonthlyReportPage(
+            companyId: state.pathParameters['companyId']!,
+          );
+        },
+      ),
+
       // ======================================================
       // EXPENSES
       // ======================================================
-      // ======================================================
+
       GoRoute(
         path: '/consultant/companies/:id/expenses',
         builder: (context, state) {
-          final id = state.pathParameters['id']!;
+          return ExpenseDashboardPage(
+            companyId: state.pathParameters['id']!,
+          );
+        },
+      ),
 
-          return ExpenseDashboardPage(companyId: id);
+      GoRoute(
+        path: '/consultant/companies/:companyId/expenses/periods',
+        builder: (context, state) {
+          return ExpenseFiscalPeriodsPage(
+            companyId: state.pathParameters['companyId']!,
+          );
+        },
+      ),
+
+      GoRoute(
+        path: '/consultant/companies/:companyId/expenses/recognition/:periodId',
+        builder: (context, state) {
+          return ExpenseRecognitionPage(
+            companyId: state.pathParameters['companyId']!,
+            periodId: state.pathParameters['periodId']!,
+          );
+        },
+      ),
+
+      GoRoute(
+        path: '/consultant/companies/:companyId/expenses/reports/:periodId',
+        builder: (context, state) {
+          return ExpenseMonthlyReportPage(
+            companyId: state.pathParameters['companyId']!,
+            periodId: state.pathParameters['periodId']!,
+          );
         },
       ),
 
       GoRoute(
         path: '/consultant/companies/:id/expenses/records',
         builder: (context, state) {
-          final id = state.pathParameters['id']!;
-
-          return ExpenseRecordsPage(companyId: id);
+          return ExpenseRecordsPage(
+            companyId: state.pathParameters['id']!,
+          );
         },
       ),
 
       GoRoute(
         path: '/consultant/companies/:id/expenses/categories',
         builder: (context, state) {
-          final id = state.pathParameters['id']!;
-
-          return ExpenseCategoriesPage(companyId: id);
+          return ExpenseCategoriesPage(
+            companyId: state.pathParameters['id']!,
+          );
         },
       ),
 
       // ======================================================
       // COMPANY REPORTS
       // ======================================================
+
       GoRoute(
         path: '/consultant/companies/:id/reports',
         builder: (context, state) {
-          final id = state.pathParameters['id']!;
-
-          return CompanyReportsPage(companyId: id);
+          return CompanyReportsPage(
+            companyId: state.pathParameters['id']!,
+          );
         },
       ),
 
       // ======================================================
       // COMPANY ACTIONS
       // ======================================================
+
       GoRoute(
         path: '/consultant/companies/:id/actions',
         builder: (context, state) {
-          final id = state.pathParameters['id']!;
-
-          return CompanyActionsPage(companyId: id);
+          return CompanyActionsPage(
+            companyId: state.pathParameters['id']!,
+          );
         },
       ),
 
       // ======================================================
       // COMPANY WORKFLOW
       // ======================================================
+
       GoRoute(
         path: '/consultant/companies/:id/workflow',
         builder: (context, state) {
-          final id = state.pathParameters['id']!;
-
-          return CompanyWorkflowPage(companyId: id);
+          return CompanyWorkflowPage(
+            companyId: state.pathParameters['id']!,
+          );
         },
       ),
 
       // ======================================================
       // COMPANY DOCUMENTS
       // ======================================================
+
       GoRoute(
         path: '/consultant/companies/:id/documents',
         builder: (context, state) {
-          final id = state.pathParameters['id']!;
-
-          return CompanyDocumentsPage(companyId: id);
+          return CompanyDocumentsPage(
+            companyId: state.pathParameters['id']!,
+          );
         },
       ),
 
       // ======================================================
       // COMPANY NOTES
       // ======================================================
+
       GoRoute(
         path: '/consultant/companies/:id/notes',
         builder: (context, state) {
-          final id = state.pathParameters['id']!;
-
-          return CompanyNotesPage(companyId: id);
+          return CompanyNotesPage(
+            companyId: state.pathParameters['id']!,
+          );
         },
       ),
 
       // ======================================================
       // COMPANY ANALYTICS
       // ======================================================
+
       GoRoute(
         path: '/consultant/companies/:id/analytics',
         builder: (context, state) {
-          final id = state.pathParameters['id']!;
-
-          return CompanyAnalyticsPage(companyId: id);
+          return CompanyAnalyticsPage(
+            companyId: state.pathParameters['id']!,
+          );
         },
       ),
 
       // ======================================================
-      // CONSULTANT ANALYTICS
+      // CONSULTANT FINANCIAL ANALYSIS
       // ======================================================
+
       GoRoute(
         path: '/consultant/companies/:id/financial-analysis',
         builder: (context, state) {
-          final companyId = state.pathParameters['id']!;
-
           return FinancialAnalysisPage(
-            companyId: companyId,
+            companyId: state.pathParameters['id']!,
           );
         },
       ),
@@ -543,6 +672,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ======================================================
       // CONSULTANT REPORTS
       // ======================================================
+
       GoRoute(
         path: '/consultant/reports',
         builder: (context, state) {
@@ -553,6 +683,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ======================================================
       // CONSULTANT WORKFLOW
       // ======================================================
+
       GoRoute(
         path: '/consultant/workflow',
         builder: (context, state) {
@@ -563,6 +694,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ======================================================
       // CONSULTANT HISTORY
       // ======================================================
+
       GoRoute(
         path: '/consultant/history',
         builder: (context, state) {
@@ -573,6 +705,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ======================================================
       // CONSULTANT SETTINGS
       // ======================================================
+
       GoRoute(
         path: '/consultant/settings',
         builder: (context, state) {
@@ -581,10 +714,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
 
       // ======================================================
-      // ======================================================
       // OWNER
       // ======================================================
-      // ======================================================
+
       GoRoute(
         path: '/owner',
         builder: (context, state) {

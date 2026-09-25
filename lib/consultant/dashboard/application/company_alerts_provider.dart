@@ -2,8 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import 'package:tarazyar/consultant/companies/banking/data/models/banking_models.dart';
 import '../../companies/banking/application/banking_provider.dart';
-import '../../companies/banking/data/banking_repository.dart';
 
 // ============================================================
 // PROVIDER
@@ -28,19 +28,33 @@ final companyAlertsProvider = FutureProvider.family<List<CompanyAlert>, String>(
     ).getAlerts(companyId);
 
     // ----------------------------------------------------------
-    // BUILD BANKING ALERTS
+    // INCOME
+    // ----------------------------------------------------------
+
+    final incomeAlerts = await IncomeAlertsRepository(
+      Supabase.instance.client,
+    ).getAlerts(companyId);
+
+    // ----------------------------------------------------------
+    // BANKING ALERTS
     // ----------------------------------------------------------
 
     final alerts = CompanyAlertsBuilder.build(bankingData);
 
     // ----------------------------------------------------------
-    // ADD PAYROLL ALERTS
+    // PAYROLL ALERTS
     // ----------------------------------------------------------
 
     alerts.addAll(payrollAlerts);
 
     // ----------------------------------------------------------
-    // SORT ALL ALERTS
+    // INCOME ALERTS
+    // ----------------------------------------------------------
+
+    alerts.addAll(incomeAlerts);
+
+    // ----------------------------------------------------------
+    // SORT
     // ----------------------------------------------------------
 
     alerts.sort((a, b) {
@@ -60,18 +74,20 @@ final companyAlertsProvider = FutureProvider.family<List<CompanyAlert>, String>(
 );
 
 // ============================================================
-// ALERT ENUMS
+// ALERT SEVERITY
 // ============================================================
 
 enum CompanyAlertSeverity { danger, warning, info }
+
+// ============================================================
+// ALERT TYPE
+// ============================================================
 
 enum CompanyAlertType {
   // Banking
   bankDiscrepancy,
   cashDiscrepancy,
-  overdueCheck,
-  upcomingCheck,
-  loan,
+  pettyCashDiscrepancy,
 
   // Payroll
   payrollPendingCeo,
@@ -79,6 +95,18 @@ enum CompanyAlertType {
   payrollPendingConsultant,
   payrollRejected,
   payrollDraft,
+
+  // Banking checks / loans
+  upcomingCheck,
+  overdueCheck,
+  loan,
+
+  // Income
+  incomeNoRecognition,
+  incomeReceivableWithoutRecognition,
+  incomeReceivableExceededRecognition,
+  incomeUnreceivedReceivable,
+  incomeOpenPeriod,
 }
 
 // ============================================================
@@ -96,20 +124,15 @@ class CompanyAlert {
   });
 
   final CompanyAlertType type;
-
   final CompanyAlertSeverity severity;
-
   final String title;
-
   final String description;
-
   final String route;
-
   final double? amount;
 }
 
 // ============================================================
-// ALERT SORT HELPER
+// SEVERITY WEIGHT
 // ============================================================
 
 int _severityWeight(CompanyAlertSeverity severity) {
@@ -130,32 +153,14 @@ int _severityWeight(CompanyAlertSeverity severity) {
 // ============================================================
 
 class CompanyAlertsBuilder {
-  static List<CompanyAlert> build(BankingDashboardData data) {
+  static List<CompanyAlert> build(BankingSnapshot data) {
     final alerts = <CompanyAlert>[];
-
-    // ----------------------------------------------------------
-    // BANK
-    // ----------------------------------------------------------
 
     _addBankDiscrepancies(alerts, data);
 
-    // ----------------------------------------------------------
-    // CASH
-    // ----------------------------------------------------------
-
     _addCashDiscrepancies(alerts, data);
 
-    // ----------------------------------------------------------
-    // CHECKS
-    // ----------------------------------------------------------
-
-    _addCheckAlerts(alerts, data);
-
-    // ----------------------------------------------------------
-    // LOANS
-    // ----------------------------------------------------------
-
-    _addLoanAlerts(alerts, data);
+    _addPettyCashDiscrepancies(alerts, data);
 
     return alerts;
   }
@@ -166,14 +171,14 @@ class CompanyAlertsBuilder {
 
   static void _addBankDiscrepancies(
     List<CompanyAlert> alerts,
-    BankingDashboardData data,
+    BankingSnapshot data,
   ) {
     for (final account in data.bankAccounts) {
-      if (account.discrepancy == 0) {
+      final discrepancy = account.discrepancy;
+
+      if (discrepancy == 0) {
         continue;
       }
-
-      final amount = account.discrepancy;
 
       alerts.add(
         CompanyAlert(
@@ -183,9 +188,9 @@ class CompanyAlertsBuilder {
           description:
               '${account.bankName} '
               'با شماره ${account.accountNumber} '
-              'دارای مغایرت ${_money(amount)} است.',
+              'دارای مغایرت ${_money(discrepancy)} است.',
           route: '/consultant/companies/${account.companyId}/banking/accounts',
-          amount: amount,
+          amount: discrepancy,
         ),
       );
     }
@@ -197,14 +202,14 @@ class CompanyAlertsBuilder {
 
   static void _addCashDiscrepancies(
     List<CompanyAlert> alerts,
-    BankingDashboardData data,
+    BankingSnapshot data,
   ) {
     for (final box in data.cashBoxes) {
-      if (box.discrepancy == 0) {
+      final discrepancy = box.discrepancy;
+
+      if (discrepancy == 0) {
         continue;
       }
-
-      final amount = box.discrepancy;
 
       alerts.add(
         CompanyAlert(
@@ -213,175 +218,40 @@ class CompanyAlertsBuilder {
           title: 'مغایرت صندوق',
           description:
               'صندوق ${box.boxName} '
-              'دارای مغایرت ${_money(amount)} است.',
+              'دارای مغایرت ${_money(discrepancy)} است.',
           route: '/consultant/companies/${box.companyId}/banking/cash-boxes',
-          amount: amount,
+          amount: discrepancy,
         ),
       );
     }
   }
 
   // ==========================================================
-  // CHECK ALERTS
+  // PETTY CASH DISCREPANCIES
   // ==========================================================
 
-  static void _addCheckAlerts(
+  static void _addPettyCashDiscrepancies(
     List<CompanyAlert> alerts,
-    BankingDashboardData data,
+    BankingSnapshot data,
   ) {
-    final today = _dateOnly(DateTime.now());
+    for (final pettyCash in data.pettyCashAccounts) {
+      final discrepancy = pettyCash.discrepancy;
 
-    final upcomingLimit = today.add(const Duration(days: 3));
-
-    // --------------------------------------------------------
-    // RECEIVED
-    // --------------------------------------------------------
-
-    for (final check in data.receivedChecks.checks) {
-      _evaluateCheck(
-        alerts: alerts,
-        check: check,
-        today: today,
-        upcomingLimit: upcomingLimit,
-        typeTitle: 'دریافتی',
-        route:
-            '/consultant/companies/${check.companyId}/banking/received-checks',
-      );
-    }
-
-    // --------------------------------------------------------
-    // PAID
-    // --------------------------------------------------------
-
-    for (final check in data.paidChecks.checks) {
-      _evaluateCheck(
-        alerts: alerts,
-        check: check,
-        today: today,
-        upcomingLimit: upcomingLimit,
-        typeTitle: 'پرداختی',
-        route: '/consultant/companies/${check.companyId}/banking/paid-checks',
-      );
-    }
-  }
-
-  // ==========================================================
-  // EVALUATE CHECK
-  // ==========================================================
-
-  static void _evaluateCheck({
-    required List<CompanyAlert> alerts,
-    required CheckModel check,
-    required DateTime today,
-    required DateTime upcomingLimit,
-    required String typeTitle,
-    required String route,
-  }) {
-    final dueDate = check.dueDate;
-
-    if (dueDate == null) {
-      return;
-    }
-
-    final status = check.status.trim().toLowerCase();
-
-    const closedStatuses = <String>{
-      'paid',
-      'cleared',
-      'settled',
-      'cancelled',
-      'canceled',
-      'پرداخت شده',
-      'وصول شده',
-      'تسویه شده',
-      'باطل شده',
-    };
-
-    if (closedStatuses.contains(status)) {
-      return;
-    }
-
-    final date = _dateOnly(dueDate);
-
-    // --------------------------------------------------------
-    // OVERDUE
-    // --------------------------------------------------------
-
-    if (date.isBefore(today)) {
-      final numberText =
-          check.checkNumber.trim().isEmpty
-              ? ''
-              : 'شماره ${check.checkNumber.trim()} ';
-
-      alerts.add(
-        CompanyAlert(
-          type: CompanyAlertType.overdueCheck,
-          severity: CompanyAlertSeverity.danger,
-          title: 'چک سررسید شده',
-          description:
-              'چک $typeTitle '
-              '$numberText'
-              'به مبلغ ${_money(check.amount)} '
-              'از سررسید گذشته است.',
-          route: route,
-          amount: check.amount,
-        ),
-      );
-
-      return;
-    }
-
-    // --------------------------------------------------------
-    // UPCOMING
-    // --------------------------------------------------------
-
-    if (!date.isAfter(upcomingLimit)) {
-      final numberText =
-          check.checkNumber.trim().isEmpty
-              ? ''
-              : 'شماره ${check.checkNumber.trim()} ';
-
-      alerts.add(
-        CompanyAlert(
-          type: CompanyAlertType.upcomingCheck,
-          severity: CompanyAlertSeverity.warning,
-          title: 'چک نزدیک سررسید',
-          description:
-              'چک $typeTitle '
-              '$numberText'
-              'به مبلغ ${_money(check.amount)} '
-              'در تاریخ ${_dateText(date)} سررسید می‌شود.',
-          route: route,
-          amount: check.amount,
-        ),
-      );
-    }
-  }
-
-  // ==========================================================
-  // LOAN ALERTS
-  // ==========================================================
-
-  static void _addLoanAlerts(
-    List<CompanyAlert> alerts,
-    BankingDashboardData data,
-  ) {
-    for (final loan in data.bankLoans) {
-      if (loan.remainingAmount <= 0) {
+      if (discrepancy == 0) {
         continue;
       }
 
       alerts.add(
         CompanyAlert(
-          type: CompanyAlertType.loan,
-          severity: CompanyAlertSeverity.info,
-          title: 'تسهیلات دارای مانده',
+          type: CompanyAlertType.pettyCashDiscrepancy,
+          severity: CompanyAlertSeverity.warning,
+          title: 'مغایرت تنخواه',
           description:
-              '${loan.bankName} '
-              'دارای مانده تسهیلات '
-              '${_money(loan.remainingAmount)} است.',
-          route: '/consultant/companies/${loan.companyId}/banking/loans',
-          amount: loan.remainingAmount,
+              'تنخواه ${pettyCash.name} '
+              'دارای مغایرت ${_money(discrepancy)} است.',
+          route:
+              '/consultant/companies/${pettyCash.companyId}/banking/petty-cash',
+          amount: discrepancy,
         ),
       );
     }
@@ -397,10 +267,6 @@ class PayrollAlertsRepository {
 
   final SupabaseClient _client;
 
-  // ==========================================================
-  // GET PAYROLL ALERTS
-  // ==========================================================
-
   Future<List<CompanyAlert>> getAlerts(String companyId) async {
     try {
       final response = await _client
@@ -412,7 +278,7 @@ class PayrollAlertsRepository {
             period_month,
             status,
             notes
-            ''')
+          ''')
           .eq('company_id', companyId)
           .order('period_year', ascending: false)
           .order('period_month', ascending: false);
@@ -426,23 +292,19 @@ class PayrollAlertsRepository {
 
         final periodId = row['id']?.toString() ?? '';
 
+        if (periodId.isEmpty) {
+          continue;
+        }
+
         final year = _toInt(row['period_year']);
 
         final month = _toInt(row['period_month']);
 
         final status = row['status']?.toString().trim() ?? '';
 
-        if (periodId.isEmpty) {
-          continue;
-        }
-
         final periodTitle = _periodTitle(year, month);
 
         final route = '/consultant/companies/$companyId/payroll/periods';
-
-        // ------------------------------------------------------
-        // PENDING CEO
-        // ------------------------------------------------------
 
         if (status == 'pending_ceo') {
           alerts.add(
@@ -460,10 +322,6 @@ class PayrollAlertsRepository {
           continue;
         }
 
-        // ------------------------------------------------------
-        // CEO APPROVED
-        // ------------------------------------------------------
-
         if (status == 'ceo_approved') {
           alerts.add(
             CompanyAlert(
@@ -479,10 +337,6 @@ class PayrollAlertsRepository {
 
           continue;
         }
-
-        // ------------------------------------------------------
-        // PENDING CONSULTANT
-        // ------------------------------------------------------
 
         if (status == 'pending_consultant') {
           alerts.add(
@@ -500,10 +354,6 @@ class PayrollAlertsRepository {
           continue;
         }
 
-        // ------------------------------------------------------
-        // REJECTED
-        // ------------------------------------------------------
-
         if (status == 'rejected') {
           alerts.add(
             CompanyAlert(
@@ -520,10 +370,6 @@ class PayrollAlertsRepository {
           continue;
         }
 
-        // ------------------------------------------------------
-        // DRAFT
-        // ------------------------------------------------------
-
         if (status == 'draft') {
           alerts.add(
             CompanyAlert(
@@ -536,8 +382,6 @@ class PayrollAlertsRepository {
               route: route,
             ),
           );
-
-          continue;
         }
       }
 
@@ -547,10 +391,249 @@ class PayrollAlertsRepository {
 
       debugPrint('$stackTrace');
 
-      // --------------------------------------------------------
-      // IMPORTANT:
-      // اگر حقوق خطا داد، هشدارهای بانک از کار نیفتند.
-      // --------------------------------------------------------
+      return [];
+    }
+  }
+}
+
+// ============================================================
+// INCOME ALERT REPOSITORY
+// ============================================================
+
+class IncomeAlertsRepository {
+  IncomeAlertsRepository(this._client);
+
+  final SupabaseClient _client;
+
+  Future<List<CompanyAlert>> getAlerts(String companyId) async {
+    try {
+      final yearsResponse = await _client
+          .from('income_fiscal_years')
+          .select('''
+            id,
+            company_id,
+            year,
+            title,
+            status
+          ''')
+          .eq('company_id', companyId)
+          .order('year', ascending: false);
+
+      final years = List<Map<String, dynamic>>.from(yearsResponse);
+
+      if (years.isEmpty) {
+        return [];
+      }
+
+      final latestYear = years.first;
+      final latestYearId = latestYear['id']?.toString();
+
+      if (latestYearId == null || latestYearId.isEmpty) {
+        return [];
+      }
+
+      final latestYearValue = _toInt(latestYear['year']);
+
+      final periodsResponse = await _client
+          .from('income_fiscal_periods')
+          .select('''
+            id,
+            fiscal_year_id,
+            company_id,
+            year,
+            month,
+            title,
+            status
+          ''')
+          .eq('company_id', companyId)
+          .eq('fiscal_year_id', latestYearId)
+          .order('month', ascending: true);
+
+      final periods = List<Map<String, dynamic>>.from(periodsResponse);
+
+      if (periods.isEmpty) {
+        return [
+          CompanyAlert(
+            type: CompanyAlertType.incomeOpenPeriod,
+            severity: CompanyAlertSeverity.info,
+            title: 'دوره‌های درآمد ایجاد نشده‌اند',
+            description:
+                'برای سال مالی $latestYearValue هنوز دوره‌های ماهانه درآمد ایجاد نشده است.',
+            route: '/consultant/companies/$companyId/income/periods',
+          ),
+        ];
+      }
+
+      final periodIds = periods.map((item) => item['id'].toString()).toList();
+
+      final recognitionsResponse = await _client
+          .from('income_recognitions')
+          .select('''
+            id,
+            fiscal_period_id,
+            category_id,
+            amount
+          ''')
+          .eq('company_id', companyId)
+          .inFilter('fiscal_period_id', periodIds);
+
+      final receivablesResponse = await _client
+          .from('income_receivables')
+          .select('''
+            id,
+            fiscal_period_id,
+            amount,
+            received_documents_amount
+          ''')
+          .eq('company_id', companyId)
+          .inFilter('fiscal_period_id', periodIds);
+
+      final recognitions = List<Map<String, dynamic>>.from(
+        recognitionsResponse,
+      );
+
+      final receivables = List<Map<String, dynamic>>.from(receivablesResponse);
+
+      final alerts = <CompanyAlert>[];
+
+      for (final period in periods) {
+        final periodId = period['id'].toString();
+
+        final year = _toInt(period['year']);
+
+        final month = _toInt(period['month']);
+
+        final title =
+            period['title']?.toString().trim().isNotEmpty == true
+                ? period['title'].toString()
+                : _periodTitle(year, month);
+
+        final status = period['status']?.toString() ?? 'open';
+
+        final periodRecognitions =
+            recognitions
+                .where(
+                  (item) => item['fiscal_period_id']?.toString() == periodId,
+                )
+                .toList();
+
+        final periodReceivables =
+            receivables
+                .where(
+                  (item) => item['fiscal_period_id']?.toString() == periodId,
+                )
+                .toList();
+
+        double recognizedTotal = 0;
+
+        for (final item in periodRecognitions) {
+          recognizedTotal += _toDouble(item['amount']);
+        }
+
+        double receivableTotal = 0;
+        double receivedTotal = 0;
+
+        for (final item in periodReceivables) {
+          receivableTotal += _toDouble(item['amount']);
+
+          receivedTotal += _toDouble(item['received_documents_amount']);
+        }
+
+        final remainingReceivable =
+            (receivableTotal - receivedTotal)
+                .clamp(0, double.infinity)
+                .toDouble();
+
+        // ------------------------------------------------------
+        // NO RECOGNITION
+        // ------------------------------------------------------
+
+        if (recognizedTotal <= 0 && status == 'open') {
+          alerts.add(
+            CompanyAlert(
+              type: CompanyAlertType.incomeNoRecognition,
+              severity: CompanyAlertSeverity.warning,
+              title: 'درآمد $title ثبت نشده است',
+              description:
+                  'برای دوره $title هنوز درآمد ماهانه شناسایی نشده است.',
+              route:
+                  '/consultant/companies/$companyId/income/recognition/$periodId',
+            ),
+          );
+        }
+
+        // ------------------------------------------------------
+        // RECEIVABLE WITHOUT RECOGNITION
+        // ------------------------------------------------------
+
+        if (receivableTotal > 0 && recognizedTotal <= 0) {
+          alerts.add(
+            CompanyAlert(
+              type: CompanyAlertType.incomeReceivableWithoutRecognition,
+              severity: CompanyAlertSeverity.danger,
+              title: 'دریافتنی بدون شناسایی درآمد',
+              description:
+                  'در دوره $title مبلغ '
+                  '${_money(receivableTotal)} '
+                  'به‌عنوان دریافتنی ثبت شده ولی درآمدی برای دوره شناسایی نشده است.',
+              route:
+                  '/consultant/companies/$companyId/income/receivables/$periodId',
+              amount: receivableTotal,
+            ),
+          );
+        }
+
+        // ------------------------------------------------------
+        // RECEIVABLE EXCEEDS RECOGNIZED
+        // ------------------------------------------------------
+
+        if (recognizedTotal > 0 && receivableTotal > recognizedTotal) {
+          final difference = receivableTotal - recognizedTotal;
+
+          alerts.add(
+            CompanyAlert(
+              type: CompanyAlertType.incomeReceivableExceededRecognition,
+              severity: CompanyAlertSeverity.warning,
+              title: 'دریافتنی بیشتر از درآمد شناسایی‌شده',
+              description:
+                  'در دوره $title مبلغ دریافتنی '
+                  '${_money(receivableTotal)} '
+                  'است که ${_money(difference)} '
+                  'بیشتر از درآمد شناسایی‌شده است.',
+              route:
+                  '/consultant/companies/$companyId/income/receivables/$periodId',
+              amount: difference,
+            ),
+          );
+        }
+
+        // ------------------------------------------------------
+        // UNRECEIVED
+        // ------------------------------------------------------
+
+        if (remainingReceivable > 0) {
+          alerts.add(
+            CompanyAlert(
+              type: CompanyAlertType.incomeUnreceivedReceivable,
+              severity: CompanyAlertSeverity.info,
+              title: 'مانده دریافتنی درآمد',
+              description:
+                  'در دوره $title مبلغ '
+                  '${_money(remainingReceivable)} '
+                  'از دریافتنی‌ها هنوز دریافت نشده است.',
+              route:
+                  '/consultant/companies/$companyId/income/receivables/$periodId',
+              amount: remainingReceivable,
+            ),
+          );
+        }
+      }
+
+      return alerts;
+    } catch (error, stackTrace) {
+      debugPrint('INCOME ALERTS ERROR: $error');
+
+      debugPrint('$stackTrace');
 
       return [];
     }
@@ -558,21 +641,19 @@ class PayrollAlertsRepository {
 }
 
 // ============================================================
-// PAYROLL PERIOD TITLE
+// PERIOD TITLE
 // ============================================================
 
 String _periodTitle(int year, int month) {
-  final monthName = _jalaliMonthName(month);
-
   if (year <= 0 || month <= 0) {
-    return 'دوره حقوق';
+    return 'دوره';
   }
 
-  return '$monthName $year';
+  return '${_jalaliMonthName(month)} $year';
 }
 
 // ============================================================
-// JALALI MONTH NAME
+// JALALI MONTH
 // ============================================================
 
 String _jalaliMonthName(int month) {
@@ -619,24 +700,6 @@ String _jalaliMonthName(int month) {
 }
 
 // ============================================================
-// DATE ONLY
-// ============================================================
-
-DateTime _dateOnly(DateTime date) {
-  return DateTime(date.year, date.month, date.day);
-}
-
-// ============================================================
-// DATE TEXT
-// ============================================================
-
-String _dateText(DateTime date) {
-  return '${date.year}/'
-      '${date.month.toString().padLeft(2, '0')}/'
-      '${date.day.toString().padLeft(2, '0')}';
-}
-
-// ============================================================
 // MONEY
 // ============================================================
 
@@ -675,9 +738,25 @@ int _toInt(dynamic value) {
     return value;
   }
 
-  if (value is double) {
+  if (value is num) {
     return value.toInt();
   }
 
   return int.tryParse(value.toString()) ?? 0;
+}
+
+// ============================================================
+// TO DOUBLE
+// ============================================================
+
+double _toDouble(dynamic value) {
+  if (value == null) {
+    return 0;
+  }
+
+  if (value is num) {
+    return value.toDouble();
+  }
+
+  return double.tryParse(value.toString()) ?? 0;
 }

@@ -1,848 +1,1093 @@
 import 'dart:math' as math;
 
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import 'package:tarazyar/consultant/companies/income/application/income_access_provider.dart';
+import 'package:tarazyar/consultant/companies/income/application/income_dashboard_provider.dart';
 import 'package:tarazyar/consultant/dashboard/presentation/widgets/company_scaffold.dart';
 
-import '../../application/income_dashboard_provider.dart';
+const Color _projectColor = Color(0xFF163A2B);
+const Color _projectColorLight = Color(0xFF245B45);
+const Color _projectColorSoft = Color(0xFFEAF2EE);
 
 class IncomeDashboardPage extends ConsumerWidget {
   final String companyId;
 
   const IncomeDashboardPage({super.key, required this.companyId});
 
-  // =====================================================
-  // اعداد فارسی
-  // =====================================================
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final dashboardAsync = ref.watch(incomeDashboardProvider(companyId));
 
-  String _toPersianDigits(String value) {
-    const english = '0123456789';
-    const persian = '۰۱۲۳۴۵۶۷۸۹';
+    return CompanyScaffold(
+      companyId: companyId,
+      currentRoute: '/consultant/companies/$companyId/income',
+      title: 'درآمد',
+      body: dashboardAsync.when(
+        loading:
+            () => const Center(
+              child: CircularProgressIndicator(color: _projectColor),
+            ),
+        error:
+            (error, stack) => _ErrorView(
+              error: error,
+              onRetry: () {
+                ref.invalidate(incomeDashboardProvider(companyId));
+              },
+            ),
+        data: (data) {
+          if (!data.hasFiscalYear) {
+            return _NoFiscalYearView(companyId: companyId);
+          }
 
-    var result = value;
-
-    for (var i = 0; i < english.length; i++) {
-      result = result.replaceAll(english[i], persian[i]);
-    }
-
-    return result;
-  }
-
-  // =====================================================
-  // فرمت مبلغ
-  // =====================================================
-
-  String _formatAmount(num value, {bool compact = false}) {
-    if (compact) {
-      if (value.abs() >= 1000000000) {
-        return '${_toPersianDigits((value / 1000000000).toStringAsFixed(1))} میلیارد';
-      }
-
-      if (value.abs() >= 1000000) {
-        return '${_toPersianDigits((value / 1000000).toStringAsFixed(1))} میلیون';
-      }
-
-      if (value.abs() >= 1000) {
-        return '${_toPersianDigits((value / 1000).toStringAsFixed(1))} هزار';
-      }
-    }
-
-    final number = value.toDouble();
-
-    final text =
-        number.truncateToDouble() == number
-            ? number.toStringAsFixed(0)
-            : number.toStringAsFixed(2);
-
-    final parts = text.split('.');
-
-    final integerPart = parts.first.replaceAllMapped(
-      RegExp(r'\B(?=(\d{3})+(?!\d))'),
-      (match) => ',',
+          return _DashboardContent(companyId: companyId, data: data);
+        },
+      ),
     );
-
-    final result = parts.length > 1 ? '$integerPart.${parts[1]}' : integerPart;
-
-    return _toPersianDigits(result);
   }
+}
 
-  String _formatPercent(double value) {
-    final fixed =
-        value.abs() >= 100
-            ? value.toStringAsFixed(0)
-            : value.toStringAsFixed(1);
+class _DashboardContent extends ConsumerWidget {
+  final String companyId;
+  final IncomeDashboardData data;
 
-    return _toPersianDigits(fixed);
+  const _DashboardContent({required this.companyId, required this.data});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final accessAsync = ref.watch(incomeAccessProvider(companyId));
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: RefreshIndicator(
+        color: _projectColor,
+        onRefresh: () async {
+          ref.invalidate(incomeDashboardProvider(companyId));
+
+          await ref.read(incomeDashboardProvider(companyId).future);
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(26, 22, 26, 30),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _DashboardHeader(
+                data: data,
+                companyId: companyId,
+                accessAsync: accessAsync,
+              ),
+              const SizedBox(height: 18),
+              _TopSummary(data: data),
+              const SizedBox(height: 18),
+              _ChartsGrid(data: data),
+              const SizedBox(height: 18),
+              _ReceivablesSection(data: data),
+            ],
+          ),
+        ),
+      ),
+    );
   }
+}
 
-  // =====================================================
-  // کارت KPI
-  // =====================================================
+class _DashboardHeader extends StatelessWidget {
+  final IncomeDashboardData data;
+  final String companyId;
+  final AsyncValue<IncomeAccess> accessAsync;
 
-  Widget _kpiCard({
-    required BuildContext context,
-    required String title,
-    required String value,
-    required String subtitle,
-    required IconData icon,
-    double? growth,
-  }) {
-    final theme = Theme.of(context);
+  const _DashboardHeader({
+    required this.data,
+    required this.companyId,
+    required this.accessAsync,
+  });
 
-    final hasGrowth = growth != null;
-    final positive = (growth ?? 0) >= 0;
+  @override
+  Widget build(BuildContext context) {
+    final canManage = accessAsync.valueOrNull?.canCreatePeriods == true;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      height: 84,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.grey.shade200),
+        gradient: const LinearGradient(
+          begin: Alignment.centerRight,
+          end: Alignment.centerLeft,
+          colors: [_projectColor, _projectColorLight],
+        ),
+        borderRadius: BorderRadius.circular(14),
         boxShadow: [
           BoxShadow(
-            blurRadius: 20,
-            offset: const Offset(0, 6),
-            color: Colors.black.withValues(alpha: 0.04),
+            color: _projectColor.withValues(alpha: .18),
+            blurRadius: 18,
+            offset: const Offset(0, 7),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Row(
         children: [
-          Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(13),
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: .13),
+              borderRadius: BorderRadius.circular(11),
+            ),
+            child: const Icon(
+              Icons.analytics_rounded,
+              color: Colors.white,
+              size: 22,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'داشبورد تحلیلی درآمد',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 18,
+                  ),
                 ),
-                child: Icon(icon, color: theme.colorScheme.primary),
+                const SizedBox(height: 4),
+                Text(
+                  'تمرکز بر تحلیل روندها، شناسایی نقاط ضعف و ارائه پیشنهادهای مدیریتی',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: .80),
+                    fontSize: 10,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: .13),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white.withValues(alpha: .10)),
+            ),
+            child: Text(
+              'سال مالی ${_fa((data.fiscalYear ?? 0).toString())}',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: 11,
               ),
-              const Spacer(),
-              if (hasGrowth)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color:
-                        positive
-                            ? Colors.green.withValues(alpha: 0.10)
-                            : Colors.red.withValues(alpha: 0.10),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        positive ? Icons.trending_up : Icons.trending_down,
-                        size: 14,
-                        color: positive ? Colors.green : Colors.red,
-                      ),
-                      const SizedBox(width: 3),
-                      Text(
-                        '${_formatPercent(growth!)}٪',
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                          color: positive ? Colors.green : Colors.red,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
+            ),
           ),
-          const SizedBox(height: 18),
-          Text(
-            title,
-            style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-          ),
-          const SizedBox(height: 7),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 21, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            subtitle,
-            style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
-          ),
+          if (canManage) ...[
+            const SizedBox(width: 8),
+            IconButton(
+              tooltip: 'مدیریت دوره‌های درآمد',
+              onPressed: () {
+                context.push('/consultant/companies/$companyId/income/periods');
+              },
+              icon: const Icon(
+                Icons.calendar_month_rounded,
+                color: Colors.white,
+              ),
+            ),
+          ],
         ],
       ),
     );
   }
+}
 
-  // =====================================================
-  // هدر نمودار
-  // =====================================================
+class _TopSummary extends StatelessWidget {
+  final IncomeDashboardData data;
 
-  Widget _chartHeader({
-    required BuildContext context,
-    required String title,
-    required String subtitle,
-    required IconData icon,
-  }) {
-    final theme = Theme.of(context);
+  const _TopSummary({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+
+        final count =
+            width >= 1000
+                ? 4
+                : width >= 650
+                ? 2
+                : 1;
+
+        const gap = 12.0;
+
+        final itemWidth = (width - ((count - 1) * gap)) / count;
+
+        final cards = [
+          _SummaryCard(
+            title: 'کل درآمد سال',
+            value: _money(data.totalIncome),
+            subtitle: 'درآمد شناسایی‌شده',
+            icon: Icons.account_balance_wallet_rounded,
+          ),
+          _SummaryCard(
+            title: 'درآمد عملیاتی',
+            value: _money(data.operationalIncome),
+            subtitle: 'از کل درآمد',
+            icon: Icons.trending_up_rounded,
+          ),
+          _SummaryCard(
+            title: 'درآمد غیرعملیاتی',
+            value: _money(data.nonOperationalIncome),
+            subtitle: 'از کل درآمد',
+            icon: Icons.category_rounded,
+          ),
+          _SummaryCard(
+            title: 'مانده دریافتنی',
+            value: _money(data.remainingReceivables),
+            subtitle: 'اسناد دریافت‌شده کسر شده',
+            icon: Icons.receipt_long_rounded,
+          ),
+        ];
+
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children:
+              cards
+                  .map((card) => SizedBox(width: itemWidth, child: card))
+                  .toList(),
+        );
+      },
+    );
+  }
+}
+
+class _ChartsGrid extends StatelessWidget {
+  final IncomeDashboardData data;
+
+  const _ChartsGrid({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+
+        final twoColumns = width >= 1050;
+
+        final chartWidth = twoColumns ? (width - 12) / 2 : width;
+
+        if (!twoColumns) {
+          return Column(
+            children: [
+              _TrendChart(data: data),
+              const SizedBox(height: 12),
+              _IncomeMixChart(data: data),
+              const SizedBox(height: 12),
+              _ComparisonChart(data: data),
+              const SizedBox(height: 12),
+              _ManagementAlerts(data: data),
+            ],
+          );
+        }
+
+        return Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          children: [
+            SizedBox(
+              width: chartWidth,
+              height: 330,
+              child: _TrendChart(data: data),
+            ),
+            SizedBox(
+              width: chartWidth,
+              height: 330,
+              child: _IncomeMixChart(data: data),
+            ),
+            SizedBox(
+              width: chartWidth,
+              height: 330,
+              child: _ComparisonChart(data: data),
+            ),
+            SizedBox(
+              width: chartWidth,
+              height: 330,
+              child: _ManagementAlerts(data: data),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _TrendChart extends StatelessWidget {
+  final IncomeDashboardData data;
+
+  const _TrendChart({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    final maxValue = data.months
+        .map((e) => e.totalIncome)
+        .fold<double>(
+          0.0,
+          (previous, value) => math.max(previous, value).toDouble(),
+        );
+
+    return _ChartCard(
+      title: 'تحلیل روند درآمد',
+      icon: Icons.bar_chart_rounded,
+      child: SizedBox(
+        height: 245,
+        child: _MonthlyBars(months: data.months, maxValue: maxValue),
+      ),
+    );
+  }
+}
+
+class _MonthlyBars extends StatelessWidget {
+  final List<IncomeDashboardMonth> months;
+  final double maxValue;
+
+  const _MonthlyBars({required this.months, required this.maxValue});
+
+  @override
+  Widget build(BuildContext context) {
+    final safeMax = maxValue <= 0 ? 1.0 : maxValue;
 
     return Row(
-      children: [
-        Container(
-          width: 42,
-          height: 42,
-          decoration: BoxDecoration(
-            color: theme.colorScheme.primary.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(icon, color: theme.colorScheme.primary),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children:
+          months.map((month) {
+            final value = month.totalIncome;
+
+            final ratio = (value / safeMax).clamp(0.0, 1.0).toDouble();
+
+            final barHeight = math.max(4.0, ratio * 150.0).toDouble();
+
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 3),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    SizedBox(
+                      height: 25,
+                      child:
+                          value > 0
+                              ? FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  _compactMoney(value),
+                                  style: const TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              )
+                              : null,
+                    ),
+                    const SizedBox(height: 4),
+                    Expanded(
+                      child: Align(
+                        alignment: Alignment.bottomCenter,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          width: 21,
+                          height: barHeight,
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              begin: Alignment.bottomCenter,
+                              end: Alignment.topCenter,
+                              colors: [Color(0xFF245B45), Color(0xFF4D9272)],
+                            ),
+                            borderRadius: const BorderRadius.vertical(
+                              top: Radius.circular(5),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 7),
+                    Text(
+                      _shortMonth(month.title),
+                      style: TextStyle(
+                        fontSize: 8,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
+            );
+          }).toList(),
+    );
+  }
+}
+
+class _IncomeMixChart extends StatelessWidget {
+  final IncomeDashboardData data;
+
+  const _IncomeMixChart({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    final categories = [...data.categoryTotals]
+      ..sort((a, b) => b.amount.compareTo(a.amount));
+
+    return _ChartCard(
+      title: 'تحلیل سهم سرفصل‌ها',
+      icon: Icons.donut_large_rounded,
+      child: SizedBox(
+        height: 245,
+        child:
+            categories.isEmpty
+                ? const _EmptyChart(
+                  text: 'هنوز درآمدی برای تحلیل سرفصل‌ها ثبت نشده است',
+                )
+                : Row(
+                  children: [
+                    Expanded(
+                      flex: 5,
+                      child: Center(
+                        child: SizedBox(
+                          width: 165,
+                          height: 165,
+                          child: _DonutChart(
+                            categories: categories,
+                            total: data.totalIncome,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      flex: 5,
+                      child: ListView.separated(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        itemCount: categories.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 6),
+                        itemBuilder: (context, index) {
+                          final item = categories[index];
+
+                          final percent =
+                              data.totalIncome <= 0
+                                  ? 0.0
+                                  : (item.amount / data.totalIncome) * 100;
+
+                          return Row(
+                            children: [
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color:
+                                      _chartColors[index % _chartColors.length],
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                child: Text(
+                                  item.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(fontSize: 9),
+                                ),
+                              ),
+                              Text(
+                                '${_fa(percent.toStringAsFixed(1))}٪',
+                                style: const TextStyle(
+                                  fontSize: 8,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+      ),
+    );
+  }
+}
+
+class _DonutChart extends StatelessWidget {
+  final List<IncomeCategoryTotal> categories;
+  final double total;
+
+  const _DonutChart({required this.categories, required this.total});
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      painter: _DonutPainter(categories: categories, total: total),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              _compactMoney(total),
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              'مجموع درآمد',
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 8),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DonutPainter extends CustomPainter {
+  final List<IncomeCategoryTotal> categories;
+  final double total;
+
+  _DonutPainter({required this.categories, required this.total});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+
+    final radius = math.min(size.width, size.height) / 2;
+
+    final rect = Rect.fromCircle(center: center, radius: radius);
+
+    final paint =
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 25
+          ..strokeCap = StrokeCap.butt;
+
+    double start = -math.pi / 2;
+
+    if (total <= 0) {
+      paint.color = Colors.grey.shade300;
+
+      canvas.drawArc(rect, 0, math.pi * 2, false, paint);
+
+      return;
+    }
+
+    for (int i = 0; i < categories.length; i++) {
+      final item = categories[i];
+
+      final sweep = (item.amount / total) * math.pi * 2;
+
+      paint.color = _chartColors[i % _chartColors.length];
+
+      canvas.drawArc(rect, start, sweep, false, paint);
+
+      start += sweep;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DonutPainter oldDelegate) {
+    return oldDelegate.categories != categories || oldDelegate.total != total;
+  }
+}
+
+class _ComparisonChart extends StatelessWidget {
+  final IncomeDashboardData data;
+
+  const _ComparisonChart({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    final current = data.currentMonth;
+
+    final previous = data.previousMonth;
+
+    return _ChartCard(
+      title: 'مقایسه رشد درآمد و دریافتنی‌ها',
+      icon: Icons.compare_arrows_rounded,
+      child: SizedBox(
+        height: 245,
+        child:
+            current == null
+                ? const _EmptyChart(text: 'اطلاعات ماه جاری در دسترس نیست')
+                : _ComparisonBars(current: current, previous: previous),
+      ),
+    );
+  }
+}
+
+class _ComparisonBars extends StatelessWidget {
+  final IncomeDashboardMonth current;
+  final IncomeDashboardMonth? previous;
+
+  const _ComparisonBars({required this.current, required this.previous});
+
+  @override
+  Widget build(BuildContext context) {
+    final maxValue = [
+      current.totalIncome,
+      current.receivables,
+      previous?.totalIncome ?? 0.0,
+      previous?.receivables ?? 0.0,
+    ].fold<double>(
+      0.0,
+      (previousValue, value) => math.max(previousValue, value).toDouble(),
+    );
+
+    final safeMax = maxValue <= 0 ? 1.0 : maxValue;
+
+    return Column(
+      children: [
+        Expanded(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _ComparisonGroup(
+                title: previous?.title ?? 'ماه قبل',
+                income: previous?.totalIncome ?? 0.0,
+                receivables: previous?.receivables ?? 0.0,
+                maxValue: safeMax,
+              ),
+              _ComparisonGroup(
+                title: current.title,
+                income: current.totalIncome,
+                receivables: current.receivables,
+                maxValue: safeMax,
               ),
             ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _LegendDot(color: Color(0xFF245B45), text: 'درآمد'),
+            SizedBox(width: 18),
+            _LegendDot(color: Color(0xFF78909C), text: 'دریافتنی'),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _ComparisonGroup extends StatelessWidget {
+  final String title;
+  final double income;
+  final double receivables;
+  final double maxValue;
+
+  const _ComparisonGroup({
+    required this.title,
+    required this.income,
+    required this.receivables,
+    required this.maxValue,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        SizedBox(
+          height: 165,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              _SmallBar(
+                value: income,
+                maxValue: maxValue,
+                color: const Color(0xFF245B45),
+              ),
+              const SizedBox(width: 8),
+              _SmallBar(
+                value: receivables,
+                maxValue: maxValue,
+                color: const Color(0xFF78909C),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 7),
+        Text(
+          title,
+          style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700),
+        ),
+      ],
+    );
+  }
+}
+
+class _SmallBar extends StatelessWidget {
+  final double value;
+  final double maxValue;
+  final Color color;
+
+  const _SmallBar({
+    required this.value,
+    required this.maxValue,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final ratio = (value / maxValue).clamp(0.0, 1.0).toDouble();
+
+    final height = math.max(4.0, ratio * 135.0).toDouble();
+
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Text(
+          _compactMoney(value),
+          style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 3),
+        Container(
+          width: 25,
+          height: height,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(5)),
           ),
         ),
       ],
     );
   }
+}
 
-  // =====================================================
-  // نمودار روند درآمد
-  // =====================================================
+class _ManagementAlerts extends StatelessWidget {
+  final IncomeDashboardData data;
 
-  Widget _buildIncomeTrendChart(
-    BuildContext context,
-    IncomeDashboardData data,
-  ) {
-    final monthly = data.monthlyData;
+  const _ManagementAlerts({required this.data});
 
-    double maxValue = 0;
+  @override
+  Widget build(BuildContext context) {
+    final alerts = _buildAlerts(data);
 
-    for (final month in monthly) {
-      maxValue = math.max(maxValue, month.amount);
-    }
+    return _ChartCard(
+      title: 'هشدارهای مدیریتی',
+      icon: Icons.warning_amber_rounded,
+      titleColor: alerts.isNotEmpty ? const Color(0xFFD32F2F) : null,
+      child: SizedBox(
+        height: 245,
+        child:
+            alerts.isEmpty
+                ? const _EmptyChart(
+                  text: 'در حال حاضر هشدار مدیریتی فعالی وجود ندارد',
+                )
+                : ListView.separated(
+                  padding: const EdgeInsets.symmetric(vertical: 5),
+                  itemCount: alerts.length,
+                  separatorBuilder: (_, __) => const Divider(height: 16),
+                  itemBuilder: (context, index) {
+                    final alert = alerts[index];
 
-    if (maxValue <= 0) {
-      maxValue = 100;
-    }
-
-    // کمی فضا بالای نمودار
-    final chartMax = maxValue * 1.15;
-
-    return Container(
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        children: [
-          _chartHeader(
-            context: context,
-            title: 'روند درآمد',
-            subtitle: 'مبلغ واقعی درآمد در ۶ ماه شمسی اخیر',
-            icon: Icons.show_chart,
-          ),
-          const SizedBox(height: 30),
-          SizedBox(
-            height: 330,
-            child: LineChart(
-              LineChartData(
-                minY: 0,
-                maxY: chartMax,
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  horizontalInterval: chartMax / 4,
-                  getDrawingHorizontalLine: (value) {
-                    return FlLine(
-                      color: Colors.grey.withValues(alpha: 0.12),
-                      strokeWidth: 1,
-                    );
-                  },
-                ),
-                borderData: FlBorderData(show: false),
-                titlesData: FlTitlesData(
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 72,
-                      interval: chartMax / 4,
-                      getTitlesWidget: (value, meta) {
-                        return Text(
-                          _formatChartAmount(value),
-                          style: TextStyle(
-                            color: Colors.grey.shade500,
-                            fontSize: 10,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 38,
-                      getTitlesWidget: (value, meta) {
-                        final index = value.toInt();
-
-                        if (index < 0 || index >= monthly.length) {
-                          return const SizedBox();
-                        }
-
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 10),
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(alert.icon, size: 18, color: alert.color),
+                        const SizedBox(width: 9),
+                        Expanded(
                           child: Text(
-                            monthly[index].label,
-                            style: TextStyle(
-                              color: Colors.grey.shade600,
-                              fontSize: 11,
-                            ),
+                            alert.text,
+                            style: const TextStyle(fontSize: 10, height: 1.6),
                           ),
-                        );
-                      },
-                    ),
-                  ),
-                ),
-                lineTouchData: LineTouchData(
-                  enabled: true,
-                  touchTooltipData: LineTouchTooltipData(
-                    getTooltipItems: (spots) {
-                      return spots.map((spot) {
-                        final index = spot.x.toInt();
-
-                        if (index < 0 || index >= monthly.length) {
-                          return null;
-                        }
-
-                        final month = monthly[index];
-
-                        return LineTooltipItem(
-                          '${month.label}\n'
-                          '${_formatAmount(month.amount)} ریال',
-                          const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        );
-                      }).toList();
-                    },
-                  ),
-                ),
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: [
-                      for (int i = 0; i < monthly.length; i++)
-                        FlSpot(i.toDouble(), monthly[i].amount),
-                    ],
-                    isCurved: true,
-                    curveSmoothness: 0.25,
-                    barWidth: 3.5,
-                    isStrokeCapRound: true,
-                    dotData: FlDotData(
-                      show: true,
-                      getDotPainter: (spot, percent, bar, index) {
-                        return FlDotCirclePainter(
-                          radius: 4,
-                          color: Theme.of(context).colorScheme.primary,
-                          strokeWidth: 2,
-                          strokeColor: Colors.white,
-                        );
-                      },
-                    ),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Theme.of(
-                            context,
-                          ).colorScheme.primary.withValues(alpha: 0.16),
-                          Theme.of(
-                            context,
-                          ).colorScheme.primary.withValues(alpha: 0.01),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _formatChartAmount(double value) {
-    if (value.abs() >= 1000000000) {
-      return _toPersianDigits('${(value / 1000000000).toStringAsFixed(1)}B');
-    }
-
-    if (value.abs() >= 1000000) {
-      return _toPersianDigits('${(value / 1000000).toStringAsFixed(0)}M');
-    }
-
-    if (value.abs() >= 1000) {
-      return _toPersianDigits('${(value / 1000).toStringAsFixed(0)}K');
-    }
-
-    return _toPersianDigits(value.toStringAsFixed(0));
-  }
-
-  // =====================================================
-  // نمودار وضعیت
-  // =====================================================
-
-  Widget _buildStatusChart(BuildContext context, IncomeDashboardData data) {
-    final sections = <PieChartSectionData>[];
-
-    if (data.receivedIncome > 0) {
-      sections.add(
-        PieChartSectionData(
-          value: data.receivedIncome,
-          title: '${_formatPercent(data.receivedPercentage)}٪',
-          radius: 62,
-          titleStyle: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-      );
-    }
-
-    if (data.pendingIncome > 0) {
-      sections.add(
-        PieChartSectionData(
-          value: data.pendingIncome,
-          title: '${_formatPercent(data.pendingPercentage)}٪',
-          radius: 62,
-          titleStyle: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-      );
-    }
-
-    if (data.cancelledIncome > 0) {
-      sections.add(
-        PieChartSectionData(
-          value: data.cancelledIncome,
-          title: '${_formatPercent(data.cancelledPercentage)}٪',
-          radius: 62,
-          titleStyle: const TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _chartHeader(
-            context: context,
-            title: 'وضعیت درآمدها',
-            subtitle: 'توزیع درآمد بر اساس وضعیت',
-            icon: Icons.pie_chart_outline,
-          ),
-          const SizedBox(height: 25),
-          SizedBox(
-            height: 220,
-            child:
-                sections.isEmpty
-                    ? const Center(child: Text('داده‌ای برای نمایش وجود ندارد'))
-                    : PieChart(
-                      PieChartData(
-                        sections: sections,
-                        centerSpaceRadius: 55,
-                        sectionsSpace: 3,
-                      ),
-                    ),
-          ),
-          const SizedBox(height: 12),
-          _legendItem(
-            context,
-            'دریافت شده',
-            data.receivedIncome,
-            data.totalIncome,
-          ),
-          _legendItem(
-            context,
-            'در انتظار',
-            data.pendingIncome,
-            data.totalIncome,
-          ),
-          _legendItem(
-            context,
-            'لغو شده',
-            data.cancelledIncome,
-            data.totalIncome,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _legendItem(
-    BuildContext context,
-    String title,
-    double amount,
-    double total,
-  ) {
-    final percentage = total <= 0 ? 0 : amount / total;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          Container(
-            width: 9,
-            height: 9,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: _legendColor(title),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(child: Text(title, style: const TextStyle(fontSize: 12))),
-          Text(
-            '${_formatAmount(amount)} ریال',
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            '${_formatPercent(percentage * 100)}٪',
-            style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Color _legendColor(String title) {
-    if (title == 'دریافت شده') {
-      return Colors.green;
-    }
-
-    if (title == 'در انتظار') {
-      return Colors.orange;
-    }
-
-    return Colors.red;
-  }
-
-  // =====================================================
-  // مقایسه ماه جاری و قبل
-  // =====================================================
-
-  Widget _buildMonthComparison(BuildContext context, IncomeDashboardData data) {
-    final maxValue = math.max(
-      data.currentMonthIncome,
-      data.previousMonthIncome,
-    );
-
-    final safeMax = maxValue <= 0 ? 1 : maxValue;
-
-    return Container(
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _chartHeader(
-            context: context,
-            title: 'مقایسه درآمد ماهانه',
-            subtitle: 'ماه جاری در برابر ماه قبل',
-            icon: Icons.bar_chart,
-          ),
-          const SizedBox(height: 30),
-          SizedBox(
-            height: 280,
-            child: BarChart(
-              BarChartData(
-                maxY: safeMax * 1.25,
-                minY: 0,
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  getDrawingHorizontalLine: (value) {
-                    return FlLine(
-                      color: Colors.grey.withValues(alpha: 0.12),
-                      strokeWidth: 1,
+                        ),
+                      ],
                     );
                   },
                 ),
-                borderData: FlBorderData(show: false),
-                titlesData: FlTitlesData(
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 65,
-                      getTitlesWidget: (value, meta) {
-                        return Text(
-                          _formatChartAmount(value),
-                          style: TextStyle(
-                            color: Colors.grey.shade500,
-                            fontSize: 9,
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 38,
-                      getTitlesWidget: (value, meta) {
-                        if (value == 0) {
-                          return Text(
-                            data.previousMonthName,
-                            style: const TextStyle(fontSize: 11),
-                          );
-                        }
+      ),
+    );
+  }
+}
 
-                        if (value == 1) {
-                          return Text(
-                            data.currentMonthName,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          );
-                        }
+List<_DashboardAlert> _buildAlerts(IncomeDashboardData data) {
+  final result = <_DashboardAlert>[];
 
-                        return const SizedBox();
-                      },
-                    ),
-                  ),
+  final current = data.currentMonth;
+
+  if (current != null && current.isEmpty) {
+    result.add(
+      const _DashboardAlert(
+        text: 'درآمد ماه جاری هنوز ثبت نشده است.',
+        icon: Icons.calendar_today_rounded,
+        color: Color(0xFFE53935),
+      ),
+    );
+  }
+
+  if (data.remainingReceivables > 0) {
+    result.add(
+      const _DashboardAlert(
+        text: 'بخشی از درآمد ثبت‌شده هنوز دریافت نشده است.',
+        icon: Icons.account_balance_wallet_rounded,
+        color: Color(0xFFFF9800),
+      ),
+    );
+  }
+
+  if (current != null && current.totalIncome > 0 && current.receivables <= 0) {
+    result.add(
+      const _DashboardAlert(
+        text: 'برای درآمد ماه جاری حساب دریافتنی ثبت نشده است.',
+        icon: Icons.info_outline_rounded,
+        color: Color(0xFFFF9800),
+      ),
+    );
+  }
+
+  if (current?.isClosed == true) {
+    result.add(
+      const _DashboardAlert(
+        text: 'دوره ماه جاری بسته شده است.',
+        icon: Icons.lock_rounded,
+        color: Color(0xFFF9A825),
+      ),
+    );
+  }
+
+  if (data.completedMonths < 12) {
+    result.add(
+      _DashboardAlert(
+        text:
+            '${_fa((12 - data.completedMonths).toString())} ماه سال مالی هنوز ثبت درآمد یا دریافتنی ندارد.',
+        icon: Icons.pending_actions_rounded,
+        color: const Color(0xFFFF9800),
+      ),
+    );
+  }
+
+  return result;
+}
+
+class _DashboardAlert {
+  final String text;
+  final IconData icon;
+  final Color color;
+
+  const _DashboardAlert({
+    required this.text,
+    required this.icon,
+    required this.color,
+  });
+}
+
+class _ReceivablesSection extends StatelessWidget {
+  final IncomeDashboardData data;
+
+  const _ReceivablesSection({required this.data});
+
+  @override
+  Widget build(BuildContext context) {
+    final total = data.totalReceivables;
+
+    final received = data.totalReceivedDocuments;
+
+    final percent =
+        total <= 0 ? 0.0 : (received / total).clamp(0.0, 1.0).toDouble();
+
+    return _ChartCard(
+      title: 'وضعیت حساب‌های دریافتنی',
+      icon: Icons.receipt_long_rounded,
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: _ReceivableMetric(
+                  title: 'کل دریافتنی',
+                  value: _money(total),
                 ),
-                barGroups: [
-                  BarChartGroupData(
-                    x: 0,
-                    barRods: [
-                      BarChartRodData(
-                        toY: data.previousMonthIncome,
-                        width: 45,
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(8),
-                        ),
-                      ),
-                    ],
-                  ),
-                  BarChartGroupData(
-                    x: 1,
-                    barRods: [
-                      BarChartRodData(
-                        toY: data.currentMonthIncome,
-                        width: 45,
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(8),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-                barTouchData: BarTouchData(
-                  enabled: true,
-                  touchTooltipData: BarTouchTooltipData(
-                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                      final label =
-                          groupIndex == 0
-                              ? data.previousMonthName
-                              : data.currentMonthName;
+              ),
+              Expanded(
+                child: _ReceivableMetric(
+                  title: 'دریافت‌شده',
+                  value: _money(received),
+                ),
+              ),
+              Expanded(
+                child: _ReceivableMetric(
+                  title: 'مانده',
+                  value: _money(data.remainingReceivables),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              value: percent,
+              minHeight: 9,
+              color: _projectColorLight,
+              backgroundColor: _projectColorSoft,
+            ),
+          ),
+          const SizedBox(height: 7),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              '${_fa((percent * 100).toStringAsFixed(1))}٪ دریافت شده',
+              style: TextStyle(color: Colors.grey.shade600, fontSize: 10),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
-                      return BarTooltipItem(
-                        '$label\n'
-                        '${_formatAmount(rod.toY)} ریال',
-                        const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                        ),
-                      );
-                    },
+class _ReceivableMetric extends StatelessWidget {
+  final String title;
+  final String value;
+
+  const _ReceivableMetric({required this.title, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(color: Colors.grey.shade600, fontSize: 10),
+        ),
+        const SizedBox(height: 5),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
+        ),
+      ],
+    );
+  }
+}
+
+class _ChartCard extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final Widget child;
+  final Color? titleColor;
+
+  const _ChartCard({
+    required this.title,
+    required this.icon,
+    required this.child,
+    this.titleColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFDCE6F2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: .035),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(
+                icon,
+                size: 17,
+                color: titleColor ?? const Color(0xFF315A91),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: titleColor ?? const Color(0xFF315A91),
+                    fontWeight: FontWeight.w900,
+                    fontSize: 12,
                   ),
                 ),
               ),
-            ),
+            ],
           ),
+          const SizedBox(height: 8),
+          child,
         ],
       ),
     );
   }
+}
 
-  // =====================================================
-  // هشدارهای مدیریتی
-  // =====================================================
+class _SummaryCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final String subtitle;
+  final IconData icon;
 
-  Widget _buildWarnings(BuildContext context, IncomeDashboardData data) {
-    final warnings = <Widget>[];
+  const _SummaryCard({
+    required this.title,
+    required this.value,
+    required this.subtitle,
+    required this.icon,
+  });
 
-    if (data.pendingIncome > 0) {
-      warnings.add(
-        _warningItem(
-          context,
-          icon: Icons.access_time,
-          title: 'درآمدهای در انتظار دریافت',
-          description:
-              '${_formatAmount(data.pendingIncome)} ریال هنوز دریافت نشده است.',
-          iconColor: Colors.orange,
-        ),
-      );
-    }
-
-    if (data.monthGrowthPercentage < 0) {
-      warnings.add(
-        _warningItem(
-          context,
-          icon: Icons.trending_down,
-          title: 'کاهش درآمد ماه جاری',
-          description: 'درآمد ماه جاری نسبت به ماه قبل کاهش داشته است.',
-          iconColor: Colors.red,
-        ),
-      );
-    }
-
-    if (data.cancelledIncome > 0) {
-      warnings.add(
-        _warningItem(
-          context,
-          icon: Icons.cancel_outlined,
-          title: 'درآمدهای لغو شده',
-          description:
-              '${_formatAmount(data.cancelledIncome)} ریال درآمد لغو شده ثبت شده است.',
-          iconColor: Colors.red,
-        ),
-      );
-    }
-
-    if (warnings.isEmpty) {
-      warnings.add(
-        _warningItem(
-          context,
-          icon: Icons.check_circle_outline,
-          title: 'وضعیت مناسب',
-          description: 'مورد مهمی برای پیگیری در اطلاعات درآمد ثبت نشده است.',
-          iconColor: Colors.green,
-        ),
-      );
-    }
-
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _chartHeader(
-            context: context,
-            title: 'هشدارهای مدیریتی',
-            subtitle: 'موارد مهم قابل پیگیری',
-            icon: Icons.notifications_active_outlined,
-          ),
-          const SizedBox(height: 15),
-          ...warnings,
-        ],
-      ),
-    );
-  }
-
-  Widget _warningItem(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String description,
-    required Color iconColor,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14),
-      decoration: BoxDecoration(
-        border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE1E7F0)),
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 38,
-            height: 38,
+            width: 42,
+            height: 42,
             decoration: BoxDecoration(
-              color: iconColor.withValues(alpha: 0.10),
-              shape: BoxShape.circle,
+              color: _projectColor.withValues(alpha: .08),
+              borderRadius: BorderRadius.circular(11),
             ),
-            child: Icon(icon, size: 20, color: iconColor),
+            child: Icon(icon, size: 20, color: _projectColor),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   title,
+                  style: TextStyle(color: Colors.grey.shade600, fontSize: 10),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 13,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(height: 5),
+                const SizedBox(height: 2),
                 Text(
-                  description,
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 11,
-                    height: 1.6,
-                  ),
+                  subtitle,
+                  style: TextStyle(color: Colors.grey.shade500, fontSize: 9),
                 ),
               ],
             ),
@@ -851,318 +1096,236 @@ class IncomeDashboardPage extends ConsumerWidget {
       ),
     );
   }
+}
 
-  // =====================================================
-  // Insights
-  // =====================================================
+class _LegendDot extends StatelessWidget {
+  final Color color;
+  final String text;
 
-  Widget _buildInsights(BuildContext context, IncomeDashboardData data) {
-    final topCategory =
-        data.categoryData.isNotEmpty ? data.categoryData.first : null;
-
-    return Container(
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _chartHeader(
-            context: context,
-            title: 'خلاصه مدیریتی',
-            subtitle: 'برداشت سریع از وضعیت درآمد',
-            icon: Icons.insights_outlined,
-          ),
-          const SizedBox(height: 20),
-          _insightRow(
-            'کل درآمد ثبت شده',
-            '${_formatAmount(data.totalIncome)} ریال',
-          ),
-          _insightRow(
-            'تعداد درآمدها',
-            _toPersianDigits(data.totalCount.toString()),
-          ),
-          _insightRow(
-            'دریافت شده',
-            '${_formatAmount(data.receivedIncome)} ریال',
-          ),
-          _insightRow(
-            'در انتظار دریافت',
-            '${_formatAmount(data.pendingIncome)} ریال',
-          ),
-          if (topCategory != null)
-            _insightRow('بیشترین دسته‌بندی', topCategory.name),
-        ],
-      ),
-    );
-  }
-
-  Widget _insightRow(String title, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 9),
-      child: Row(
-        children: [
-          Expanded(child: Text(title, style: const TextStyle(fontSize: 12))),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // =====================================================
-  // Build
-  // =====================================================
+  const _LegendDot({required this.color, required this.text});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final dashboardAsync = ref.watch(incomeDashboardProvider(companyId));
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 5),
+        Text(text, style: const TextStyle(fontSize: 9)),
+      ],
+    );
+  }
+}
 
-    return CompanyScaffold(
-      companyId: companyId,
-      title: 'داشبورد درآمد',
-      currentRoute: '/consultant/companies/$companyId/income',
-      body: Directionality(
-        textDirection: TextDirection.rtl,
-        child: dashboardAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, stack) {
-            return Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.error_outline, size: 55),
-                  const SizedBox(height: 15),
-                  const Text(
-                    'خطا در دریافت اطلاعات داشبورد',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(error.toString(), textAlign: TextAlign.center),
-                  const SizedBox(height: 18),
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      ref.invalidate(incomeDashboardProvider(companyId));
-                    },
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('تلاش مجدد'),
-                  ),
-                ],
-              ),
-            );
-          },
-          data: (data) {
-            return RefreshIndicator(
-              onRefresh: () async {
-                ref.invalidate(incomeDashboardProvider(companyId));
+class _EmptyChart extends StatelessWidget {
+  final String text;
 
-                await ref.read(incomeDashboardProvider(companyId).future);
-              },
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.all(22),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // =========================
-                    // عنوان
-                    // =========================
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'داشبورد درآمد',
-                                style: TextStyle(
-                                  fontSize: 25,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 5),
-                              Text(
-                                'تحلیل و بررسی عملکرد درآمد شرکت',
-                                style: TextStyle(color: Colors.grey.shade600),
-                              ),
-                            ],
-                          ),
-                        ),
-                        IconButton(
-                          tooltip: 'به‌روزرسانی',
-                          onPressed: () {
-                            ref.invalidate(incomeDashboardProvider(companyId));
-                          },
-                          icon: const Icon(Icons.refresh),
-                        ),
-                      ],
-                    ),
+  const _EmptyChart({required this.text});
 
-                    const SizedBox(height: 22),
-
-                    // =========================
-                    // KPI
-                    // =========================
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final width = constraints.maxWidth;
-
-                        final columns =
-                            width >= 1200
-                                ? 4
-                                : width >= 750
-                                ? 2
-                                : 1;
-
-                        final spacing = 14.0;
-
-                        final itemWidth =
-                            columns == 1
-                                ? width
-                                : (width - ((columns - 1) * spacing)) / columns;
-
-                        return Wrap(
-                          spacing: spacing,
-                          runSpacing: spacing,
-                          children: [
-                            SizedBox(
-                              width: itemWidth,
-                              child: _kpiCard(
-                                context: context,
-                                title: 'کل درآمد',
-                                value:
-                                    '${_formatAmount(data.totalIncome)} ریال',
-                                subtitle:
-                                    '${_toPersianDigits(data.totalCount.toString())} ثبت درآمد',
-                                icon: Icons.account_balance_wallet_outlined,
-                              ),
-                            ),
-                            SizedBox(
-                              width: itemWidth,
-                              child: _kpiCard(
-                                context: context,
-                                title: 'دریافت شده',
-                                value:
-                                    '${_formatAmount(data.receivedIncome)} ریال',
-                                subtitle:
-                                    '${_formatPercent(data.receivedPercentage)}٪ از کل درآمد',
-                                icon: Icons.payments_outlined,
-                                growth: data.receivedGrowthPercentage,
-                              ),
-                            ),
-                            SizedBox(
-                              width: itemWidth,
-                              child: _kpiCard(
-                                context: context,
-                                title: 'در انتظار دریافت',
-                                value:
-                                    '${_formatAmount(data.pendingIncome)} ریال',
-                                subtitle:
-                                    '${_formatPercent(data.pendingPercentage)}٪ از کل درآمد',
-                                icon: Icons.access_time_outlined,
-                              ),
-                            ),
-                            SizedBox(
-                              width: itemWidth,
-                              child: _kpiCard(
-                                context: context,
-                                title: 'درآمد امروز',
-                                value:
-                                    '${_formatAmount(data.todayIncome)} ریال',
-                                subtitle: 'ثبت شده در امروز',
-                                icon: Icons.today_outlined,
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    // =========================
-                    // نمودار + هشدار
-                    // =========================
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final wide = constraints.maxWidth >= 1000;
-
-                        if (wide) {
-                          return Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(
-                                flex: 3,
-                                child: _buildIncomeTrendChart(context, data),
-                              ),
-                              const SizedBox(width: 18),
-                              Expanded(
-                                flex: 2,
-                                child: _buildWarnings(context, data),
-                              ),
-                            ],
-                          );
-                        }
-
-                        return Column(
-                          children: [
-                            _buildIncomeTrendChart(context, data),
-                            const SizedBox(height: 18),
-                            _buildWarnings(context, data),
-                          ],
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    // =========================
-                    // وضعیت + مقایسه
-                    // =========================
-                    LayoutBuilder(
-                      builder: (context, constraints) {
-                        final wide = constraints.maxWidth >= 1000;
-
-                        if (wide) {
-                          return Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Expanded(child: _buildStatusChart(context, data)),
-                              const SizedBox(width: 18),
-                              Expanded(
-                                child: _buildMonthComparison(context, data),
-                              ),
-                            ],
-                          );
-                        }
-
-                        return Column(
-                          children: [
-                            _buildStatusChart(context, data),
-                            const SizedBox(height: 18),
-                            _buildMonthComparison(context, data),
-                          ],
-                        );
-                      },
-                    ),
-
-                    const SizedBox(height: 18),
-
-                    _buildInsights(context, data),
-
-                    const SizedBox(height: 30),
-                  ],
-                ),
-              ),
-            );
-          },
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.insert_chart_outlined_rounded,
+              size: 38,
+              color: Colors.grey.shade300,
+            ),
+            const SizedBox(height: 9),
+            Text(
+              text,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey.shade500, fontSize: 10),
+            ),
+          ],
         ),
       ),
     );
   }
+}
+
+class _NoFiscalYearView extends StatelessWidget {
+  final String companyId;
+
+  const _NoFiscalYearView({required this.companyId});
+
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Card(
+            elevation: 0,
+            child: Padding(
+              padding: const EdgeInsets.all(30),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.calendar_month_rounded,
+                    size: 55,
+                    color: _projectColor,
+                  ),
+                  const SizedBox(height: 15),
+                  const Text(
+                    'هنوز سال مالی ایجاد نشده است',
+                    style: TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'ابتدا سال مالی را ایجاد کنید. سیستم ۱۲ ماه آن را به‌صورت خودکار ایجاد می‌کند.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey.shade600),
+                  ),
+                  const SizedBox(height: 20),
+                  FilledButton.icon(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: _projectColor,
+                    ),
+                    onPressed: () {
+                      context.push(
+                        '/consultant/companies/$companyId/income/periods',
+                      );
+                    },
+                    icon: const Icon(Icons.add_rounded),
+                    label: const Text('ایجاد سال مالی'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorView extends StatelessWidget {
+  final Object error;
+  final VoidCallback onRetry;
+
+  const _ErrorView({required this.error, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.error_outline_rounded,
+                size: 45,
+                color: Colors.red,
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'خطا در دریافت اطلاعات داشبورد',
+                style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                error.toString(),
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 11),
+              ),
+              const SizedBox(height: 18),
+              FilledButton.icon(
+                style: FilledButton.styleFrom(backgroundColor: _projectColor),
+                onPressed: onRetry,
+                icon: const Icon(Icons.refresh_rounded),
+                label: const Text('تلاش مجدد'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+const _chartColors = [
+  Color(0xFF245B45),
+  Color(0xFF4D9272),
+  Color(0xFF78909C),
+  Color(0xFF26A69A),
+  Color(0xFF66BB6A),
+  Color(0xFFFFB300),
+  Color(0xFFFF7043),
+  Color(0xFF7E57C2),
+];
+
+String _money(double value) {
+  return '${_formatNumber(value.round().toString())} ریال';
+}
+
+String _compactMoney(double value) {
+  if (value == 0) {
+    return '۰';
+  }
+
+  if (value.abs() >= 1000000000) {
+    return '${_fa((value / 1000000000).toStringAsFixed(1))}B';
+  }
+
+  if (value.abs() >= 1000000) {
+    return '${_fa((value / 1000000).toStringAsFixed(1))}M';
+  }
+
+  if (value.abs() >= 1000) {
+    return '${_fa((value / 1000).toStringAsFixed(1))}K';
+  }
+
+  return _fa(value.round().toString());
+}
+
+String _formatNumber(String value) {
+  final chars = value.split('');
+
+  final buffer = StringBuffer();
+
+  for (int i = 0; i < chars.length; i++) {
+    if (i > 0 && (chars.length - i) % 3 == 0) {
+      buffer.write(',');
+    }
+
+    buffer.write(chars[i]);
+  }
+
+  return _fa(buffer.toString());
+}
+
+String _shortMonth(String value) {
+  if (value.length <= 3) {
+    return value;
+  }
+
+  return value.substring(0, 3);
+}
+
+String _fa(String value) {
+  const en = '0123456789';
+
+  const fa = '۰۱۲۳۴۵۶۷۸۹';
+
+  var result = value;
+
+  for (int i = 0; i < en.length; i++) {
+    result = result.replaceAll(en[i], fa[i]);
+  }
+
+  return result;
 }

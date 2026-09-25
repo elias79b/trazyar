@@ -22,8 +22,6 @@ class CompanyScaffold extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final width = MediaQuery.sizeOf(context).width;
-
-    // همان breakpoint اصلی پنل شرکت
     final isDesktop = width >= 900;
 
     return Scaffold(
@@ -32,7 +30,6 @@ class CompanyScaffold extends ConsumerWidget {
         children: [
           if (isDesktop)
             CompanySidebar(companyId: companyId, currentRoute: currentRoute),
-
           Expanded(
             child: Column(
               children: [
@@ -103,7 +100,6 @@ class _CompanyTopBar extends StatelessWidget {
             ),
             const SizedBox(width: 8),
           ],
-
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -127,11 +123,8 @@ class _CompanyTopBar extends StatelessWidget {
               ],
             ),
           ),
-
           _CompanyAlertBell(companyId: companyId),
-
           const SizedBox(width: 10),
-
           Container(
             width: 42,
             height: 42,
@@ -169,22 +162,11 @@ class _CompanyAlertBellState extends ConsumerState<_CompanyAlertBell> {
 
   bool get _isOpen => _overlayEntry != null;
 
-  // ==========================================================
-  // DISPOSE
-  // ==========================================================
-
   @override
   void dispose() {
-    // مهم:
-    // هنگام dispose هرگز setState نمی‌کنیم.
     _removeOverlay(updateState: false);
-
     super.dispose();
   }
-
-  // ==========================================================
-  // TOGGLE
-  // ==========================================================
 
   void _toggle() {
     if (!mounted) {
@@ -197,10 +179,6 @@ class _CompanyAlertBellState extends ConsumerState<_CompanyAlertBell> {
       _showOverlay();
     }
   }
-
-  // ==========================================================
-  // SHOW OVERLAY
-  // ==========================================================
 
   void _showOverlay() {
     if (!mounted) {
@@ -240,17 +218,12 @@ class _CompanyAlertBellState extends ConsumerState<_CompanyAlertBell> {
 
         const popupWidth = 380.0;
 
-        // محاسبه موقعیت افقی به شکلی
-        // که پنل تا جای ممکن زیر زنگوله باشد
         final desiredRight = screenWidth - (position.dx + size.width);
 
         final right = desiredRight.clamp(10.0, screenWidth - popupWidth - 10.0);
 
         return Stack(
           children: [
-            // ------------------------------------------------
-            // BACKDROP
-            // ------------------------------------------------
             Positioned.fill(
               child: GestureDetector(
                 behavior: HitTestBehavior.translucent,
@@ -258,10 +231,6 @@ class _CompanyAlertBellState extends ConsumerState<_CompanyAlertBell> {
                 child: const SizedBox.expand(),
               ),
             ),
-
-            // ------------------------------------------------
-            // POPUP
-            // ------------------------------------------------
             Positioned(
               top: position.dy + size.height + 8,
               right: right,
@@ -288,10 +257,6 @@ class _CompanyAlertBellState extends ConsumerState<_CompanyAlertBell> {
     }
   }
 
-  // ==========================================================
-  // REMOVE OVERLAY
-  // ==========================================================
-
   void _removeOverlay({bool updateState = true}) {
     final entry = _overlayEntry;
 
@@ -300,20 +265,13 @@ class _CompanyAlertBellState extends ConsumerState<_CompanyAlertBell> {
     if (entry != null) {
       try {
         entry.remove();
-      } catch (_) {
-        // Overlay ممکن است قبلاً remove شده باشد.
-      }
+      } catch (_) {}
     }
 
-    // در dispose به هیچ وجه setState نکن.
     if (updateState && mounted) {
       setState(() {});
     }
   }
-
-  // ==========================================================
-  // BUILD
-  // ==========================================================
 
   @override
   Widget build(BuildContext context) {
@@ -340,7 +298,6 @@ class _CompanyAlertBellState extends ConsumerState<_CompanyAlertBell> {
               size: 24,
             ),
           ),
-
           if (alertCount > 0)
             Positioned(
               right: 3,
@@ -405,9 +362,6 @@ class _AlertPopup extends ConsumerWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // ==================================================
-            // HEADER
-            // ==================================================
             Padding(
               padding: const EdgeInsets.fromLTRB(18, 15, 12, 12),
               child: Row(
@@ -421,7 +375,6 @@ class _AlertPopup extends ConsumerWidget {
                       ),
                     ),
                   ),
-
                   IconButton(
                     onPressed: onClose,
                     tooltip: 'بستن',
@@ -430,12 +383,7 @@ class _AlertPopup extends ConsumerWidget {
                 ],
               ),
             ),
-
             Divider(height: 1, color: Colors.grey.shade200),
-
-            // ==================================================
-            // ALERTS
-            // ==================================================
             Flexible(
               child: alertsAsync.when(
                 loading: () {
@@ -444,7 +392,6 @@ class _AlertPopup extends ConsumerWidget {
                     child: Center(child: CircularProgressIndicator()),
                   );
                 },
-
                 error: (error, stackTrace) {
                   return SizedBox(
                     height: 180,
@@ -460,7 +407,6 @@ class _AlertPopup extends ConsumerWidget {
                     ),
                   );
                 },
-
                 data: (alerts) {
                   if (alerts.isEmpty) {
                     return const SizedBox(
@@ -508,7 +454,6 @@ class _AlertPopup extends ConsumerWidget {
                               context.go(alerts[i].route);
                             },
                           ),
-
                           if (i != alerts.length - 1) const SizedBox(height: 8),
                         ],
                       ],
@@ -517,12 +462,7 @@ class _AlertPopup extends ConsumerWidget {
                 },
               ),
             ),
-
             Divider(height: 1, color: Colors.grey.shade200),
-
-            // ==================================================
-            // FOOTER
-            // ==================================================
             Padding(
               padding: const EdgeInsets.all(12),
               child: SizedBox(
@@ -530,7 +470,6 @@ class _AlertPopup extends ConsumerWidget {
                 child: OutlinedButton.icon(
                   onPressed: () {
                     onClose();
-
                     context.go('/consultant/companies/$companyId/banking');
                   },
                   icon: const Icon(Icons.account_balance_rounded, size: 18),
@@ -580,11 +519,14 @@ class _AlertItem extends StatelessWidget {
       case CompanyAlertType.cashDiscrepancy:
         return Icons.point_of_sale_rounded;
 
-      case CompanyAlertType.overdueCheck:
-        return Icons.warning_amber_rounded;
+      case CompanyAlertType.pettyCashDiscrepancy:
+        return Icons.payments_outlined;
 
       case CompanyAlertType.upcomingCheck:
         return Icons.schedule_rounded;
+
+      case CompanyAlertType.overdueCheck:
+        return Icons.warning_amber_rounded;
 
       case CompanyAlertType.loan:
         return Icons.request_quote_rounded;
@@ -607,6 +549,25 @@ class _AlertItem extends StatelessWidget {
 
       case CompanyAlertType.payrollDraft:
         return Icons.edit_note_rounded;
+
+      // ========================================================
+      // INCOME
+      // ========================================================
+
+      case CompanyAlertType.incomeNoRecognition:
+        return Icons.pending_actions_rounded;
+
+      case CompanyAlertType.incomeReceivableWithoutRecognition:
+        return Icons.warning_amber_rounded;
+
+      case CompanyAlertType.incomeReceivableExceededRecognition:
+        return Icons.difference_rounded;
+
+      case CompanyAlertType.incomeUnreceivedReceivable:
+        return Icons.receipt_long_rounded;
+
+      case CompanyAlertType.incomeOpenPeriod:
+        return Icons.calendar_month_rounded;
     }
   }
 
@@ -639,9 +600,7 @@ class _AlertItem extends StatelessWidget {
                 ),
                 child: Icon(_icon, color: color, size: 19),
               ),
-
               const SizedBox(width: 10),
-
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -655,9 +614,7 @@ class _AlertItem extends StatelessWidget {
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-
                     const SizedBox(height: 4),
-
                     Text(
                       alert.description,
                       maxLines: 3,
@@ -671,9 +628,7 @@ class _AlertItem extends StatelessWidget {
                   ],
                 ),
               ),
-
               const SizedBox(width: 6),
-
               Icon(
                 Icons.chevron_left_rounded,
                 color: Colors.grey.shade500,

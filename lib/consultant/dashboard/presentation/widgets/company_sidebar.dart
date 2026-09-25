@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../application/company_provider.dart';
 
@@ -24,6 +25,20 @@ class _CompanySidebarState extends ConsumerState<CompanySidebar> {
   bool _incomeExpanded = false;
   bool _expenseExpanded = false;
 
+  bool _incomeActionLoading = false;
+  bool _expenseActionLoading = false;
+
+  String get _companyBase => '/consultant/companies/${widget.companyId}';
+
+  String get _bankingBase => '$_companyBase/banking';
+  String get _payrollBase => '$_companyBase/payroll';
+  String get _incomeBase => '$_companyBase/income';
+  String get _expenseBase => '$_companyBase/expenses';
+
+  String get _incomePeriodsRoute => '$_incomeBase/periods';
+  String get _expensePeriodsRoute => '$_expenseBase/periods';
+  String get _expenseReportsRoute => '$_expenseBase/reports';
+
   @override
   void initState() {
     super.initState();
@@ -38,20 +53,23 @@ class _CompanySidebarState extends ConsumerState<CompanySidebar> {
   void didUpdateWidget(covariant CompanySidebar oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (_isBankingRoute()) {
-      _bankingExpanded = true;
-    }
+    if (widget.companyId != oldWidget.companyId ||
+        widget.currentRoute != oldWidget.currentRoute) {
+      if (_isBankingRoute()) {
+        _bankingExpanded = true;
+      }
 
-    if (_isPayrollRoute()) {
-      _payrollExpanded = true;
-    }
+      if (_isPayrollRoute()) {
+        _payrollExpanded = true;
+      }
 
-    if (_isIncomeRoute()) {
-      _incomeExpanded = true;
-    }
+      if (_isIncomeRoute()) {
+        _incomeExpanded = true;
+      }
 
-    if (_isExpenseRoute()) {
-      _expenseExpanded = true;
+      if (_isExpenseRoute()) {
+        _expenseExpanded = true;
+      }
     }
   }
 
@@ -68,63 +86,346 @@ class _CompanySidebarState extends ConsumerState<CompanySidebar> {
   }
 
   // ==========================================================
-  // BANKING
+  // INCOME DIRECT ACTION
+  // ==========================================================
+
+  Future<void> _openIncomeRecognition(BuildContext context) async {
+    if (_incomeActionLoading) {
+      return;
+    }
+
+    setState(() {
+      _incomeActionLoading = true;
+    });
+
+    try {
+      final client = Supabase.instance.client;
+
+      final yearResponse = await client
+          .from('income_fiscal_years')
+          .select('id, year, status')
+          .eq('company_id', widget.companyId)
+          .order('year', ascending: false)
+          .limit(1)
+          .maybeSingle();
+
+      if (yearResponse == null) {
+        if (!mounted) return;
+
+        _showMessage(context, 'هنوز سال مالی درآمد ایجاد نشده است.');
+        return;
+      }
+
+      final yearId = yearResponse['id']?.toString();
+
+      if (yearId == null || yearId.isEmpty) {
+        if (!mounted) return;
+
+        _showMessage(context, 'سال مالی درآمد معتبر نیست.');
+        return;
+      }
+
+      final periodResponse = await client
+          .from('income_fiscal_periods')
+          .select('id, fiscal_year_id, year, month, title, status')
+          .eq('company_id', widget.companyId)
+          .eq('fiscal_year_id', yearId)
+          .eq('status', 'open')
+          .order('month', ascending: true)
+          .limit(1)
+          .maybeSingle();
+
+      if (periodResponse == null) {
+        if (!mounted) return;
+
+        _showMessage(
+          context,
+          'در این سال مالی هیچ دوره بازی برای ثبت درآمد وجود ندارد.',
+        );
+        return;
+      }
+
+      final periodId = periodResponse['id']?.toString();
+
+      if (periodId == null || periodId.isEmpty) {
+        if (!mounted) return;
+
+        _showMessage(context, 'دوره درآمد معتبر نیست.');
+        return;
+      }
+
+      if (!mounted) return;
+
+      context.go('$_incomeBase/recognition/$periodId');
+    } catch (error) {
+      if (!mounted) return;
+
+      _showMessage(context, 'خطا در بازکردن ثبت درآمد: $error');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _incomeActionLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _openIncomeReceivables(BuildContext context) async {
+    if (_incomeActionLoading) {
+      return;
+    }
+
+    setState(() {
+      _incomeActionLoading = true;
+    });
+
+    try {
+      final client = Supabase.instance.client;
+
+      final yearResponse = await client
+          .from('income_fiscal_years')
+          .select('id, year, status')
+          .eq('company_id', widget.companyId)
+          .order('year', ascending: false)
+          .limit(1)
+          .maybeSingle();
+
+      if (yearResponse == null) {
+        if (!mounted) return;
+
+        _showMessage(context, 'هنوز سال مالی درآمد ایجاد نشده است.');
+        return;
+      }
+
+      final yearId = yearResponse['id']?.toString();
+
+      if (yearId == null || yearId.isEmpty) {
+        if (!mounted) return;
+
+        _showMessage(context, 'سال مالی درآمد معتبر نیست.');
+        return;
+      }
+
+      final periodResponse = await client
+          .from('income_fiscal_periods')
+          .select('id, fiscal_year_id, year, month, title, status')
+          .eq('company_id', widget.companyId)
+          .eq('fiscal_year_id', yearId)
+          .eq('status', 'open')
+          .order('month', ascending: true)
+          .limit(1)
+          .maybeSingle();
+
+      if (periodResponse == null) {
+        if (!mounted) return;
+
+        _showMessage(
+          context,
+          'در این سال مالی هیچ دوره بازی برای ثبت دریافتنی وجود ندارد.',
+        );
+        return;
+      }
+
+      final periodId = periodResponse['id']?.toString();
+
+      if (periodId == null || periodId.isEmpty) {
+        if (!mounted) return;
+
+        _showMessage(context, 'دوره درآمد معتبر نیست.');
+        return;
+      }
+
+      if (!mounted) return;
+
+      context.go('$_incomeBase/receivables/$periodId');
+    } catch (error) {
+      if (!mounted) return;
+
+      _showMessage(context, 'خطا در بازکردن حساب‌های دریافتنی: $error');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _incomeActionLoading = false;
+        });
+      }
+    }
+  }
+
+  // ==========================================================
+  // EXPENSE DIRECT ACTION
+  // ==========================================================
+
+  Future<void> _openExpenseRecognition(BuildContext context) async {
+    if (_expenseActionLoading) {
+      return;
+    }
+
+    setState(() {
+      _expenseActionLoading = true;
+    });
+
+    try {
+      final client = Supabase.instance.client;
+
+      final yearResponse = await client
+          .from('expense_fiscal_years')
+          .select('id, year, status')
+          .eq('company_id', widget.companyId)
+          .order('year', ascending: false)
+          .limit(1)
+          .maybeSingle();
+
+      if (yearResponse == null) {
+        if (!mounted) return;
+
+        _showMessage(context, 'هنوز سال مالی هزینه ایجاد نشده است.');
+        return;
+      }
+
+      final yearId = yearResponse['id']?.toString();
+
+      if (yearId == null || yearId.isEmpty) {
+        if (!mounted) return;
+
+        _showMessage(context, 'سال مالی هزینه معتبر نیست.');
+        return;
+      }
+
+      if (yearResponse['status']?.toString() == 'closed') {
+        if (!mounted) return;
+
+        _showMessage(
+          context,
+          'سال مالی هزینه بسته است و دوره بازی برای ثبت هزینه وجود ندارد.',
+        );
+        return;
+      }
+
+      final periodResponse = await client
+          .from('expense_fiscal_periods')
+          .select('id, fiscal_year_id, year, month, title, status')
+          .eq('company_id', widget.companyId)
+          .eq('fiscal_year_id', yearId)
+          .eq('status', 'open')
+          .order('month', ascending: true)
+          .limit(1)
+          .maybeSingle();
+
+      if (periodResponse == null) {
+        if (!mounted) return;
+
+        _showMessage(
+          context,
+          'در این سال مالی هیچ دوره بازی برای ثبت هزینه وجود ندارد.',
+        );
+        return;
+      }
+
+      final periodId = periodResponse['id']?.toString();
+
+      if (periodId == null || periodId.isEmpty) {
+        if (!mounted) return;
+
+        _showMessage(context, 'دوره هزینه معتبر نیست.');
+        return;
+      }
+
+      if (!mounted) return;
+
+      context.go('$_expenseBase/recognition/$periodId');
+    } catch (error) {
+      if (!mounted) return;
+
+      _showMessage(context, 'خطا در بازکردن ثبت هزینه: $error');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _expenseActionLoading = false;
+        });
+      }
+    }
+  }
+
+  // ==========================================================
+  // MESSAGE
+  // ==========================================================
+
+  void _showMessage(BuildContext context, String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            textDirection: TextDirection.rtl,
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+  }
+
+  // ==========================================================
+  // ROUTE HELPERS
   // ==========================================================
 
   bool _isBankingRoute() {
-    final base = '/consultant/companies/${widget.companyId}/banking';
-
-    return widget.currentRoute == base ||
-        widget.currentRoute.startsWith('$base/');
+    return widget.currentRoute == _bankingBase ||
+        widget.currentRoute.startsWith('$_bankingBase/');
   }
 
   bool _isBankingSubRoute(String route) {
     return widget.currentRoute == route;
   }
 
-  // ==========================================================
-  // PAYROLL
-  // ==========================================================
-
   bool _isPayrollRoute() {
-    final base = '/consultant/companies/${widget.companyId}/payroll';
-
-    return widget.currentRoute == base ||
-        widget.currentRoute.startsWith('$base/');
+    return widget.currentRoute == _payrollBase ||
+        widget.currentRoute.startsWith('$_payrollBase/');
   }
 
   bool _isPayrollSubRoute(String route) {
     return widget.currentRoute == route;
   }
 
-  // ==========================================================
-  // INCOME
-  // ==========================================================
-
   bool _isIncomeRoute() {
-    final base = '/consultant/companies/${widget.companyId}/income';
-
-    return widget.currentRoute == base ||
-        widget.currentRoute.startsWith('$base/');
+    return widget.currentRoute == _incomeBase ||
+        widget.currentRoute.startsWith('$_incomeBase/');
   }
 
   bool _isIncomeSubRoute(String route) {
     return widget.currentRoute == route;
   }
 
-  // ==========================================================
-  // EXPENSE
-  // ==========================================================
+  bool _isIncomeRecognitionRoute() {
+    return widget.currentRoute.startsWith(
+      '$_incomeBase/recognition/',
+    );
+  }
+
+  bool _isIncomeReceivablesRoute() {
+    return widget.currentRoute.startsWith(
+      '$_incomeBase/receivables/',
+    );
+  }
 
   bool _isExpenseRoute() {
-    final base = '/consultant/companies/${widget.companyId}/expenses';
-
-    return widget.currentRoute == base ||
-        widget.currentRoute.startsWith('$base/');
+    return widget.currentRoute == _expenseBase ||
+        widget.currentRoute.startsWith('$_expenseBase/');
   }
 
   bool _isExpenseSubRoute(String route) {
     return widget.currentRoute == route;
+  }
+
+  bool _isExpenseRecognitionRoute() {
+    return widget.currentRoute.startsWith(
+      '$_expenseBase/recognition/',
+    );
+  }
+
+  bool _isExpenseReportRoute() {
+    return widget.currentRoute.startsWith(
+      '$_expenseBase/reports/',
+    );
   }
 
   // ==========================================================
@@ -133,7 +434,9 @@ class _CompanySidebarState extends ConsumerState<CompanySidebar> {
 
   @override
   Widget build(BuildContext context) {
-    final companyAsync = ref.watch(companyProvider(widget.companyId));
+    final companyAsync = ref.watch(
+      companyProvider(widget.companyId),
+    );
 
     final bankingSelected = _isBankingRoute();
     final payrollSelected = _isPayrollRoute();
@@ -143,518 +446,614 @@ class _CompanySidebarState extends ConsumerState<CompanySidebar> {
     return Container(
       width: 250,
       color: const Color(0xFF163A2B),
-      child: Column(
-        children: [
-          const SizedBox(height: 30),
+      child: SafeArea(
+        child: Column(
+          children: [
+            const SizedBox(height: 18),
 
-          // ==================================================
-          // COMPANY ICON
-          // ==================================================
-          Container(
-            width: 70,
-            height: 70,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
+            // ==================================================
+            // COMPANY ICON
+            // ==================================================
+
+            Container(
+              width: 70,
+              height: 70,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Icon(
+                Icons.business_rounded,
+                color: Color(0xFF1B4332),
+                size: 38,
+              ),
             ),
-            child: const Icon(
-              Icons.business_rounded,
-              color: Color(0xFF1B4332),
-              size: 38,
+
+            const SizedBox(height: 13),
+
+            const Text(
+              'شرکت انتخاب شده',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 12,
+              ),
             ),
-          ),
 
-          const SizedBox(height: 15),
+            const SizedBox(height: 5),
 
-          const Text(
-            'شرکت انتخاب شده',
-            style: TextStyle(color: Colors.white70, fontSize: 12),
-          ),
-
-          const SizedBox(height: 5),
-
-          companyAsync.when(
-            loading: () {
-              return const Text(
-                'درحال بارگذاری...',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w900,
-                ),
-              );
-            },
-            error: (error, stackTrace) {
-              return const Text(
-                'شرکت',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                ),
-              );
-            },
-            data: (company) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                child: Text(
-                  company.name,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
+            companyAsync.when(
+              loading: () {
+                return const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 15),
+                  child: Text(
+                    'درحال بارگذاری...',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                );
+              },
+              error: (error, stackTrace) {
+                return const Text(
+                  'شرکت',
+                  style: TextStyle(
                     color: Colors.white,
                     fontSize: 18,
                     fontWeight: FontWeight.w900,
                   ),
+                );
+              },
+              data: (company) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                  ),
+                  child: Text(
+                    company.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                );
+              },
+            ),
+
+            const SizedBox(height: 20),
+
+            // ==================================================
+            // MENU
+            // ==================================================
+
+            Expanded(
+              child: Scrollbar(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Column(
+                    children: [
+                      // ==================================================
+                      // OVERVIEW
+                      // ==================================================
+
+                      _Item(
+                        icon: Icons.dashboard_rounded,
+                        title: 'نمای کلی',
+                        route: _companyBase,
+                        currentRoute: widget.currentRoute,
+                        onTap: _go,
+                      ),
+
+                      // ==================================================
+                      // BANKING
+                      // ==================================================
+
+                      _ParentItem(
+                        icon: Icons.account_balance_rounded,
+                        title: 'بانک و نقد',
+                        selected: bankingSelected,
+                        expanded: _bankingExpanded,
+                        onTap: () {
+                          setState(() {
+                            _bankingExpanded = !_bankingExpanded;
+                          });
+                        },
+                      ),
+
+                      if (_bankingExpanded) ...[
+                        _SubItem(
+                          icon: Icons.dashboard_customize_rounded,
+                          title: 'داشبورد بانک و نقد',
+                          route: _bankingBase,
+                          selected: _isBankingSubRoute(
+                            _bankingBase,
+                          ),
+                          onTap: () {
+                            _go(context, _bankingBase);
+                          },
+                        ),
+                        _SubItem(
+                          icon: Icons.account_balance_rounded,
+                          title: 'حساب‌های بانکی',
+                          route: '$_bankingBase/accounts',
+                          selected: _isBankingSubRoute(
+                            '$_bankingBase/accounts',
+                          ),
+                          onTap: () {
+                            _go(
+                              context,
+                              '$_bankingBase/accounts',
+                            );
+                          },
+                        ),
+                        _SubItem(
+                          icon: Icons.point_of_sale_rounded,
+                          title: 'صندوق‌ها',
+                          route: '$_bankingBase/cash-boxes',
+                          selected: _isBankingSubRoute(
+                            '$_bankingBase/cash-boxes',
+                          ),
+                          onTap: () {
+                            _go(
+                              context,
+                              '$_bankingBase/cash-boxes',
+                            );
+                          },
+                        ),
+                        _SubItem(
+                          icon: Icons.account_balance_wallet_rounded,
+                          title: 'تنخواه',
+                          route: '$_bankingBase/petty-cash',
+                          selected: _isBankingSubRoute(
+                            '$_bankingBase/petty-cash',
+                          ),
+                          onTap: () {
+                            _go(
+                              context,
+                              '$_bankingBase/petty-cash',
+                            );
+                          },
+                        ),
+                        _SubItem(
+                          icon: Icons.calendar_month_rounded,
+                          title: 'دوره‌های مالی',
+                          route: '$_bankingBase/fiscal-periods',
+                          selected: _isBankingSubRoute(
+                            '$_bankingBase/fiscal-periods',
+                          ),
+                          onTap: () {
+                            _go(
+                              context,
+                              '$_bankingBase/fiscal-periods',
+                            );
+                          },
+                        ),
+                        _SubItem(
+                          icon: Icons.request_quote_rounded,
+                          title: 'تسهیلات بانکی',
+                          route: '$_bankingBase/loans',
+                          selected: _isBankingSubRoute(
+                            '$_bankingBase/loans',
+                          ),
+                          onTap: () {
+                            _go(
+                              context,
+                              '$_bankingBase/loans',
+                            );
+                          },
+                        ),
+                        _SubItem(
+                          icon: Icons.call_received_rounded,
+                          title: 'چک‌های دریافتی',
+                          route:
+                          '$_bankingBase/received-checks',
+                          selected: _isBankingSubRoute(
+                            '$_bankingBase/received-checks',
+                          ),
+                          onTap: () {
+                            _go(
+                              context,
+                              '$_bankingBase/received-checks',
+                            );
+                          },
+                        ),
+                        _SubItem(
+                          icon: Icons.call_made_rounded,
+                          title: 'چک‌های پرداختی',
+                          route:
+                          '$_bankingBase/paid-checks',
+                          selected: _isBankingSubRoute(
+                            '$_bankingBase/paid-checks',
+                          ),
+                          onTap: () {
+                            _go(
+                              context,
+                              '$_bankingBase/paid-checks',
+                            );
+                          },
+                        ),
+                        _SubItem(
+                          icon: Icons.assessment_outlined,
+                          title: 'گزارش‌های بانکی',
+                          route: '$_bankingBase/reports',
+                          selected: _isBankingSubRoute(
+                            '$_bankingBase/reports',
+                          ),
+                          onTap: () {
+                            _go(
+                              context,
+                              '$_bankingBase/reports',
+                            );
+                          },
+                        ),
+                        _SubItem(
+                          icon:
+                          Icons.notifications_active_outlined,
+                          title: 'هشدارهای مدیریتی',
+                          route: '$_bankingBase/alerts',
+                          selected: _isBankingSubRoute(
+                            '$_bankingBase/alerts',
+                          ),
+                          onTap: () {
+                            _go(
+                              context,
+                              '$_bankingBase/alerts',
+                            );
+                          },
+                        ),
+                      ],
+
+                      const SizedBox(height: 5),
+
+                      // ==================================================
+                      // PAYROLL
+                      // ==================================================
+
+                      _ParentItem(
+                        icon: Icons.payments_rounded,
+                        title: 'حقوق و دستمزد',
+                        selected: payrollSelected,
+                        expanded: _payrollExpanded,
+                        onTap: () {
+                          setState(() {
+                            _payrollExpanded =
+                            !_payrollExpanded;
+                          });
+                        },
+                      ),
+
+                      if (_payrollExpanded) ...[
+                        _SubItem(
+                          icon:
+                          Icons.dashboard_customize_rounded,
+                          title: 'داشبورد حقوق و دستمزد',
+                          route: _payrollBase,
+                          selected: _isPayrollSubRoute(
+                            _payrollBase,
+                          ),
+                          onTap: () {
+                            _go(context, _payrollBase);
+                          },
+                        ),
+                        _SubItem(
+                          icon: Icons.people_alt_rounded,
+                          title: 'پرسنل',
+                          route: '$_payrollBase/employees',
+                          selected: _isPayrollSubRoute(
+                            '$_payrollBase/employees',
+                          ),
+                          onTap: () {
+                            _go(
+                              context,
+                              '$_payrollBase/employees',
+                            );
+                          },
+                        ),
+                        _SubItem(
+                          icon: Icons.account_tree_rounded,
+                          title: 'مراکز هزینه',
+                          route:
+                          '$_payrollBase/cost-centers',
+                          selected: _isPayrollSubRoute(
+                            '$_payrollBase/cost-centers',
+                          ),
+                          onTap: () {
+                            _go(
+                              context,
+                              '$_payrollBase/cost-centers',
+                            );
+                          },
+                        ),
+                        _SubItem(
+                          icon: Icons.description_rounded,
+                          title: 'قراردادها',
+                          route: '$_payrollBase/contracts',
+                          selected: _isPayrollSubRoute(
+                            '$_payrollBase/contracts',
+                          ),
+                          onTap: () {
+                            _go(
+                              context,
+                              '$_payrollBase/contracts',
+                            );
+                          },
+                        ),
+                        _SubItem(
+                          icon: Icons.calendar_month_rounded,
+                          title: 'دوره‌های حقوق',
+                          route: '$_payrollBase/periods',
+                          selected: _isPayrollSubRoute(
+                            '$_payrollBase/periods',
+                          ),
+                          onTap: () {
+                            _go(
+                              context,
+                              '$_payrollBase/periods',
+                            );
+                          },
+                        ),
+                      ],
+
+                      const SizedBox(height: 5),
+
+                      // ==================================================
+                      // INCOME
+                      // ==================================================
+
+                      _ParentItem(
+                        icon: Icons.trending_up_rounded,
+                        title: 'درآمد',
+                        selected: incomeSelected,
+                        expanded: _incomeExpanded,
+                        onTap: () {
+                          setState(() {
+                            _incomeExpanded =
+                            !_incomeExpanded;
+                          });
+                        },
+                      ),
+
+                      if (_incomeExpanded) ...[
+                        _SubItem(
+                          icon:
+                          Icons.dashboard_customize_rounded,
+                          title: 'داشبورد درآمد',
+                          route: _incomeBase,
+                          selected: _isIncomeSubRoute(
+                            _incomeBase,
+                          ),
+                          onTap: () {
+                            _go(context, _incomeBase);
+                          },
+                        ),
+                        _SubItem(
+                          icon: Icons.calendar_month_rounded,
+                          title: 'دوره‌های درآمد',
+                          route: _incomePeriodsRoute,
+                          selected: _isIncomeSubRoute(
+                            _incomePeriodsRoute,
+                          ),
+                          onTap: () {
+                            _go(
+                              context,
+                              _incomePeriodsRoute,
+                            );
+                          },
+                        ),
+                        _SubItem(
+                          icon: Icons.fact_check_rounded,
+                          title: 'ثبت درآمد ماهانه',
+                          route:
+                          '$_incomeBase/recognition',
+                          selected:
+                          _isIncomeRecognitionRoute(),
+                          loading: _incomeActionLoading,
+                          onTap: () {
+                            _openIncomeRecognition(
+                              context,
+                            );
+                          },
+                        ),
+                        _SubItem(
+                          icon: Icons.receipt_long_rounded,
+                          title: 'حساب‌های دریافتنی',
+                          route:
+                          '$_incomeBase/receivables',
+                          selected:
+                          _isIncomeReceivablesRoute(),
+                          loading: _incomeActionLoading,
+                          onTap: () {
+                            _openIncomeReceivables(
+                              context,
+                            );
+                          },
+                        ),
+                        _SubItem(
+                          icon: Icons.category_rounded,
+                          title: 'دسته‌بندی درآمد',
+                          route:
+                          '$_incomeBase/categories',
+                          selected: _isIncomeSubRoute(
+                            '$_incomeBase/categories',
+                          ),
+                          onTap: () {
+                            _go(
+                              context,
+                              '$_incomeBase/categories',
+                            );
+                          },
+                        ),
+                        _SubItem(
+                          icon: Icons.assessment_outlined,
+                          title: 'گزارش ماهانه درآمد',
+                          route: '$_incomeBase/reports',
+                          selected: _isIncomeSubRoute(
+                            '$_incomeBase/reports',
+                          ),
+                          onTap: () {
+                            _go(
+                              context,
+                              '$_incomeBase/reports',
+                            );
+                          },
+                        ),
+                      ],
+
+                      const SizedBox(height: 5),
+
+                      // ==================================================
+                      // EXPENSES
+                      // ==================================================
+
+                      _ParentItem(
+                        icon: Icons.payments_outlined,
+                        title: 'هزینه‌ها',
+                        selected: expenseSelected,
+                        expanded: _expenseExpanded,
+                        onTap: () {
+                          setState(() {
+                            _expenseExpanded =
+                            !_expenseExpanded;
+                          });
+                        },
+                      ),
+
+                      if (_expenseExpanded) ...[
+                        _SubItem(
+                          icon:
+                          Icons.dashboard_customize_rounded,
+                          title: 'داشبورد هزینه‌ها',
+                          route: _expenseBase,
+                          selected: _isExpenseSubRoute(
+                            _expenseBase,
+                          ),
+                          onTap: () {
+                            _go(context, _expenseBase);
+                          },
+                        ),
+                        _SubItem(
+                          icon: Icons.calendar_month_rounded,
+                          title: 'دوره‌های مالی هزینه',
+                          route: _expensePeriodsRoute,
+                          selected: _isExpenseSubRoute(
+                            _expensePeriodsRoute,
+                          ),
+                          onTap: () {
+                            _go(
+                              context,
+                              _expensePeriodsRoute,
+                            );
+                          },
+                        ),
+                        _SubItem(
+                          icon: Icons.fact_check_rounded,
+                          title: 'ثبت هزینه ماهانه',
+                          route:
+                          '$_expenseBase/recognition',
+                          selected:
+                          _isExpenseRecognitionRoute(),
+                          loading: _expenseActionLoading,
+                          onTap: () {
+                            _openExpenseRecognition(
+                              context,
+                            );
+                          },
+                        ),
+                        _SubItem(
+                          icon: Icons.category_outlined,
+                          title: 'دسته‌بندی هزینه‌ها',
+                          route:
+                          '$_expenseBase/categories',
+                          selected: _isExpenseSubRoute(
+                            '$_expenseBase/categories',
+                          ),
+                          onTap: () {
+                            _go(
+                              context,
+                              '$_expenseBase/categories',
+                            );
+                          },
+                        ),
+                        _SubItem(
+                          icon:
+                          Icons.receipt_long_outlined,
+                          title: 'رکوردهای هزینه',
+                          route:
+                          '$_expenseBase/records',
+                          selected: _isExpenseSubRoute(
+                            '$_expenseBase/records',
+                          ),
+                          onTap: () {
+                            _go(
+                              context,
+                              '$_expenseBase/records',
+                            );
+                          },
+                        ),
+                        _SubItem(
+                          icon: Icons.assessment_outlined,
+                          title: 'گزارش ماهانه هزینه',
+                          route: _expenseReportsRoute,
+                          selected: _isExpenseReportRoute(),
+                          onTap: () {
+                            _showMessage(
+                              context,
+                              'ابتدا دوره مالی موردنظر را از بخش دوره‌های مالی انتخاب کنید.',
+                            );
+                          },
+                        ),
+                      ],
+
+                      const SizedBox(height: 5),
+
+                      // ==================================================
+                      // FINANCIAL ANALYSIS
+                      // ==================================================
+
+                      _Item(
+                        icon: Icons.analytics_rounded,
+                        title: 'تحلیل مالی',
+                        route:
+                        '$_companyBase/financial-analysis',
+                        currentRoute: widget.currentRoute,
+                        onTap: _go,
+                      ),
+                    ],
+                  ),
                 ),
-              );
-            },
-          ),
-
-          const SizedBox(height: 28),
-
-          // ==================================================
-          // MENU
-          // ==================================================
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  // ==================================================
-                  // OVERVIEW
-                  // ==================================================
-                  _Item(
-                    icon: Icons.dashboard_rounded,
-                    title: 'نمای کلی',
-                    route: '/consultant/companies/${widget.companyId}',
-                    currentRoute: widget.currentRoute,
-                    onTap: _go,
-                  ),
-
-                  // ==================================================
-                  // BANKING PARENT
-                  // ==================================================
-                  _ParentItem(
-                    icon: Icons.account_balance_rounded,
-                    title: 'بانک و نقد',
-                    selected: bankingSelected,
-                    expanded: _bankingExpanded,
-                    onTap: () {
-                      setState(() {
-                        _bankingExpanded = !_bankingExpanded;
-                      });
-                    },
-                  ),
-
-                  if (_bankingExpanded) ...[
-                    _SubItem(
-                      icon: Icons.dashboard_customize_rounded,
-                      title: 'داشبورد بانک و نقد',
-                      route:
-                          '/consultant/companies/${widget.companyId}/banking',
-                      selected: _isBankingSubRoute(
-                        '/consultant/companies/${widget.companyId}/banking',
-                      ),
-                      onTap: () {
-                        _go(
-                          context,
-                          '/consultant/companies/${widget.companyId}/banking',
-                        );
-                      },
-                    ),
-                    _SubItem(
-                      icon: Icons.account_balance_rounded,
-                      title: 'حساب‌های بانکی',
-                      route:
-                          '/consultant/companies/${widget.companyId}/banking/accounts',
-                      selected: _isBankingSubRoute(
-                        '/consultant/companies/${widget.companyId}/banking/accounts',
-                      ),
-                      onTap: () {
-                        _go(
-                          context,
-                          '/consultant/companies/${widget.companyId}/banking/accounts',
-                        );
-                      },
-                    ),
-                    _SubItem(
-                      icon: Icons.point_of_sale_rounded,
-                      title: 'صندوق‌ها',
-                      route:
-                          '/consultant/companies/${widget.companyId}/banking/cash-boxes',
-                      selected: _isBankingSubRoute(
-                        '/consultant/companies/${widget.companyId}/banking/cash-boxes',
-                      ),
-                      onTap: () {
-                        _go(
-                          context,
-                          '/consultant/companies/${widget.companyId}/banking/cash-boxes',
-                        );
-                      },
-                    ),
-                    _SubItem(
-                      icon: Icons.account_balance_wallet_rounded,
-                      title: 'تنخواه',
-                      route:
-                          '/consultant/companies/${widget.companyId}/banking/petty-cash',
-                      selected: _isBankingSubRoute(
-                        '/consultant/companies/${widget.companyId}/banking/petty-cash',
-                      ),
-                      onTap: () {
-                        _go(
-                          context,
-                          '/consultant/companies/${widget.companyId}/banking/petty-cash',
-                        );
-                      },
-                    ),
-                    _SubItem(
-                      icon: Icons.request_quote_rounded,
-                      title: 'تسهیلات بانکی',
-                      route:
-                          '/consultant/companies/${widget.companyId}/banking/loans',
-                      selected: _isBankingSubRoute(
-                        '/consultant/companies/${widget.companyId}/banking/loans',
-                      ),
-                      onTap: () {
-                        _go(
-                          context,
-                          '/consultant/companies/${widget.companyId}/banking/loans',
-                        );
-                      },
-                    ),
-                    _SubItem(
-                      icon: Icons.call_received_rounded,
-                      title: 'چک‌های دریافتی',
-                      route:
-                          '/consultant/companies/${widget.companyId}/banking/received-checks',
-                      selected: _isBankingSubRoute(
-                        '/consultant/companies/${widget.companyId}/banking/received-checks',
-                      ),
-                      onTap: () {
-                        _go(
-                          context,
-                          '/consultant/companies/${widget.companyId}/banking/received-checks',
-                        );
-                      },
-                    ),
-                    _SubItem(
-                      icon: Icons.call_made_rounded,
-                      title: 'چک‌های پرداختی',
-                      route:
-                          '/consultant/companies/${widget.companyId}/banking/paid-checks',
-                      selected: _isBankingSubRoute(
-                        '/consultant/companies/${widget.companyId}/banking/paid-checks',
-                      ),
-                      onTap: () {
-                        _go(
-                          context,
-                          '/consultant/companies/${widget.companyId}/banking/paid-checks',
-                        );
-                      },
-                    ),
-                  ],
-
-                  const SizedBox(height: 4),
-
-                  // ==================================================
-                  // PAYROLL PARENT
-                  // ==================================================
-                  _ParentItem(
-                    icon: Icons.payments_rounded,
-                    title: 'حقوق و دستمزد',
-                    selected: payrollSelected,
-                    expanded: _payrollExpanded,
-                    onTap: () {
-                      setState(() {
-                        _payrollExpanded = !_payrollExpanded;
-                      });
-                    },
-                  ),
-
-                  if (_payrollExpanded) ...[
-                    _SubItem(
-                      icon: Icons.dashboard_customize_rounded,
-                      title: 'داشبورد حقوق و دستمزد',
-                      route:
-                          '/consultant/companies/${widget.companyId}/payroll',
-                      selected: _isPayrollSubRoute(
-                        '/consultant/companies/${widget.companyId}/payroll',
-                      ),
-                      onTap: () {
-                        _go(
-                          context,
-                          '/consultant/companies/${widget.companyId}/payroll',
-                        );
-                      },
-                    ),
-                    _SubItem(
-                      icon: Icons.people_alt_rounded,
-                      title: 'پرسنل',
-                      route:
-                          '/consultant/companies/${widget.companyId}/payroll/employees',
-                      selected: _isPayrollSubRoute(
-                        '/consultant/companies/${widget.companyId}/payroll/employees',
-                      ),
-                      onTap: () {
-                        _go(
-                          context,
-                          '/consultant/companies/${widget.companyId}/payroll/employees',
-                        );
-                      },
-                    ),
-                    _SubItem(
-                      icon: Icons.account_tree_rounded,
-                      title: 'مراکز هزینه',
-                      route:
-                          '/consultant/companies/${widget.companyId}/payroll/cost-centers',
-                      selected: _isPayrollSubRoute(
-                        '/consultant/companies/${widget.companyId}/payroll/cost-centers',
-                      ),
-                      onTap: () {
-                        _go(
-                          context,
-                          '/consultant/companies/${widget.companyId}/payroll/cost-centers',
-                        );
-                      },
-                    ),
-                    _SubItem(
-                      icon: Icons.description_rounded,
-                      title: 'قراردادها',
-                      route:
-                          '/consultant/companies/${widget.companyId}/payroll/contracts',
-                      selected: _isPayrollSubRoute(
-                        '/consultant/companies/${widget.companyId}/payroll/contracts',
-                      ),
-                      onTap: () {
-                        _go(
-                          context,
-                          '/consultant/companies/${widget.companyId}/payroll/contracts',
-                        );
-                      },
-                    ),
-                    _SubItem(
-                      icon: Icons.calendar_month_rounded,
-                      title: 'دوره‌های حقوق',
-                      route:
-                          '/consultant/companies/${widget.companyId}/payroll/periods',
-                      selected: _isPayrollSubRoute(
-                        '/consultant/companies/${widget.companyId}/payroll/periods',
-                      ),
-                      onTap: () {
-                        _go(
-                          context,
-                          '/consultant/companies/${widget.companyId}/payroll/periods',
-                        );
-                      },
-                    ),
-                  ],
-
-                  const SizedBox(height: 4),
-
-                  // ==================================================
-                  // INCOME PARENT
-                  // ==================================================
-                  _ParentItem(
-                    icon: Icons.trending_up_rounded,
-                    title: 'درآمد',
-                    selected: incomeSelected,
-                    expanded: _incomeExpanded,
-                    onTap: () {
-                      setState(() {
-                        _incomeExpanded = !_incomeExpanded;
-                      });
-                    },
-                  ),
-
-                  if (_incomeExpanded) ...[
-                    _SubItem(
-                      icon: Icons.dashboard_customize_rounded,
-                      title: 'داشبورد درآمد',
-                      route: '/consultant/companies/${widget.companyId}/income',
-                      selected: _isIncomeSubRoute(
-                        '/consultant/companies/${widget.companyId}/income',
-                      ),
-                      onTap: () {
-                        _go(
-                          context,
-                          '/consultant/companies/${widget.companyId}/income',
-                        );
-                      },
-                    ),
-                    _SubItem(
-                      icon: Icons.trending_up_rounded,
-                      title: 'درآمدها',
-                      route:
-                          '/consultant/companies/${widget.companyId}/income/records',
-                      selected: _isIncomeSubRoute(
-                        '/consultant/companies/${widget.companyId}/income/records',
-                      ),
-                      onTap: () {
-                        _go(
-                          context,
-                          '/consultant/companies/${widget.companyId}/income/records',
-                        );
-                      },
-                    ),
-                    _SubItem(
-                      icon: Icons.category_rounded,
-                      title: 'دسته‌بندی درآمد',
-                      route:
-                          '/consultant/companies/${widget.companyId}/income/categories',
-                      selected: _isIncomeSubRoute(
-                        '/consultant/companies/${widget.companyId}/income/categories',
-                      ),
-                      onTap: () {
-                        _go(
-                          context,
-                          '/consultant/companies/${widget.companyId}/income/categories',
-                        );
-                      },
-                    ),
-                  ],
-
-                  const SizedBox(height: 4),
-
-                  // ==================================================
-                  // EXPENSE PARENT
-                  // ==================================================
-                  _ParentItem(
-                    icon: Icons.payments_outlined,
-                    title: 'هزینه‌ها',
-                    selected: expenseSelected,
-                    expanded: _expenseExpanded,
-                    onTap: () {
-                      setState(() {
-                        _expenseExpanded = !_expenseExpanded;
-                      });
-                    },
-                  ),
-
-                  if (_expenseExpanded) ...[
-                    _SubItem(
-                      icon: Icons.dashboard_customize_rounded,
-                      title: 'داشبورد هزینه‌ها',
-                      route:
-                          '/consultant/companies/${widget.companyId}/expenses',
-                      selected: _isExpenseSubRoute(
-                        '/consultant/companies/${widget.companyId}/expenses',
-                      ),
-                      onTap: () {
-                        _go(
-                          context,
-                          '/consultant/companies/${widget.companyId}/expenses',
-                        );
-                      },
-                    ),
-                    _SubItem(
-                      icon: Icons.receipt_long_outlined,
-                      title: 'ثبت و مدیریت هزینه‌ها',
-                      route:
-                          '/consultant/companies/${widget.companyId}/expenses/records',
-                      selected: _isExpenseSubRoute(
-                        '/consultant/companies/${widget.companyId}/expenses/records',
-                      ),
-                      onTap: () {
-                        _go(
-                          context,
-                          '/consultant/companies/${widget.companyId}/expenses/records',
-                        );
-                      },
-                    ),
-                    _SubItem(
-                      icon: Icons.category_outlined,
-                      title: 'دسته‌بندی هزینه‌ها',
-                      route:
-                          '/consultant/companies/${widget.companyId}/expenses/categories',
-                      selected: _isExpenseSubRoute(
-                        '/consultant/companies/${widget.companyId}/expenses/categories',
-                      ),
-                      onTap: () {
-                        _go(
-                          context,
-                          '/consultant/companies/${widget.companyId}/expenses/categories',
-                        );
-                      },
-                    ),
-                  ],
-
-                  const SizedBox(height: 4),
-
-                  // ==================================================
-                  // ANALYTICS
-                  // ==================================================
-                  _Item(
-                    icon: Icons.analytics_rounded,
-                    title: 'تحلیل مالی',
-                    route:
-                        '/consultant/companies/${widget.companyId}/financial-analysis',
-                    currentRoute: widget.currentRoute,
-                    onTap: _go,
-                  ),
-
-                  // ==================================================
-                  // REPORTS
-                  // ==================================================
-                  // _Item(
-                  //   icon: Icons.description_rounded,
-                  //   title: 'گزارش‌ها',
-                  //   route: '/consultant/companies/${widget.companyId}/reports',
-                  //   currentRoute: widget.currentRoute,
-                  //   onTap: _go,
-                  // ),
-
-                  // ==================================================
-                  // ACTIONS
-                  // ==================================================
-                  // _Item(
-                  //   icon: Icons.task_alt_rounded,
-                  //   title: 'اقدامات',
-                  //   route: '/consultant/companies/${widget.companyId}/actions',
-                  //   currentRoute: widget.currentRoute,
-                  //   onTap: _go,
-                  // ),
-
-                  // ==================================================
-                  // DOCUMENTS
-                  // ==================================================
-                  // _Item(
-                  //   icon: Icons.folder_open_rounded,
-                  //   title: 'اسناد و مدارک',
-                  //   route:
-                  //       '/consultant/companies/${widget.companyId}/documents',
-                  //   currentRoute: widget.currentRoute,
-                  //   onTap: _go,
-                  // ),
-
-                  // ==================================================
-                  // NOTES
-                  // ==================================================
-                  _Item(
-                    icon: Icons.note_alt_rounded,
-                    title: 'یادداشت‌های مشاور',
-                    route: '/consultant/companies/${widget.companyId}/notes',
-                    currentRoute: widget.currentRoute,
-                    onTap: _go,
-                  ),
-                ],
               ),
             ),
-          ),
 
-          // ==================================================
-          // BACK
-          // ==================================================
-          _Item(
-            icon: Icons.arrow_back_rounded,
-            title: 'بازگشت به شرکت‌ها',
-            route: '/consultant/companies',
-            currentRoute: widget.currentRoute,
-            onTap: _go,
-          ),
+            // ==================================================
+            // BACK TO COMPANIES
+            // ==================================================
 
-          const SizedBox(height: 20),
-        ],
+            const Divider(
+              height: 1,
+              color: Colors.white12,
+            ),
+
+            const SizedBox(height: 8),
+
+            _Item(
+              icon: Icons.arrow_back_rounded,
+              title: 'بازگشت به شرکت‌ها',
+              route: '/consultant/companies',
+              currentRoute: widget.currentRoute,
+              onTap: _go,
+            ),
+
+            const SizedBox(height: 12),
+          ],
+        ),
       ),
     );
   }
@@ -682,18 +1081,30 @@ class _ParentItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 4,
+      ),
       child: Material(
-        color: selected ? Colors.white.withOpacity(.12) : Colors.transparent,
+        color: selected
+            ? Colors.white.withOpacity(.12)
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.all(13),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 13,
+              vertical: 13,
+            ),
             child: Row(
               children: [
-                Icon(icon, color: Colors.white, size: 21),
+                Icon(
+                  icon,
+                  color: Colors.white,
+                  size: 21,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -705,12 +1116,15 @@ class _ParentItem extends StatelessWidget {
                     ),
                   ),
                 ),
-                Icon(
-                  expanded
-                      ? Icons.keyboard_arrow_up_rounded
-                      : Icons.keyboard_arrow_down_rounded,
-                  color: Colors.white70,
-                  size: 21,
+                AnimatedRotation(
+                  turns: expanded ? .5 : 0,
+                  duration:
+                  const Duration(milliseconds: 180),
+                  child: const Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: Colors.white70,
+                    size: 21,
+                  ),
                 ),
               ],
             ),
@@ -738,7 +1152,6 @@ class _Item extends StatelessWidget {
   final String title;
   final String route;
   final String currentRoute;
-
   final Function(BuildContext, String) onTap;
 
   @override
@@ -746,9 +1159,14 @@ class _Item extends StatelessWidget {
     final selected = currentRoute == route;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 12,
+        vertical: 4,
+      ),
       child: Material(
-        color: selected ? Colors.white.withOpacity(.15) : Colors.transparent,
+        color: selected
+            ? Colors.white.withOpacity(.15)
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
           borderRadius: BorderRadius.circular(14),
@@ -756,10 +1174,17 @@ class _Item extends StatelessWidget {
             onTap(context, route);
           },
           child: Padding(
-            padding: const EdgeInsets.all(13),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 13,
+              vertical: 13,
+            ),
             child: Row(
               children: [
-                Icon(icon, color: Colors.white, size: 21),
+                Icon(
+                  icon,
+                  color: Colors.white,
+                  size: 21,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -791,6 +1216,7 @@ class _SubItem extends StatelessWidget {
     required this.route,
     required this.selected,
     required this.onTap,
+    this.loading = false,
   });
 
   final IconData icon;
@@ -798,34 +1224,74 @@ class _SubItem extends StatelessWidget {
   final String route;
   final bool selected;
   final VoidCallback onTap;
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 24, right: 20, top: 2, bottom: 2),
+      padding: const EdgeInsets.only(
+        left: 24,
+        right: 20,
+        top: 2,
+        bottom: 2,
+      ),
       child: Material(
-        color: selected ? Colors.white.withOpacity(.14) : Colors.transparent,
+        color: selected
+            ? Colors.white.withOpacity(.14)
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          onTap: loading ? null : onTap,
+          child: AnimatedContainer(
+            duration:
+            const Duration(milliseconds: 150),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 10,
+            ),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: selected
+                  ? Border.all(
+                color:
+                Colors.white.withOpacity(.06),
+              )
+                  : null,
+            ),
             child: Row(
               children: [
-                Icon(
-                  icon,
-                  color: selected ? Colors.white : Colors.white60,
-                  size: 18,
-                ),
+                if (loading)
+                  const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white70,
+                    ),
+                  )
+                else
+                  Icon(
+                    icon,
+                    color: selected
+                        ? Colors.white
+                        : Colors.white60,
+                    size: 18,
+                  ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: TextStyle(
-                      color: selected ? Colors.white : Colors.white70,
+                      color: selected
+                          ? Colors.white
+                          : Colors.white70,
                       fontSize: 12,
-                      fontWeight: selected ? FontWeight.w800 : FontWeight.w500,
+                      fontWeight: selected
+                          ? FontWeight.w800
+                          : FontWeight.w500,
                     ),
                   ),
                 ),

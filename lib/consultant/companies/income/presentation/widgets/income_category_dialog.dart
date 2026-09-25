@@ -1,34 +1,42 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../application/income_categories_provider.dart';
-
-class IncomeCategoryDialog extends ConsumerStatefulWidget {
-  final String companyId;
+class IncomeCategoryDialog extends StatefulWidget {
   final Map<String, dynamic>? category;
 
   const IncomeCategoryDialog({
     super.key,
-    required this.companyId,
     this.category,
   });
 
-  bool get isEdit => category != null;
+  static Future<Map<String, dynamic>?> show(
+      BuildContext context, {
+        Map<String, dynamic>? category,
+      }) {
+    return showDialog<Map<String, dynamic>>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => IncomeCategoryDialog(
+        category: category,
+      ),
+    );
+  }
 
   @override
-  ConsumerState<IncomeCategoryDialog> createState() =>
+  State<IncomeCategoryDialog> createState() =>
       _IncomeCategoryDialogState();
 }
 
-class _IncomeCategoryDialogState extends ConsumerState<IncomeCategoryDialog> {
+class _IncomeCategoryDialogState
+    extends State<IncomeCategoryDialog> {
   final _formKey = GlobalKey<FormState>();
 
   late final TextEditingController _nameController;
   late final TextEditingController _codeController;
   late final TextEditingController _descriptionController;
 
-  bool _isActive = true;
-  bool _loading = false;
+  String _categoryType = 'operational';
+
+  bool get isEditing => widget.category != null;
 
   @override
   void initState() {
@@ -37,18 +45,19 @@ class _IncomeCategoryDialogState extends ConsumerState<IncomeCategoryDialog> {
     final category = widget.category;
 
     _nameController = TextEditingController(
-      text: category?['name'] as String? ?? '',
+      text: category?['name']?.toString() ?? '',
     );
 
     _codeController = TextEditingController(
-      text: category?['code'] as String? ?? '',
+      text: category?['code']?.toString() ?? '',
     );
 
     _descriptionController = TextEditingController(
-      text: category?['description'] as String? ?? '',
+      text: category?['description']?.toString() ?? '',
     );
 
-    _isActive = category?['is_active'] as bool? ?? true;
+    _categoryType =
+        category?['category_type']?.toString() ?? 'operational';
   }
 
   @override
@@ -59,168 +68,138 @@ class _IncomeCategoryDialogState extends ConsumerState<IncomeCategoryDialog> {
     super.dispose();
   }
 
+  void _submit() {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    Navigator.of(context).pop({
+      'name': _nameController.text.trim(),
+      'code': _codeController.text.trim(),
+      'description': _descriptionController.text.trim(),
+      'category_type': _categoryType,
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(
-        widget.isEdit ? 'ویرایش دسته‌بندی درآمد' : 'دسته‌بندی درآمد جدید',
-      ),
-      content: SizedBox(
-        width: 480,
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView(
+    final theme = Theme.of(context);
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: AlertDialog(
+        title: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: .10),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                isEditing
+                    ? Icons.edit_outlined
+                    : Icons.add_chart_outlined,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              isEditing
+                  ? 'ویرایش سرفصل درآمد'
+                  : 'افزودن سرفصل درآمد',
+            ),
+          ],
+        ),
+        content: SizedBox(
+          width: 500,
+          child: Form(
+            key: _formKey,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextFormField(
                   controller: _nameController,
-                  autofocus: true,
+                  autofocus: !isEditing,
                   decoration: const InputDecoration(
-                    labelText: 'نام دسته‌بندی *',
-                    hintText: 'مثلاً فروش کالا',
-                    prefixIcon: Icon(Icons.category_outlined),
+                    labelText: 'نام سرفصل',
+                    hintText: 'مثلاً درآمد اجاره',
+                    prefixIcon: Icon(Icons.label_outline),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'نام دسته‌بندی الزامی است';
+                      return 'نام سرفصل را وارد کنید.';
                     }
-
-                    if (value.trim().length < 2) {
-                      return 'نام دسته‌بندی خیلی کوتاه است';
-                    }
-
                     return null;
                   },
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  value: _categoryType,
+                  decoration: const InputDecoration(
+                    labelText: 'نوع درآمد',
+                    prefixIcon: Icon(Icons.account_tree_outlined),
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'operational',
+                      child: Text('درآمد عملیاتی'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'non_operational',
+                      child: Text('درآمد غیرعملیاتی'),
+                    ),
+                  ],
+                  onChanged: (value) {
+                    if (value == null) return;
+
+                    setState(() {
+                      _categoryType = value;
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: _codeController,
                   decoration: const InputDecoration(
-                    labelText: 'کد دسته‌بندی',
-                    hintText: 'مثلاً INC-001',
-                    prefixIcon: Icon(Icons.tag),
+                    labelText: 'کد سرفصل',
+                    hintText: 'اختیاری',
+                    prefixIcon: Icon(Icons.tag_outlined),
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
                 TextFormField(
                   controller: _descriptionController,
-                  maxLines: 3,
+                  minLines: 3,
+                  maxLines: 5,
                   decoration: const InputDecoration(
                     labelText: 'توضیحات',
-                    hintText: 'توضیحات اختیاری',
+                    hintText: 'توضیحات تکمیلی سرفصل',
                     prefixIcon: Icon(Icons.notes_outlined),
+                    alignLabelWithHint: true,
                   ),
-                ),
-                const SizedBox(height: 8),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('دسته‌بندی فعال باشد'),
-                  subtitle: const Text(
-                    'دسته‌بندی‌های غیرفعال در ثبت درآمد قابل انتخاب نیستند.',
-                  ),
-                  value: _isActive,
-                  onChanged:
-                      _loading
-                          ? null
-                          : (value) {
-                            setState(() {
-                              _isActive = value;
-                            });
-                          },
                 ),
               ],
             ),
           ),
         ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: _loading ? null : () => Navigator.pop(context),
-          child: const Text('انصراف'),
-        ),
-        FilledButton(
-          onPressed: _loading ? null : _submit,
-          child:
-              _loading
-                  ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                  : Text(widget.isEdit ? 'ذخیره تغییرات' : 'ایجاد'),
-        ),
-      ],
-    );
-  }
-
-  Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
-    setState(() {
-      _loading = true;
-    });
-
-    try {
-      final service = ref.read(incomeCategoryServiceProvider);
-
-      final name = _nameController.text.trim();
-
-      final code =
-          _codeController.text.trim().isEmpty
-              ? null
-              : _codeController.text.trim();
-
-      final description =
-          _descriptionController.text.trim().isEmpty
-              ? null
-              : _descriptionController.text.trim();
-
-      if (widget.isEdit) {
-        await service.updateCategory(
-          id: widget.category!['id'] as String,
-          name: name,
-          code: code,
-          description: description,
-          isActive: _isActive,
-        );
-      } else {
-        await service.createCategory(
-          companyId: widget.companyId,
-          name: name,
-          code: code,
-          description: description,
-        );
-      }
-
-      if (!mounted) return;
-
-      Navigator.pop(context);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            widget.isEdit
-                ? 'دسته‌بندی با موفقیت ویرایش شد'
-                : 'دسته‌بندی با موفقیت ایجاد شد',
+        actionsPadding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('انصراف'),
           ),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-
-      setState(() {
-        _loading = false;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('خطا: $e'), backgroundColor: Colors.red),
-      );
-    }
+          const SizedBox(width: 8),
+          FilledButton.icon(
+            onPressed: _submit,
+            icon: const Icon(Icons.check),
+            label: Text(
+              isEditing ? 'ذخیره تغییرات' : 'افزودن سرفصل',
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
