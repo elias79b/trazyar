@@ -1,3 +1,483 @@
+// import 'package:supabase_flutter/supabase_flutter.dart';
+//
+// class OwnerUser {
+//   const OwnerUser({
+//     required this.id,
+//     required this.fullName,
+//     required this.email,
+//     required this.role,
+//     required this.isActive,
+//     required this.createdAt,
+//     this.avatarUrl,
+//   });
+//
+//   final String id;
+//   final String fullName;
+//   final String email;
+//   final String role;
+//   final bool isActive;
+//   final DateTime createdAt;
+//   final String? avatarUrl;
+//
+//   factory OwnerUser.fromMap(
+//       Map<String, dynamic> map,
+//       ) {
+//     return OwnerUser(
+//       id: (map['id'] ?? '').toString(),
+//       fullName: (map['full_name'] ?? '').toString(),
+//       email: (map['email'] ?? '').toString(),
+//       role: (map['role'] ?? 'company_user').toString(),
+//       isActive: map['is_active'] == true,
+//       createdAt:
+//       DateTime.tryParse(
+//         (map['created_at'] ?? '').toString(),
+//       ) ??
+//           DateTime.fromMillisecondsSinceEpoch(0),
+//       avatarUrl: map['avatar_url']?.toString(),
+//     );
+//   }
+//
+//   String get statusLabel =>
+//       isActive ? 'فعال' : 'غیرفعال';
+//
+//   String get roleLabel {
+//     return switch (role) {
+//       'owner' => 'مدیر کل سیستم',
+//       'consultant' => 'مشاور',
+//       'company_admin' => 'مدیر شرکت',
+//       'accountant' => 'حسابدار',
+//       'hr' => 'منابع انسانی',
+//       'observer' => 'ناظر',
+//       _ => 'کاربر',
+//     };
+//   }
+//
+//   String get displayName {
+//     final value = fullName.trim();
+//     return value.isEmpty ? email : value;
+//   }
+//
+//   String get avatarLetter {
+//     final value = displayName.trim();
+//     return value.isEmpty ? 'ک' : value[0];
+//   }
+// }
+//
+// class OwnerUserUpdateInput {
+//   const OwnerUserUpdateInput({
+//     required this.fullName,
+//     required this.role,
+//     required this.isActive,
+//     this.companyIds = const [],
+//   });
+//
+//   final String fullName;
+//   final String role;
+//   final bool isActive;
+//
+//   /// فقط برای کاربرانی که role = consultant هستند.
+//   final List<String> companyIds;
+// }
+//
+// class UserInvitationResult {
+//   const UserInvitationResult({
+//     required this.userId,
+//     required this.email,
+//   });
+//
+//   final String userId;
+//   final String email;
+// }
+//
+// class CompanyOption {
+//   const CompanyOption({
+//     required this.id,
+//     required this.name,
+//   });
+//
+//   final String id;
+//   final String name;
+// }
+//
+// class UsersRepository {
+//   UsersRepository()
+//       : _client = Supabase.instance.client;
+//
+//   final SupabaseClient _client;
+//
+//   // ============================================================
+//   // USERS
+//   // ============================================================
+//
+//   Future<List<OwnerUser>> fetchUsers() async {
+//     final data = await _client
+//         .from('users')
+//         .select(
+//       'id, full_name, email, role, '
+//           'is_active, avatar_url, created_at',
+//     )
+//         .order(
+//       'created_at',
+//       ascending: false,
+//     );
+//
+//     return (data as List)
+//         .cast<Map<String, dynamic>>()
+//         .map(OwnerUser.fromMap)
+//         .toList();
+//   }
+//
+//   // ============================================================
+//   // UPDATE USER + CONSULTANT COMPANIES
+//   // ============================================================
+//
+//   Future<void> updateUser({
+//     required String id,
+//     required OwnerUserUpdateInput input,
+//   }) async {
+//     // ----------------------------------------------------------
+//     // 1. بروزرسانی اطلاعات اصلی کاربر
+//     // ----------------------------------------------------------
+//
+//     await _client
+//         .from('users')
+//         .update({
+//       'full_name': input.fullName.trim(),
+//       'role': input.role,
+//       'is_active': input.isActive,
+//     })
+//         .eq('id', id);
+//
+//     // ----------------------------------------------------------
+//     // 2. اگر کاربر مشاور است،
+//     //    شرکت‌های تحت پوشش را هم هماهنگ کن
+//     // ----------------------------------------------------------
+//
+//     if (input.role == 'consultant') {
+//       await syncConsultantCompanies(
+//         consultantUserId: id,
+//         companyIds: input.companyIds,
+//       );
+//     }
+//   }
+//
+//   // ============================================================
+//   // COMPANIES
+//   // ============================================================
+//
+//   Future<List<CompanyOption>> fetchCompanies() async {
+//     final data = await _client
+//         .from('companies')
+//         .select('id, name')
+//         .eq('is_active', true)
+//         .order(
+//       'name',
+//       ascending: true,
+//     );
+//
+//     return (data as List).map(
+//           (row) {
+//         final map =
+//         Map<String, dynamic>.from(row);
+//
+//         return CompanyOption(
+//           id: (map['id'] ?? '').toString(),
+//           name: (map['name'] ?? 'بدون نام').toString(),
+//         );
+//       },
+//     ).toList();
+//   }
+//
+//   // ============================================================
+//   // شرکت‌های فعلی مشاور
+//   // ============================================================
+//
+//   Future<List<String>> fetchConsultantCompanyIds(
+//       String consultantUserId,
+//       ) async {
+//     final data = await _client
+//         .from('consultant_company_assignments')
+//         .select('company_id')
+//         .eq(
+//       'consultant_user_id',
+//       consultantUserId,
+//     )
+//         .eq(
+//       'is_active',
+//       true,
+//     );
+//
+//     return (data as List)
+//         .map(
+//           (row) =>
+//           (row['company_id'] ?? '').toString(),
+//     )
+//         .where(
+//           (id) => id.isNotEmpty,
+//     )
+//         .toList();
+//   }
+//
+//   // ============================================================
+//   // هماهنگ‌سازی شرکت‌های مشاور
+//   // ============================================================
+//
+//   Future<void> syncConsultantCompanies({
+//     required String consultantUserId,
+//     required List<String> companyIds,
+//   }) async {
+//     final uniqueCompanyIds =
+//     companyIds
+//         .where(
+//           (id) => id.trim().isNotEmpty,
+//     )
+//         .map(
+//           (id) => id.trim(),
+//     )
+//         .toSet()
+//         .toList();
+//
+//     // ----------------------------------------------------------
+//     // شرکت‌های فعلی
+//     // ----------------------------------------------------------
+//
+//     final existingData = await _client
+//         .from('consultant_company_assignments')
+//         .select(
+//       'id, company_id, is_active',
+//     )
+//         .eq(
+//       'consultant_user_id',
+//       consultantUserId,
+//     );
+//
+//     final existing =
+//     (existingData as List)
+//         .map(
+//           (row) =>
+//       Map<String, dynamic>.from(row),
+//     )
+//         .toList();
+//
+//     final existingByCompanyId =
+//     <String, Map<String, dynamic>>{};
+//
+//     for (final row in existing) {
+//       final companyId =
+//       (row['company_id'] ?? '').toString();
+//
+//       if (companyId.isNotEmpty) {
+//         existingByCompanyId[companyId] = row;
+//       }
+//     }
+//
+//     // ----------------------------------------------------------
+//     // 1. شرکت‌هایی که باید فعال باشند
+//     // ----------------------------------------------------------
+//
+//     for (final companyId in uniqueCompanyIds) {
+//       final existingRow =
+//       existingByCompanyId[companyId];
+//
+//       if (existingRow == null) {
+//         // شرکت جدید برای مشاور
+//         await _client
+//             .from(
+//           'consultant_company_assignments',
+//         )
+//             .insert({
+//           'consultant_user_id':
+//           consultantUserId,
+//           'company_id': companyId,
+//           'is_active': true,
+//         });
+//       } else {
+//         // اگر قبلاً وجود داشته ولی غیرفعال شده،
+//         // دوباره فعالش می‌کنیم.
+//         if (existingRow['is_active'] != true) {
+//           await _client
+//               .from(
+//             'consultant_company_assignments',
+//           )
+//               .update({
+//             'is_active': true,
+//             'end_date': null,
+//           })
+//               .eq(
+//             'id',
+//             existingRow['id'],
+//           );
+//         }
+//       }
+//     }
+//
+//     // ----------------------------------------------------------
+//     // 2. شرکت‌هایی که از انتخاب حذف شده‌اند
+//     // ----------------------------------------------------------
+//
+//     for (final row in existing) {
+//       final companyId =
+//       (row['company_id'] ?? '').toString();
+//
+//       if (companyId.isEmpty) {
+//         continue;
+//       }
+//
+//       if (!uniqueCompanyIds.contains(companyId) &&
+//           row['is_active'] == true) {
+//         await _client
+//             .from(
+//           'consultant_company_assignments',
+//         )
+//             .update({
+//           'is_active': false,
+//           'end_date':
+//           DateTime.now()
+//               .toUtc()
+//               .toIso8601String()
+//               .split('T')
+//               .first,
+//         })
+//             .eq(
+//           'id',
+//           row['id'],
+//         );
+//       }
+//     }
+//   }
+//
+//   // ============================================================
+//   // ایجاد دعوت مشاور
+//   // ============================================================
+//
+//   Future<UserInvitationResult>
+//   createUserInvitation({
+//     required String fullName,
+//     required String email,
+//     String? phone,
+//     required String role,
+//     required List<String> companyIds,
+//   }) async {
+//     if (role != 'consultant') {
+//       throw Exception(
+//         'این عملیات فقط برای ایجاد مشاور است.',
+//       );
+//     }
+//
+//     if (companyIds.isEmpty) {
+//       throw Exception(
+//         'حداقل یک شرکت باید انتخاب شود.',
+//       );
+//     }
+//
+//     // final response =
+//     // await _client.functions.invoke(
+//     //   'create-consultant-invitation',
+//     //   body: {
+//     //     'fullName': fullName.trim(),
+//     //     'email':
+//     //     email.trim().toLowerCase(),
+//     //     'phone': phone?.trim(),
+//     //     'role': role,
+//     //     'companyIds': companyIds,
+//     //   },
+//     // );
+//     final response =
+//     await _client.functions.invoke(
+//       'smooth-action',
+//       body: {
+//         'action': 'create_consultant',
+//         'fullName': fullName.trim(),
+//         'email': email.trim().toLowerCase(),
+//         'role': role,
+//         'companyIds': companyIds,
+//       },
+//     );
+//
+//     final data = response.data;
+//
+//     if (response.status < 200 ||
+//         response.status >= 300) {
+//       throw Exception(
+//         _extractError(
+//           data,
+//           'خطا در ایجاد دعوت‌نامه.',
+//         ),
+//       );
+//     }
+//
+//     if (data is! Map) {
+//       throw Exception(
+//         'پاسخ نامعتبر از Supabase دریافت شد.',
+//       );
+//     }
+//
+//     final result =
+//     Map<String, dynamic>.from(data);
+//
+//     if (result['success'] != true) {
+//       throw Exception(
+//         _extractError(
+//           result,
+//           'ایجاد مشاور انجام نشد.',
+//         ),
+//       );
+//     }
+//
+//     final userId =
+//     result['userId']?.toString();
+//
+//     final resultEmail =
+//     result['email']?.toString();
+//
+//     if (userId == null ||
+//         userId.isEmpty ||
+//         resultEmail == null ||
+//         resultEmail.isEmpty) {
+//       throw Exception(
+//         'پاسخ Supabase اطلاعات کاربر را ندارد.',
+//       );
+//     }
+//
+//     return UserInvitationResult(
+//       userId: userId,
+//       email: resultEmail,
+//     );
+//   }
+//
+//   // ============================================================
+//   // ERROR
+//   // ============================================================
+//
+//   String _extractError(
+//       dynamic data,
+//       String fallback,
+//       ) {
+//     if (data is Map) {
+//       final error = data['error'];
+//
+//       if (error != null &&
+//           error
+//               .toString()
+//               .trim()
+//               .isNotEmpty) {
+//         return error.toString();
+//       }
+//
+//       final message = data['message'];
+//
+//       if (message != null &&
+//           message
+//               .toString()
+//               .trim()
+//               .isNotEmpty) {
+//         return message.toString();
+//       }
+//     }
+//
+//     return fallback;
+//   }
+// }
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class OwnerUser {
@@ -37,8 +517,7 @@ class OwnerUser {
     );
   }
 
-  String get statusLabel =>
-      isActive ? 'فعال' : 'غیرفعال';
+  String get statusLabel => isActive ? 'فعال' : 'غیرفعال';
 
   String get roleLabel {
     return switch (role) {
@@ -75,7 +554,8 @@ class OwnerUserUpdateInput {
   final String role;
   final bool isActive;
 
-  /// فقط برای کاربرانی که role = consultant هستند.
+  /// برای مشاور: چند شرکت
+  /// برای حسابدار: دقیقاً یک شرکت
   final List<String> companyIds;
 }
 
@@ -128,17 +608,13 @@ class UsersRepository {
   }
 
   // ============================================================
-  // UPDATE USER + CONSULTANT COMPANIES
+  // UPDATE USER
   // ============================================================
 
   Future<void> updateUser({
     required String id,
     required OwnerUserUpdateInput input,
   }) async {
-    // ----------------------------------------------------------
-    // 1. بروزرسانی اطلاعات اصلی کاربر
-    // ----------------------------------------------------------
-
     await _client
         .from('users')
         .update({
@@ -147,11 +623,6 @@ class UsersRepository {
       'is_active': input.isActive,
     })
         .eq('id', id);
-
-    // ----------------------------------------------------------
-    // 2. اگر کاربر مشاور است،
-    //    شرکت‌های تحت پوشش را هم هماهنگ کن
-    // ----------------------------------------------------------
 
     if (input.role == 'consultant') {
       await syncConsultantCompanies(
@@ -177,8 +648,7 @@ class UsersRepository {
 
     return (data as List).map(
           (row) {
-        final map =
-        Map<String, dynamic>.from(row);
+        final map = Map<String, dynamic>.from(row);
 
         return CompanyOption(
           id: (map['id'] ?? '').toString(),
@@ -226,8 +696,7 @@ class UsersRepository {
     required String consultantUserId,
     required List<String> companyIds,
   }) async {
-    final uniqueCompanyIds =
-    companyIds
+    final uniqueCompanyIds = companyIds
         .where(
           (id) => id.trim().isNotEmpty,
     )
@@ -236,10 +705,6 @@ class UsersRepository {
     )
         .toSet()
         .toList();
-
-    // ----------------------------------------------------------
-    // شرکت‌های فعلی
-    // ----------------------------------------------------------
 
     final existingData = await _client
         .from('consultant_company_assignments')
@@ -251,8 +716,7 @@ class UsersRepository {
       consultantUserId,
     );
 
-    final existing =
-    (existingData as List)
+    final existing = (existingData as List)
         .map(
           (row) =>
       Map<String, dynamic>.from(row),
@@ -271,16 +735,12 @@ class UsersRepository {
       }
     }
 
-    // ----------------------------------------------------------
-    // 1. شرکت‌هایی که باید فعال باشند
-    // ----------------------------------------------------------
-
+    // شرکت‌هایی که باید فعال باشند
     for (final companyId in uniqueCompanyIds) {
       final existingRow =
       existingByCompanyId[companyId];
 
       if (existingRow == null) {
-        // شرکت جدید برای مشاور
         await _client
             .from(
           'consultant_company_assignments',
@@ -292,8 +752,6 @@ class UsersRepository {
           'is_active': true,
         });
       } else {
-        // اگر قبلاً وجود داشته ولی غیرفعال شده،
-        // دوباره فعالش می‌کنیم.
         if (existingRow['is_active'] != true) {
           await _client
               .from(
@@ -311,10 +769,7 @@ class UsersRepository {
       }
     }
 
-    // ----------------------------------------------------------
-    // 2. شرکت‌هایی که از انتخاب حذف شده‌اند
-    // ----------------------------------------------------------
-
+    // شرکت‌هایی که حذف شده‌اند
     for (final row in existing) {
       final companyId =
       (row['company_id'] ?? '').toString();
@@ -331,8 +786,7 @@ class UsersRepository {
         )
             .update({
           'is_active': false,
-          'end_date':
-          DateTime.now()
+          'end_date': DateTime.now()
               .toUtc()
               .toIso8601String()
               .split('T')
@@ -347,53 +801,94 @@ class UsersRepository {
   }
 
   // ============================================================
-  // ایجاد دعوت مشاور
+  // ایجاد دعوت کاربر
   // ============================================================
 
-  Future<UserInvitationResult>
-  createUserInvitation({
+  Future<UserInvitationResult> createUserInvitation({
     required String fullName,
     required String email,
     String? phone,
     required String role,
     required List<String> companyIds,
   }) async {
-    if (role != 'consultant') {
-      throw Exception(
-        'این عملیات فقط برای ایجاد مشاور است.',
+    final normalizedFullName = fullName.trim();
+    final normalizedEmail = email.trim().toLowerCase();
+
+    // ==========================================================
+    // CONSULTANT
+    // ==========================================================
+
+    if (role == 'consultant') {
+      if (companyIds.isEmpty) {
+        throw Exception(
+          'حداقل یک شرکت باید برای مشاور انتخاب شود.',
+        );
+      }
+
+      final response = await _client.functions.invoke(
+        'smooth-action',
+        body: {
+          'action': 'create_consultant',
+          'fullName': normalizedFullName,
+          'email': normalizedEmail,
+          'phone': phone?.trim(),
+          'role': role,
+          'companyIds': companyIds,
+        },
+      );
+
+      return _parseInvitationResponse(
+        response,
+        'ایجاد مشاور انجام نشد.',
       );
     }
 
-    if (companyIds.isEmpty) {
-      throw Exception(
-        'حداقل یک شرکت باید انتخاب شود.',
+    // ==========================================================
+    // ACCOUNTANT
+    // ==========================================================
+
+    if (role == 'accountant') {
+      if (companyIds.length != 1) {
+        throw Exception(
+          'برای حسابدار باید دقیقاً یک شرکت انتخاب شود.',
+        );
+      }
+
+      final response = await _client.functions.invoke(
+        'smooth-action',
+        body: {
+          'action': 'create_accountant',
+          'fullName': normalizedFullName,
+          'email': normalizedEmail,
+          'phone': phone?.trim(),
+          'role': role,
+          'companyIds': companyIds,
+        },
+      );
+
+      return _parseInvitationResponse(
+        response,
+        'ایجاد حسابدار انجام نشد.',
       );
     }
 
-    // final response =
-    // await _client.functions.invoke(
-    //   'create-consultant-invitation',
-    //   body: {
-    //     'fullName': fullName.trim(),
-    //     'email':
-    //     email.trim().toLowerCase(),
-    //     'phone': phone?.trim(),
-    //     'role': role,
-    //     'companyIds': companyIds,
-    //   },
-    // );
-    final response =
-    await _client.functions.invoke(
-      'smooth-action',
-      body: {
-        'action': 'create_consultant',
-        'fullName': fullName.trim(),
-        'email': email.trim().toLowerCase(),
-        'role': role,
-        'companyIds': companyIds,
-      },
+    // ==========================================================
+    // سایر نقش‌ها
+    // ==========================================================
+
+    throw Exception(
+      'ایجاد دعوت‌نامه برای نقش «$role» هنوز پیاده‌سازی نشده است.',
     );
+  }
 
+  // ============================================================
+  // PARSE INVITATION RESPONSE
+  // ============================================================
+
+  UserInvitationResult _parseInvitationResponse(
+      FunctionResponse response,
+      String fallback,
+      ) {
     final data = response.data;
 
     if (response.status < 200 ||
@@ -419,7 +914,7 @@ class UsersRepository {
       throw Exception(
         _extractError(
           result,
-          'ایجاد مشاور انجام نشد.',
+          fallback,
         ),
       );
     }
@@ -457,20 +952,14 @@ class UsersRepository {
       final error = data['error'];
 
       if (error != null &&
-          error
-              .toString()
-              .trim()
-              .isNotEmpty) {
+          error.toString().trim().isNotEmpty) {
         return error.toString();
       }
 
       final message = data['message'];
 
       if (message != null &&
-          message
-              .toString()
-              .trim()
-              .isNotEmpty) {
+          message.toString().trim().isNotEmpty) {
         return message.toString();
       }
     }
