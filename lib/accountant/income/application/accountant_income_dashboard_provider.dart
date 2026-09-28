@@ -2,12 +2,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 final accountantIncomeDashboardProvider =
-    FutureProvider.family<AccountantIncomeDashboardData, String>((
-      ref,
-      companyId,
+FutureProvider.family<AccountantIncomeDashboardData, String>((
+    ref,
+    companyId,
     ) async {
-      return AccountantIncomeDashboardRepository.fetch(companyId);
-    });
+  return AccountantIncomeDashboardRepository.fetch(
+    companyId,
+  );
+});
 
 class AccountantIncomeDashboardData {
   final String companyId;
@@ -19,7 +21,6 @@ class AccountantIncomeDashboardData {
   final double nonOperationalIncome;
 
   final List<AccountantIncomeCategorySummary> categorySummaries;
-
   final List<AccountantIncomeMonthlySummary> monthlySummaries;
 
   const AccountantIncomeDashboardData({
@@ -33,11 +34,21 @@ class AccountantIncomeDashboardData {
     required this.monthlySummaries,
   });
 
-  double get operationalShare =>
-      totalIncome == 0 ? 0 : operationalIncome / totalIncome * 100;
+  double get operationalShare {
+    if (totalIncome == 0.0) {
+      return 0.0;
+    }
 
-  double get nonOperationalShare =>
-      totalIncome == 0 ? 0 : nonOperationalIncome / totalIncome * 100;
+    return operationalIncome / totalIncome * 100.0;
+  }
+
+  double get nonOperationalShare {
+    if (totalIncome == 0.0) {
+      return 0.0;
+    }
+
+    return nonOperationalIncome / totalIncome * 100.0;
+  }
 }
 
 class AccountantIncomeCategorySummary {
@@ -53,9 +64,11 @@ class AccountantIncomeCategorySummary {
     required this.amount,
   });
 
-  bool get isOperational => categoryType == 'operational';
+  bool get isOperational =>
+      categoryType == 'operational';
 
-  bool get isNonOperational => categoryType == 'non_operational';
+  bool get isNonOperational =>
+      categoryType == 'non_operational';
 }
 
 class AccountantIncomeMonthlySummary {
@@ -73,213 +86,486 @@ class AccountantIncomeMonthlySummary {
     required this.nonOperationalAmount,
   });
 
-  double get total => operationalAmount + nonOperationalAmount;
+  double get total =>
+      operationalAmount + nonOperationalAmount;
 }
 
 class AccountantIncomeDashboardRepository {
   AccountantIncomeDashboardRepository._();
 
-  static final SupabaseClient _supabase = Supabase.instance.client;
+  static final SupabaseClient _supabase =
+      Supabase.instance.client;
 
-  static Future<AccountantIncomeDashboardData> fetch(String companyId) async {
+  static Future<AccountantIncomeDashboardData> fetch(
+      String companyId,
+      ) async {
+    // ==========================================================
+    // سال جاری شمسی
+    // ==========================================================
+
+    final currentJalaliYear =
+    _currentJalaliYear();
+
+    // ==========================================================
+    // فقط سال جاری را از دیتابیس می‌گیریم
+    // ==========================================================
+
     final fiscalYearResponse = await _supabase
         .from('income_fiscal_years')
-        .select('id, year, title, status')
-        .eq('company_id', companyId)
-        .order('year', ascending: false)
+        .select(
+      'id, year, title, status',
+    )
+        .eq(
+      'company_id',
+      companyId,
+    )
+        .eq(
+      'year',
+      currentJalaliYear,
+    )
         .limit(1);
 
+    // اگر سال جاری برای شرکت ساخته نشده باشد،
+    // داشبورد نباید سال آینده یا آخرین سال موجود را نمایش دهد.
     if (fiscalYearResponse.isEmpty) {
       return AccountantIncomeDashboardData(
         companyId: companyId,
-        fiscalYear: null,
-        fiscalYearTitle: null,
-        totalIncome: 0,
-        operationalIncome: 0,
-        nonOperationalIncome: 0,
+        fiscalYear: currentJalaliYear,
+        fiscalYearTitle:
+        'سال مالی $currentJalaliYear',
+        totalIncome: 0.0,
+        operationalIncome: 0.0,
+        nonOperationalIncome: 0.0,
         categorySummaries: const [],
         monthlySummaries: const [],
       );
     }
 
-    final fiscalYear = Map<String, dynamic>.from(fiscalYearResponse.first);
+    final fiscalYear =
+    Map<String, dynamic>.from(
+      fiscalYearResponse.first,
+    );
 
-    final fiscalYearId = fiscalYear['id']?.toString() ?? '';
+    final fiscalYearId =
+        fiscalYear['id']?.toString() ?? '';
 
-    final year = _toInt(fiscalYear['year']);
+    final year =
+    _toInt(fiscalYear['year']);
 
-    final yearTitle = fiscalYear['title']?.toString();
+    final yearTitle =
+    fiscalYear['title']?.toString();
 
     if (fiscalYearId.isEmpty) {
       return AccountantIncomeDashboardData(
         companyId: companyId,
-        fiscalYear: year,
-        fiscalYearTitle: yearTitle,
-        totalIncome: 0,
-        operationalIncome: 0,
-        nonOperationalIncome: 0,
+        fiscalYear: currentJalaliYear,
+        fiscalYearTitle:
+        yearTitle ??
+            'سال مالی $currentJalaliYear',
+        totalIncome: 0.0,
+        operationalIncome: 0.0,
+        nonOperationalIncome: 0.0,
         categorySummaries: const [],
         monthlySummaries: const [],
       );
     }
 
+    // ==========================================================
+    // دوره‌های سال جاری
+    // ==========================================================
+
     final periodsResponse = await _supabase
         .from('income_fiscal_periods')
-        .select('id, year, month, title, status')
-        .eq('company_id', companyId)
-        .eq('fiscal_year_id', fiscalYearId)
-        .order('month', ascending: true);
+        .select(
+      'id, year, month, title, status',
+    )
+        .eq(
+      'company_id',
+      companyId,
+    )
+        .eq(
+      'fiscal_year_id',
+      fiscalYearId,
+    )
+        .order(
+      'month',
+      ascending: true,
+    );
 
-    final periods =
-        (periodsResponse as List)
-            .map((row) => Map<String, dynamic>.from(row))
-            .toList();
+    final periods = (periodsResponse as List)
+        .map(
+          (row) => Map<String, dynamic>.from(row),
+    )
+        .toList();
 
     if (periods.isEmpty) {
       return AccountantIncomeDashboardData(
         companyId: companyId,
         fiscalYear: year,
-        fiscalYearTitle: yearTitle,
-        totalIncome: 0,
-        operationalIncome: 0,
-        nonOperationalIncome: 0,
+        fiscalYearTitle:
+        yearTitle ??
+            'سال مالی $currentJalaliYear',
+        totalIncome: 0.0,
+        operationalIncome: 0.0,
+        nonOperationalIncome: 0.0,
         categorySummaries: const [],
         monthlySummaries: const [],
       );
     }
 
-    final periodIds =
-        periods
-            .map((period) => period['id']?.toString() ?? '')
-            .where((id) => id.isNotEmpty)
-            .toList();
+    final periodIds = periods
+        .map(
+          (period) =>
+      period['id']?.toString() ?? '',
+    )
+        .where(
+          (id) => id.isNotEmpty,
+    )
+        .toList();
+
+    // ==========================================================
+    // ثبت درآمدها
+    // ==========================================================
 
     final recognitionsResponse =
-        periodIds.isEmpty
-            ? <dynamic>[]
-            : await _supabase
-                .from('income_recognitions')
-                .select(
-                  'id, fiscal_period_id, category_id, amount, '
-                  'income_categories('
-                  'id, name, category_type'
-                  ')',
-                )
-                .eq('company_id', companyId)
-                .inFilter('fiscal_period_id', periodIds);
+    periodIds.isEmpty
+        ? <dynamic>[]
+        : await _supabase
+        .from('income_recognitions')
+        .select(
+      'id, fiscal_period_id, category_id, amount, '
+          'income_categories('
+          'id, name, category_type'
+          ')',
+    )
+        .eq(
+      'company_id',
+      companyId,
+    )
+        .inFilter(
+      'fiscal_period_id',
+      periodIds,
+    );
 
-    final categoryMap = <String, AccountantIncomeCategorySummary>{};
+    final categoryMap =
+    <String, AccountantIncomeCategorySummary>{};
 
-    final monthlyMap = <String, _MonthlyAccumulator>{};
+    final monthlyMap =
+    <String, _MonthlyAccumulator>{};
+
+    // ==========================================================
+    // ایجاد ۱۲ ماه
+    // ==========================================================
 
     for (final period in periods) {
-      final periodId = period['id']?.toString() ?? '';
+      final periodId =
+          period['id']?.toString() ?? '';
 
       if (periodId.isEmpty) {
         continue;
       }
 
-      monthlyMap[periodId] = _MonthlyAccumulator(
-        periodId: periodId,
-        month: _toInt(period['month']),
-        title: period['title']?.toString() ?? '',
-      );
+      monthlyMap[periodId] =
+          _MonthlyAccumulator(
+            periodId: periodId,
+            month: _toInt(
+              period['month'],
+            ),
+            title:
+            period['title']?.toString() ??
+                '',
+          );
     }
 
-    for (final rawRow in recognitionsResponse as List) {
-      final row = Map<String, dynamic>.from(rawRow);
+    // ==========================================================
+    // پردازش درآمدها
+    // ==========================================================
 
-      final categoryId = row['category_id']?.toString() ?? '';
+    for (final rawRow
+    in recognitionsResponse as List) {
+      final row =
+      Map<String, dynamic>.from(rawRow);
 
-      final periodId = row['fiscal_period_id']?.toString() ?? '';
+      final categoryId =
+          row['category_id']?.toString() ??
+              '';
 
-      final amount = _toDouble(row['amount']);
+      final periodId =
+          row['fiscal_period_id']?.toString() ??
+              '';
 
-      if (categoryId.isEmpty || periodId.isEmpty) {
+      final amount =
+      _toDouble(row['amount']);
+
+      if (categoryId.isEmpty ||
+          periodId.isEmpty) {
         continue;
       }
 
-      final categoryRaw = row['income_categories'];
+      final categoryRaw =
+      row['income_categories'];
 
       if (categoryRaw == null) {
         continue;
       }
 
-      final category = Map<String, dynamic>.from(categoryRaw);
+      final category =
+      Map<String, dynamic>.from(
+        categoryRaw,
+      );
 
-      final categoryName = category['name']?.toString() ?? 'بدون دسته‌بندی';
+      final categoryName =
+          category['name']?.toString() ??
+              'بدون دسته‌بندی';
 
       final categoryType =
-          category['category_type']?.toString().trim().toLowerCase() ??
-          'operational';
+          category['category_type']
+              ?.toString()
+              .trim()
+              .toLowerCase() ??
+              'operational';
 
-      final existing = categoryMap[categoryId];
+      // --------------------------------------------------------
+      // دسته‌بندی
+      // --------------------------------------------------------
+
+      final existing =
+      categoryMap[categoryId];
 
       if (existing == null) {
-        categoryMap[categoryId] = AccountantIncomeCategorySummary(
-          categoryId: categoryId,
-          categoryName: categoryName,
-          categoryType: categoryType,
-          amount: amount,
-        );
+        categoryMap[categoryId] =
+            AccountantIncomeCategorySummary(
+              categoryId: categoryId,
+              categoryName: categoryName,
+              categoryType: categoryType,
+              amount: amount,
+            );
       } else {
-        categoryMap[categoryId] = AccountantIncomeCategorySummary(
-          categoryId: existing.categoryId,
-          categoryName: existing.categoryName,
-          categoryType: existing.categoryType,
-          amount: existing.amount + amount,
-        );
+        categoryMap[categoryId] =
+            AccountantIncomeCategorySummary(
+              categoryId:
+              existing.categoryId,
+              categoryName:
+              existing.categoryName,
+              categoryType:
+              existing.categoryType,
+              amount:
+              existing.amount + amount,
+            );
       }
 
-      final monthly = monthlyMap[periodId];
+      // --------------------------------------------------------
+      // ماه
+      // --------------------------------------------------------
+
+      final monthly =
+      monthlyMap[periodId];
 
       if (monthly != null) {
-        if (categoryType == 'non_operational') {
-          monthly.nonOperationalAmount += amount;
+        if (categoryType ==
+            'non_operational') {
+          monthly.nonOperationalAmount +=
+              amount;
         } else {
-          monthly.operationalAmount += amount;
+          monthly.operationalAmount +=
+              amount;
         }
       }
     }
 
+    // ==========================================================
+    // مرتب‌سازی دسته‌ها
+    // ==========================================================
+
     final categories =
-        categoryMap.values.toList()
-          ..sort((a, b) => b.amount.compareTo(a.amount));
+    categoryMap.values.toList()
+      ..sort(
+            (a, b) => b.amount.compareTo(
+          a.amount,
+        ),
+      );
+
+    // ==========================================================
+    // مرتب‌سازی ماه‌ها
+    // ==========================================================
 
     final monthly =
-        monthlyMap.values.toList()..sort((a, b) => a.month.compareTo(b.month));
+    monthlyMap.values.toList()
+      ..sort(
+            (a, b) => a.month.compareTo(
+          b.month,
+        ),
+      );
 
-    var operationalIncome = 0.0;
-    var nonOperationalIncome = 0.0;
+    // ==========================================================
+    // جمع کل
+    // ==========================================================
+
+    double operationalIncome = 0.0;
+    double nonOperationalIncome = 0.0;
 
     for (final category in categories) {
       if (category.isNonOperational) {
-        nonOperationalIncome += category.amount;
+        nonOperationalIncome +=
+            category.amount;
       } else {
-        operationalIncome += category.amount;
+        operationalIncome +=
+            category.amount;
       }
     }
 
     return AccountantIncomeDashboardData(
       companyId: companyId,
-      fiscalYear: year,
-      fiscalYearTitle: yearTitle,
-      totalIncome: operationalIncome + nonOperationalIncome,
-      operationalIncome: operationalIncome,
-      nonOperationalIncome: nonOperationalIncome,
-      categorySummaries: categories,
+      fiscalYear:
+      year == 0
+          ? currentJalaliYear
+          : year,
+      fiscalYearTitle:
+      yearTitle ??
+          'سال مالی $currentJalaliYear',
+      totalIncome:
+      operationalIncome +
+          nonOperationalIncome,
+      operationalIncome:
+      operationalIncome,
+      nonOperationalIncome:
+      nonOperationalIncome,
+      categorySummaries:
+      categories,
       monthlySummaries:
-          monthly
-              .map(
-                (item) => AccountantIncomeMonthlySummary(
-                  periodId: item.periodId,
-                  month: item.month,
-                  title: item.title,
-                  operationalAmount: item.operationalAmount,
-                  nonOperationalAmount: item.nonOperationalAmount,
-                ),
-              )
-              .toList(),
+      monthly
+          .map(
+            (item) =>
+            AccountantIncomeMonthlySummary(
+              periodId:
+              item.periodId,
+              month:
+              item.month,
+              title:
+              item.title,
+              operationalAmount:
+              item.operationalAmount,
+              nonOperationalAmount:
+              item.nonOperationalAmount,
+            ),
+      )
+          .toList(),
+    );
+  }
+
+  // ============================================================
+  // سال جاری شمسی
+  // ============================================================
+
+  static int _currentJalaliYear() {
+    final now = DateTime.now();
+
+    return _gregorianToJalali(
+      now.year,
+      now.month,
+      now.day,
+    ).year;
+  }
+
+  // ============================================================
+  // تبدیل میلادی به شمسی
+  // ============================================================
+
+  static _JalaliDate _gregorianToJalali(
+      int gy,
+      int gm,
+      int gd,
+      ) {
+    final gDaysInMonth = <int>[
+      31,
+      28,
+      31,
+      30,
+      31,
+      30,
+      31,
+      31,
+      30,
+      31,
+      30,
+      31,
+    ];
+
+    final jDaysInMonth = <int>[
+      31,
+      31,
+      31,
+      31,
+      31,
+      31,
+      30,
+      30,
+      30,
+      30,
+      30,
+      29,
+    ];
+
+    int gy2 = gy - 1600;
+    int gm2 = gm - 1;
+    int gd2 = gd - 1;
+
+    int gDayNo =
+        365 * gy2 +
+            ((gy2 + 3) ~/ 4) -
+            ((gy2 + 99) ~/ 100) +
+            ((gy2 + 399) ~/ 400);
+
+    for (int i = 0; i < gm2; i++) {
+      gDayNo += gDaysInMonth[i];
+    }
+
+    if (gm2 > 1 &&
+        ((gy % 4 == 0 && gy % 100 != 0) ||
+            gy % 400 == 0)) {
+      gDayNo++;
+    }
+
+    gDayNo += gd2;
+
+    int jDayNo = gDayNo - 79;
+
+    int jNp =
+        jDayNo ~/ 12053;
+
+    int jy =
+        979 + 33 * jNp;
+
+    jDayNo %= 12053;
+
+    jy +=
+        4 * (jDayNo ~/ 1461);
+
+    jDayNo %= 1461;
+
+    if (jDayNo >= 366) {
+      jy +=
+          (jDayNo - 1) ~/ 365;
+
+      jDayNo =
+          (jDayNo - 1) % 365;
+    }
+
+    int jm = 0;
+
+    for (int i = 0;
+    i < 11 &&
+        jDayNo >= jDaysInMonth[i];
+    i++) {
+      jDayNo -=
+      jDaysInMonth[i];
+      jm++;
+    }
+
+    return _JalaliDate(
+      year: jy,
+      month: jm + 1,
+      day: jDayNo + 1,
     );
   }
 
@@ -292,20 +578,38 @@ class AccountantIncomeDashboardRepository {
       return value;
     }
 
-    return int.tryParse(value.toString()) ?? 0;
+    return int.tryParse(
+      value.toString(),
+    ) ??
+        0;
   }
 
   static double _toDouble(dynamic value) {
     if (value == null) {
-      return 0;
+      return 0.0;
     }
 
     if (value is num) {
       return value.toDouble();
     }
 
-    return double.tryParse(value.toString()) ?? 0;
+    return double.tryParse(
+      value.toString(),
+    ) ??
+        0.0;
   }
+}
+
+class _JalaliDate {
+  final int year;
+  final int month;
+  final int day;
+
+  const _JalaliDate({
+    required this.year,
+    required this.month,
+    required this.day,
+  });
 }
 
 class _MonthlyAccumulator {
@@ -320,7 +624,7 @@ class _MonthlyAccumulator {
     required this.periodId,
     required this.month,
     required this.title,
-    this.operationalAmount = 0,
-    this.nonOperationalAmount = 0,
+    this.operationalAmount = 0.0,
+    this.nonOperationalAmount = 0.0,
   });
 }

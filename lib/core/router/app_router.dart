@@ -20,6 +20,7 @@ import 'package:tarazyar/authentication/presentation/pages/splash_page.dart';
 
 import 'package:tarazyar/accountant/dashboard/application/accountant_dashboard_provider.dart';
 import 'package:tarazyar/accountant/dashboard/presentation/pages/accountant_page.dart';
+import 'package:tarazyar/accountant/dashboard/presentation/widgets/accountant_scaffold.dart';
 
 // ============================================================
 // ACCOUNTANT BANKING
@@ -48,6 +49,18 @@ import 'package:tarazyar/accountant/payroll/pages/accountant_payroll_records_pag
 import 'package:tarazyar/accountant/payroll/pages/accountant_cost_centers_page.dart';
 
 // ============================================================
+// ACCOUNTANT INCOME
+// ============================================================
+
+import 'package:tarazyar/accountant/income/application/accountant_income_fiscal_periods_provider.dart';
+import 'package:tarazyar/accountant/income/presentation/pages/accountant_income_dashboard_page.dart';
+import 'package:tarazyar/accountant/income/presentation/pages/accountant_income_fiscal_periods_page.dart';
+import 'package:tarazyar/accountant/income/presentation/pages/accountant_income_categories_page.dart';
+import 'package:tarazyar/accountant/income/presentation/pages/accountant_income_recognition_page.dart';
+import 'package:tarazyar/accountant/income/presentation/pages/accountant_income_receivables_page.dart';
+import 'package:tarazyar/accountant/income/presentation/pages/accountant_income_report_page.dart';
+
+// ============================================================
 // CONSULTANT BANKING
 // ============================================================
 
@@ -63,7 +76,6 @@ import 'package:tarazyar/consultant/companies/banking/presentation/pages/cash_fi
 import 'package:tarazyar/consultant/companies/banking/presentation/pages/paid_checks_report_page.dart';
 import 'package:tarazyar/consultant/companies/banking/presentation/pages/petty_cash_accounts_page.dart';
 import 'package:tarazyar/consultant/companies/banking/presentation/pages/received_checks_report_page.dart';
-import 'package:tarazyar/consultant/companies/expenses/presentation/pages/expense_monthly_report_page.dart';
 
 // ============================================================
 // CONSULTANT PAYROLL
@@ -76,7 +88,7 @@ import 'package:tarazyar/consultant/companies/payroll/presentation/pages/payroll
 import 'package:tarazyar/consultant/companies/payroll/presentation/pages/payroll_periods_page.dart';
 
 // ============================================================
-// INCOME
+// CONSULTANT INCOME
 // ============================================================
 
 import 'package:tarazyar/consultant/companies/income/presentation/pages/income_categories_page.dart';
@@ -87,7 +99,7 @@ import 'package:tarazyar/consultant/companies/income/presentation/pages/income_r
 import 'package:tarazyar/consultant/companies/income/presentation/pages/income_recognition_page.dart';
 
 // ============================================================
-// EXPENSES
+// CONSULTANT EXPENSES
 // ============================================================
 
 import 'package:tarazyar/consultant/companies/expenses/presentation/pages/expense_categories_page.dart';
@@ -95,6 +107,7 @@ import 'package:tarazyar/consultant/companies/expenses/presentation/pages/expens
 import 'package:tarazyar/consultant/companies/expenses/presentation/pages/expense_fiscal_periods_page.dart';
 import 'package:tarazyar/consultant/companies/expenses/presentation/pages/expense_recognition_page.dart';
 import 'package:tarazyar/consultant/companies/expenses/presentation/pages/expense_records_page.dart';
+import 'package:tarazyar/consultant/companies/expenses/presentation/pages/expense_monthly_report_page.dart';
 
 // ============================================================
 // COMPANY
@@ -132,7 +145,7 @@ import 'package:tarazyar/owner/settings/presentation/pages/settings_page.dart';
 import 'package:tarazyar/owner/users/presentation/pages/users_page.dart';
 
 // ============================================================
-// APP ROUTER
+// ROUTER
 // ============================================================
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -142,24 +155,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
   return GoRouter(
     initialLocation: '/login',
-
     refreshListenable: GoRouterRefreshStream(client.auth.onAuthStateChange),
 
     redirect: (context, state) async {
       final path = state.uri.path;
       final session = client.auth.currentSession;
 
-      // ------------------------------------------------------
-      // INVITE
-      // ------------------------------------------------------
-
       if (path == '/auth/invite') {
         return null;
       }
-
-      // ------------------------------------------------------
-      // LOGIN
-      // ------------------------------------------------------
 
       if (path == '/login') {
         if (firstRedirect) {
@@ -182,17 +186,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return AuthService.routeForRole(role);
       }
 
-      // ------------------------------------------------------
-      // SESSION REQUIRED
-      // ------------------------------------------------------
-
       if (session == null) {
         return '/login';
       }
-
-      // ------------------------------------------------------
-      // ROLE
-      // ------------------------------------------------------
 
       final authService = AuthService(client);
 
@@ -202,19 +198,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return '/login';
       }
 
-      // ------------------------------------------------------
-      // ROOT / SPLASH
-      // ------------------------------------------------------
-
       final target = AuthService.routeForRole(role);
 
       if (path == '/' || path == '/splash') {
         return target;
       }
-
-      // ------------------------------------------------------
-      // OWNER
-      // ------------------------------------------------------
 
       if (role == 'owner') {
         if (path == '/owner' || path.startsWith('/owner/')) {
@@ -224,10 +212,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return '/owner';
       }
 
-      // ------------------------------------------------------
-      // CONSULTANT
-      // ------------------------------------------------------
-
       if (role == 'consultant') {
         if (path == '/consultant' || path.startsWith('/consultant/')) {
           return null;
@@ -235,10 +219,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
         return '/consultant';
       }
-
-      // ------------------------------------------------------
-      // ACCOUNTANT
-      // ------------------------------------------------------
 
       if (role == 'accountant') {
         if (path == '/accountant' || path.startsWith('/accountant/')) {
@@ -251,18 +231,15 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       return '/login';
     },
 
-    // ========================================================
-    // ROUTES
-    // ========================================================
     routes: [
-      // ======================================================
+      // ========================================================
       // ROOT
-      // ======================================================
+      // ========================================================
       GoRoute(path: '/', redirect: (_, __) => '/login'),
 
-      // ======================================================
+      // ========================================================
       // SPLASH
-      // ======================================================
+      // ========================================================
       GoRoute(
         path: '/splash',
         builder: (context, state) {
@@ -270,9 +247,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
+      // ========================================================
       // LOGIN
-      // ======================================================
+      // ========================================================
       GoRoute(
         path: '/login',
         builder: (context, state) {
@@ -280,9 +257,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
+      // ========================================================
       // INVITE
-      // ======================================================
+      // ========================================================
       GoRoute(
         path: '/auth/invite',
         builder: (context, state) {
@@ -290,9 +267,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
-      // ACCOUNTANT
-      // ======================================================
+      // ========================================================
+      // ACCOUNTANT DASHBOARD
+      // ========================================================
       GoRoute(
         path: '/accountant',
         builder: (context, state) {
@@ -300,9 +277,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
-      // ACCOUNTANT PAYROLL DASHBOARD
-      // ======================================================
+      // ========================================================
+      // ACCOUNTANT PAYROLL
+      // ========================================================
       GoRoute(
         path: '/accountant/payroll',
         builder: (context, state) {
@@ -310,9 +287,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
-      // ACCOUNTANT PAYROLL EMPLOYEES
-      // ======================================================
       GoRoute(
         path: '/accountant/payroll/employees',
         builder: (context, state) {
@@ -320,9 +294,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
-      // ACCOUNTANT PAYROLL CONTRACTS
-      // ======================================================
       GoRoute(
         path: '/accountant/payroll/contracts',
         builder: (context, state) {
@@ -330,9 +301,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
-      // ACCOUNTANT PAYROLL COST CENTERS
-      // ======================================================
       GoRoute(
         path: '/accountant/payroll/cost-centers',
         builder: (context, state) {
@@ -340,9 +308,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
-      // ACCOUNTANT PAYROLL PERIODS
-      // ======================================================
       GoRoute(
         path: '/accountant/payroll/periods',
         builder: (context, state) {
@@ -350,9 +315,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
-      // ACCOUNTANT PAYROLL RECORDS
-      // ======================================================
       GoRoute(
         path: '/accountant/payroll/records/:periodId',
         builder: (context, state) {
@@ -373,9 +335,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
-      // ACCOUNTANT BANKING DASHBOARD
-      // ======================================================
+      // ========================================================
+      // ACCOUNTANT BANKING
+      // ========================================================
       GoRoute(
         path: '/accountant/banking',
         builder: (context, state) {
@@ -383,9 +345,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
-      // ACCOUNTANT BANK ACCOUNTS
-      // ======================================================
       GoRoute(
         path: '/accountant/banking/accounts',
         builder: (context, state) {
@@ -393,9 +352,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
-      // ACCOUNTANT CASH BOXES
-      // ======================================================
       GoRoute(
         path: '/accountant/banking/cash-boxes',
         builder: (context, state) {
@@ -403,9 +359,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
-      // ACCOUNTANT PETTY CASH
-      // ======================================================
       GoRoute(
         path: '/accountant/banking/petty-cash',
         builder: (context, state) {
@@ -413,9 +366,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
-      // ACCOUNTANT BANK LOANS
-      // ======================================================
       GoRoute(
         path: '/accountant/banking/loans',
         builder: (context, state) {
@@ -423,9 +373,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
-      // ACCOUNTANT RECEIVED CHECKS
-      // ======================================================
       GoRoute(
         path: '/accountant/banking/received-checks',
         builder: (context, state) {
@@ -433,9 +380,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
-      // ACCOUNTANT PAID CHECKS
-      // ======================================================
       GoRoute(
         path: '/accountant/banking/paid-checks',
         builder: (context, state) {
@@ -443,9 +387,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
-      // ACCOUNTANT FISCAL PERIODS
-      // ======================================================
       GoRoute(
         path: '/accountant/banking/fiscal-periods',
         builder: (context, state) {
@@ -453,9 +394,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
-      // ACCOUNTANT FISCAL PERIOD ENTRY
-      // ======================================================
       GoRoute(
         path: '/accountant/banking/fiscal-periods/:periodId',
         builder: (context, state) {
@@ -476,9 +414,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
-      // ACCOUNTANT BANKING REPORTS
-      // ======================================================
       GoRoute(
         path: '/accountant/banking/reports',
         builder: (context, state) {
@@ -486,9 +421,109 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
+      // ========================================================
+      // ACCOUNTANT INCOME
+      // ========================================================
+      GoRoute(
+        path: '/accountant/income',
+        builder: (context, state) {
+          return const AccountantIncomeDashboardRoutePage();
+        },
+      ),
+
+      // ========================================================
+      // ACCOUNTANT INCOME PERIODS
+      // ========================================================
+      GoRoute(
+        path: '/accountant/income/periods',
+        builder: (context, state) {
+          return const AccountantIncomeFiscalPeriodsRoutePage();
+        },
+      ),
+
+      // ========================================================
+      // ACCOUNTANT INCOME CATEGORIES
+      // ========================================================
+      GoRoute(
+        path: '/accountant/income/categories',
+        builder: (context, state) {
+          return const AccountantIncomeCategoriesRoutePage();
+        },
+      ),
+
+      // ========================================================
+      // ACCOUNTANT INCOME RECOGNITION
+      // ========================================================
+      GoRoute(
+        path: '/accountant/income/recognition',
+        builder: (context, state) {
+          return const AccountantIncomeRecognitionRoutePage();
+        },
+      ),
+
+      GoRoute(
+        path: '/accountant/income/recognition/:periodId',
+        builder: (context, state) {
+          final periodId = state.pathParameters['periodId'];
+
+          if (periodId == null || periodId.isEmpty) {
+            return const Scaffold(
+              body: Center(
+                child: Text(
+                  'شناسه دوره درآمد معتبر نیست',
+                  textDirection: TextDirection.rtl,
+                ),
+              ),
+            );
+          }
+
+          return AccountantIncomeRecognitionPage(periodId: periodId);
+        },
+      ),
+
+      // ========================================================
+      // ACCOUNTANT INCOME RECEIVABLES
+      // ========================================================
+      GoRoute(
+        path: '/accountant/income/receivables',
+        builder: (context, state) {
+          return const AccountantReceivablePeriodsRoutePage();
+        },
+      ),
+
+      GoRoute(
+        path: '/accountant/income/receivables/:periodId',
+        builder: (context, state) {
+          final periodId = state.pathParameters['periodId'];
+
+          if (periodId == null || periodId.isEmpty) {
+            return const Scaffold(
+              body: Center(
+                child: Text(
+                  'شناسه ماه مطالبات معتبر نیست',
+                  textDirection: TextDirection.rtl,
+                ),
+              ),
+            );
+          }
+
+          return AccountantReceivablesMonthRoutePage(periodId: periodId);
+        },
+      ),
+
+      // ========================================================
+      // ACCOUNTANT INCOME REPORT
+      // ========================================================
+      GoRoute(
+        path: '/accountant/income/reports',
+        builder: (context, state) {
+          return const AccountantIncomeReportRoutePage();
+        },
+      ),
+
+      // ========================================================
       // CONSULTANT
-      // ======================================================
+      // ========================================================
       GoRoute(
         path: '/consultant',
         builder: (context, state) {
@@ -503,9 +538,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
-      // COMPANY DASHBOARD
-      // ======================================================
+      // ========================================================
+      // COMPANY
+      // ========================================================
       GoRoute(
         path: '/consultant/companies/:id',
         builder: (context, state) {
@@ -513,9 +548,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
+      // ========================================================
       // CONSULTANT BANKING
-      // ======================================================
+      // ========================================================
       GoRoute(
         path: '/consultant/companies/:id/banking',
         builder: (context, state) {
@@ -623,9 +658,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
+      // ========================================================
       // CONSULTANT PAYROLL
-      // ======================================================
+      // ========================================================
       GoRoute(
         path: '/consultant/companies/:id/payroll',
         builder: (context, state) {
@@ -663,9 +698,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
-      // INCOME
-      // ======================================================
+      // ========================================================
+      // CONSULTANT INCOME
+      // ========================================================
       GoRoute(
         path: '/consultant/companies/:id/income',
         builder: (context, state) {
@@ -720,9 +755,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
-      // EXPENSES
-      // ======================================================
+      // ========================================================
+      // CONSULTANT EXPENSES
+      // ========================================================
       GoRoute(
         path: '/consultant/companies/:id/expenses',
         builder: (context, state) {
@@ -773,9 +808,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
+      // ========================================================
       // COMPANY REPORTS
-      // ======================================================
+      // ========================================================
       GoRoute(
         path: '/consultant/companies/:id/reports',
         builder: (context, state) {
@@ -783,9 +818,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
+      // ========================================================
       // COMPANY ACTIONS
-      // ======================================================
+      // ========================================================
       GoRoute(
         path: '/consultant/companies/:id/actions',
         builder: (context, state) {
@@ -793,9 +828,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
+      // ========================================================
       // COMPANY WORKFLOW
-      // ======================================================
+      // ========================================================
       GoRoute(
         path: '/consultant/companies/:id/workflow',
         builder: (context, state) {
@@ -803,9 +838,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
+      // ========================================================
       // COMPANY DOCUMENTS
-      // ======================================================
+      // ========================================================
       GoRoute(
         path: '/consultant/companies/:id/documents',
         builder: (context, state) {
@@ -813,9 +848,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
+      // ========================================================
       // COMPANY NOTES
-      // ======================================================
+      // ========================================================
       GoRoute(
         path: '/consultant/companies/:id/notes',
         builder: (context, state) {
@@ -823,9 +858,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
+      // ========================================================
       // COMPANY ANALYTICS
-      // ======================================================
+      // ========================================================
       GoRoute(
         path: '/consultant/companies/:id/analytics',
         builder: (context, state) {
@@ -833,9 +868,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
-      // CONSULTANT FINANCIAL ANALYSIS
-      // ======================================================
+      // ========================================================
+      // FINANCIAL ANALYSIS
+      // ========================================================
       GoRoute(
         path: '/consultant/companies/:id/financial-analysis',
         builder: (context, state) {
@@ -843,9 +878,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
+      // ========================================================
       // CONSULTANT REPORTS
-      // ======================================================
+      // ========================================================
       GoRoute(
         path: '/consultant/reports',
         builder: (context, state) {
@@ -853,9 +888,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
+      // ========================================================
       // CONSULTANT WORKFLOW
-      // ======================================================
+      // ========================================================
       GoRoute(
         path: '/consultant/workflow',
         builder: (context, state) {
@@ -863,9 +898,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
+      // ========================================================
       // CONSULTANT HISTORY
-      // ======================================================
+      // ========================================================
       GoRoute(
         path: '/consultant/history',
         builder: (context, state) {
@@ -873,9 +908,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
+      // ========================================================
       // CONSULTANT SETTINGS
-      // ======================================================
+      // ========================================================
       GoRoute(
         path: '/consultant/settings',
         builder: (context, state) {
@@ -883,9 +918,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
-      // ======================================================
+      // ========================================================
       // OWNER
-      // ======================================================
+      // ========================================================
       GoRoute(
         path: '/owner',
         builder: (context, state) {
@@ -925,7 +960,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 });
 
 // ============================================================
-// ACCOUNTANT PAYROLL DASHBOARD ROUTE RESOLVER
+// ACCOUNTANT PAYROLL DASHBOARD
 // ============================================================
 
 class AccountantPayrollDashboardRoutePage extends ConsumerWidget {
@@ -933,24 +968,22 @@ class AccountantPayrollDashboardRoutePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final accountantState = ref.watch(accountantDashboardProvider);
+    final state = ref.watch(accountantDashboardProvider);
 
-    return accountantState.when(
-      loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
-      },
-      error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
-      },
-      data: (accountant) {
-        return AccountantPayrollDashboardPage(companyId: accountant.companyId);
-      },
+    return state.when(
+      loading:
+          () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, stackTrace) => _AccountantRouteError(error: error),
+      data:
+          (accountant) =>
+              AccountantPayrollDashboardPage(companyId: accountant.companyId),
     );
   }
 }
 
 // ============================================================
-// ACCOUNTANT PAYROLL EMPLOYEES ROUTE RESOLVER
+// ACCOUNTANT PAYROLL EMPLOYEES
 // ============================================================
 
 class AccountantPayrollEmployeesRoutePage extends ConsumerWidget {
@@ -958,24 +991,22 @@ class AccountantPayrollEmployeesRoutePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final accountantState = ref.watch(accountantDashboardProvider);
+    final state = ref.watch(accountantDashboardProvider);
 
-    return accountantState.when(
-      loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
-      },
-      error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
-      },
-      data: (accountant) {
-        return AccountantPayrollEmployeesPage(companyId: accountant.companyId);
-      },
+    return state.when(
+      loading:
+          () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, stackTrace) => _AccountantRouteError(error: error),
+      data:
+          (accountant) =>
+              AccountantPayrollEmployeesPage(companyId: accountant.companyId),
     );
   }
 }
 
 // ============================================================
-// ACCOUNTANT PAYROLL CONTRACTS ROUTE RESOLVER
+// ACCOUNTANT PAYROLL CONTRACTS
 // ============================================================
 
 class AccountantPayrollContractsRoutePage extends ConsumerWidget {
@@ -983,24 +1014,22 @@ class AccountantPayrollContractsRoutePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final accountantState = ref.watch(accountantDashboardProvider);
+    final state = ref.watch(accountantDashboardProvider);
 
-    return accountantState.when(
-      loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
-      },
-      error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
-      },
-      data: (accountant) {
-        return AccountantPayrollContractsPage(companyId: accountant.companyId);
-      },
+    return state.when(
+      loading:
+          () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, stackTrace) => _AccountantRouteError(error: error),
+      data:
+          (accountant) =>
+              AccountantPayrollContractsPage(companyId: accountant.companyId),
     );
   }
 }
 
 // ============================================================
-// ACCOUNTANT COST CENTERS ROUTE RESOLVER
+// ACCOUNTANT COST CENTERS
 // ============================================================
 
 class AccountantCostCentersRoutePage extends ConsumerWidget {
@@ -1008,24 +1037,22 @@ class AccountantCostCentersRoutePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final accountantState = ref.watch(accountantDashboardProvider);
+    final state = ref.watch(accountantDashboardProvider);
 
-    return accountantState.when(
-      loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
-      },
-      error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
-      },
-      data: (accountant) {
-        return AccountantCostCentersPage(companyId: accountant.companyId);
-      },
+    return state.when(
+      loading:
+          () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, stackTrace) => _AccountantRouteError(error: error),
+      data:
+          (accountant) =>
+              AccountantCostCentersPage(companyId: accountant.companyId),
     );
   }
 }
 
 // ============================================================
-// ACCOUNTANT PAYROLL PERIODS ROUTE RESOLVER
+// ACCOUNTANT PAYROLL PERIODS
 // ============================================================
 
 class AccountantPayrollPeriodsRoutePage extends ConsumerWidget {
@@ -1033,50 +1060,22 @@ class AccountantPayrollPeriodsRoutePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final accountantState = ref.watch(accountantDashboardProvider);
+    final state = ref.watch(accountantDashboardProvider);
 
-    return accountantState.when(
-      loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
-      },
-      error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
-      },
-      data: (accountant) {
-        return AccountantPayrollPeriodsPage(companyId: accountant.companyId);
-      },
+    return state.when(
+      loading:
+          () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, stackTrace) => _AccountantRouteError(error: error),
+      data:
+          (accountant) =>
+              AccountantPayrollPeriodsPage(companyId: accountant.companyId),
     );
   }
 }
 
 // ============================================================
-// ACCOUNTANT PAYROLL RECORDS ROUTE RESOLVER
-// ============================================================
-
-class AccountantPayrollRecordsRoutePage extends ConsumerWidget {
-  const AccountantPayrollRecordsRoutePage({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final periodId = GoRouterState.of(context).pathParameters['periodId'];
-
-    if (periodId == null || periodId.isEmpty) {
-      return const Scaffold(
-        body: Center(
-          child: Text(
-            'شناسه دوره حقوق معتبر نیست',
-            textDirection: TextDirection.rtl,
-          ),
-        ),
-      );
-    }
-
-    return AccountantPayrollRecordsPage(periodId: periodId);
-  }
-}
-
-// ============================================================
-// ACCOUNTANT BANKING DASHBOARD ROUTE RESOLVER
+// ACCOUNTANT BANKING DASHBOARD
 // ============================================================
 
 class AccountantBankingDashboardRoutePage extends ConsumerWidget {
@@ -1084,24 +1083,22 @@ class AccountantBankingDashboardRoutePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final accountantState = ref.watch(accountantDashboardProvider);
+    final state = ref.watch(accountantDashboardProvider);
 
-    return accountantState.when(
-      loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
-      },
-      error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
-      },
-      data: (accountant) {
-        return AccountantBankingDashboardPage(companyId: accountant.companyId);
-      },
+    return state.when(
+      loading:
+          () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, stackTrace) => _AccountantRouteError(error: error),
+      data:
+          (accountant) =>
+              AccountantBankingDashboardPage(companyId: accountant.companyId),
     );
   }
 }
 
 // ============================================================
-// ACCOUNTANT BANK ACCOUNTS ROUTE RESOLVER
+// ACCOUNTANT BANK ACCOUNTS
 // ============================================================
 
 class AccountantBankAccountsRoutePage extends ConsumerWidget {
@@ -1109,24 +1106,22 @@ class AccountantBankAccountsRoutePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final accountantState = ref.watch(accountantDashboardProvider);
+    final state = ref.watch(accountantDashboardProvider);
 
-    return accountantState.when(
-      loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
-      },
-      error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
-      },
-      data: (accountant) {
-        return AccountantBankAccountsPage(companyId: accountant.companyId);
-      },
+    return state.when(
+      loading:
+          () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, stackTrace) => _AccountantRouteError(error: error),
+      data:
+          (accountant) =>
+              AccountantBankAccountsPage(companyId: accountant.companyId),
     );
   }
 }
 
 // ============================================================
-// ACCOUNTANT CASH BOXES ROUTE RESOLVER
+// ACCOUNTANT CASH BOXES
 // ============================================================
 
 class AccountantCashBoxesRoutePage extends ConsumerWidget {
@@ -1134,24 +1129,22 @@ class AccountantCashBoxesRoutePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final accountantState = ref.watch(accountantDashboardProvider);
+    final state = ref.watch(accountantDashboardProvider);
 
-    return accountantState.when(
-      loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
-      },
-      error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
-      },
-      data: (accountant) {
-        return AccountantCashBoxesPage(companyId: accountant.companyId);
-      },
+    return state.when(
+      loading:
+          () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, stackTrace) => _AccountantRouteError(error: error),
+      data:
+          (accountant) =>
+              AccountantCashBoxesPage(companyId: accountant.companyId),
     );
   }
 }
 
 // ============================================================
-// ACCOUNTANT PETTY CASH ROUTE RESOLVER
+// ACCOUNTANT PETTY CASH
 // ============================================================
 
 class AccountantPettyCashRoutePage extends ConsumerWidget {
@@ -1159,24 +1152,22 @@ class AccountantPettyCashRoutePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final accountantState = ref.watch(accountantDashboardProvider);
+    final state = ref.watch(accountantDashboardProvider);
 
-    return accountantState.when(
-      loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
-      },
-      error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
-      },
-      data: (accountant) {
-        return AccountantPettyCashPage(companyId: accountant.companyId);
-      },
+    return state.when(
+      loading:
+          () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, stackTrace) => _AccountantRouteError(error: error),
+      data:
+          (accountant) =>
+              AccountantPettyCashPage(companyId: accountant.companyId),
     );
   }
 }
 
 // ============================================================
-// ACCOUNTANT BANK LOANS ROUTE RESOLVER
+// ACCOUNTANT BANK LOANS
 // ============================================================
 
 class AccountantBankLoansRoutePage extends ConsumerWidget {
@@ -1184,24 +1175,22 @@ class AccountantBankLoansRoutePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final accountantState = ref.watch(accountantDashboardProvider);
+    final state = ref.watch(accountantDashboardProvider);
 
-    return accountantState.when(
-      loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
-      },
-      error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
-      },
-      data: (accountant) {
-        return AccountantBankLoansPage(companyId: accountant.companyId);
-      },
+    return state.when(
+      loading:
+          () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, stackTrace) => _AccountantRouteError(error: error),
+      data:
+          (accountant) =>
+              AccountantBankLoansPage(companyId: accountant.companyId),
     );
   }
 }
 
 // ============================================================
-// ACCOUNTANT RECEIVED CHECKS ROUTE RESOLVER
+// ACCOUNTANT RECEIVED CHECKS
 // ============================================================
 
 class AccountantReceivedChecksRoutePage extends ConsumerWidget {
@@ -1209,24 +1198,22 @@ class AccountantReceivedChecksRoutePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final accountantState = ref.watch(accountantDashboardProvider);
+    final state = ref.watch(accountantDashboardProvider);
 
-    return accountantState.when(
-      loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
-      },
-      error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
-      },
-      data: (accountant) {
-        return AccountantReceivedChecksPage(companyId: accountant.companyId);
-      },
+    return state.when(
+      loading:
+          () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, stackTrace) => _AccountantRouteError(error: error),
+      data:
+          (accountant) =>
+              AccountantReceivedChecksPage(companyId: accountant.companyId),
     );
   }
 }
 
 // ============================================================
-// ACCOUNTANT PAID CHECKS ROUTE RESOLVER
+// ACCOUNTANT PAID CHECKS
 // ============================================================
 
 class AccountantPaidChecksRoutePage extends ConsumerWidget {
@@ -1234,24 +1221,22 @@ class AccountantPaidChecksRoutePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final accountantState = ref.watch(accountantDashboardProvider);
+    final state = ref.watch(accountantDashboardProvider);
 
-    return accountantState.when(
-      loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
-      },
-      error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
-      },
-      data: (accountant) {
-        return AccountantPaidChecksPage(companyId: accountant.companyId);
-      },
+    return state.when(
+      loading:
+          () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, stackTrace) => _AccountantRouteError(error: error),
+      data:
+          (accountant) =>
+              AccountantPaidChecksPage(companyId: accountant.companyId),
     );
   }
 }
 
 // ============================================================
-// ACCOUNTANT FISCAL PERIODS ROUTE RESOLVER
+// ACCOUNTANT FISCAL PERIODS
 // ============================================================
 
 class AccountantFiscalPeriodsRoutePage extends ConsumerWidget {
@@ -1259,24 +1244,22 @@ class AccountantFiscalPeriodsRoutePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final accountantState = ref.watch(accountantDashboardProvider);
+    final state = ref.watch(accountantDashboardProvider);
 
-    return accountantState.when(
-      loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
-      },
-      error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
-      },
-      data: (accountant) {
-        return AccountantFiscalPeriodsPage(companyId: accountant.companyId);
-      },
+    return state.when(
+      loading:
+          () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, stackTrace) => _AccountantRouteError(error: error),
+      data:
+          (accountant) =>
+              AccountantFiscalPeriodsPage(companyId: accountant.companyId),
     );
   }
 }
 
 // ============================================================
-// ACCOUNTANT BANKING REPORTS ROUTE RESOLVER
+// ACCOUNTANT BANKING REPORTS
 // ============================================================
 
 class AccountantBankingReportsRoutePage extends ConsumerWidget {
@@ -1284,18 +1267,598 @@ class AccountantBankingReportsRoutePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(accountantDashboardProvider);
+
+    return state.when(
+      loading:
+          () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, stackTrace) => _AccountantRouteError(error: error),
+      data:
+          (accountant) =>
+              AccountantBankingReportsPage(companyId: accountant.companyId),
+    );
+  }
+}
+
+// ============================================================
+// ACCOUNTANT INCOME DASHBOARD
+// ============================================================
+
+class AccountantIncomeDashboardRoutePage extends ConsumerWidget {
+  const AccountantIncomeDashboardRoutePage({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(accountantDashboardProvider);
+
+    return state.when(
+      loading:
+          () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, stackTrace) => _AccountantRouteError(error: error),
+      data:
+          (accountant) =>
+              AccountantIncomeDashboardPage(companyId: accountant.companyId),
+    );
+  }
+}
+
+// ============================================================
+// ACCOUNTANT INCOME FISCAL PERIODS
+// ============================================================
+
+class AccountantIncomeFiscalPeriodsRoutePage extends ConsumerWidget {
+  const AccountantIncomeFiscalPeriodsRoutePage({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(accountantDashboardProvider);
+
+    return state.when(
+      loading:
+          () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, stackTrace) => _AccountantRouteError(error: error),
+      data:
+          (accountant) => AccountantIncomeFiscalPeriodsPage(
+            companyId: accountant.companyId,
+          ),
+    );
+  }
+}
+
+// ============================================================
+// ACCOUNTANT INCOME CATEGORIES
+// ============================================================
+
+class AccountantIncomeCategoriesRoutePage extends ConsumerWidget {
+  const AccountantIncomeCategoriesRoutePage({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(accountantDashboardProvider);
+
+    return state.when(
+      loading:
+          () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, stackTrace) => _AccountantRouteError(error: error),
+      data:
+          (accountant) =>
+              AccountantIncomeCategoriesPage(companyId: accountant.companyId),
+    );
+  }
+}
+
+// ============================================================
+// ACCOUNTANT INCOME RECOGNITION
+// ============================================================
+
+class AccountantIncomeRecognitionRoutePage extends ConsumerWidget {
+  const AccountantIncomeRecognitionRoutePage({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     final accountantState = ref.watch(accountantDashboardProvider);
 
     return accountantState.when(
-      loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
-      },
-      error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
-      },
+      loading:
+          () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, stackTrace) => _AccountantRouteError(error: error),
       data: (accountant) {
-        return AccountantBankingReportsPage(companyId: accountant.companyId);
+        final periodsState = ref.watch(
+          accountantIncomeFiscalPeriodsProvider(accountant.companyId),
+        );
+
+        return periodsState.when(
+          loading:
+              () => const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              ),
+          error: (error, stackTrace) => _AccountantRouteError(error: error),
+          data: (data) {
+            final year = data.selectedYear;
+
+            if (year == null || year.periods.isEmpty) {
+              return const Scaffold(
+                body: Center(
+                  child: Text(
+                    'هیچ دوره درآمدی برای ثبت درآمد وجود ندارد.',
+                    textDirection: TextDirection.rtl,
+                  ),
+                ),
+              );
+            }
+
+            final openPeriods =
+                year.periods
+                    .where((period) => period.status == 'open')
+                    .toList();
+
+            final period =
+                openPeriods.isNotEmpty ? openPeriods.first : year.periods.first;
+
+            return AccountantIncomeRecognitionPage(periodId: period.id);
+          },
+        );
       },
+    );
+  }
+}
+
+// ============================================================
+// ACCOUNTANT INCOME REPORT
+// ============================================================
+
+class AccountantIncomeReportRoutePage extends ConsumerWidget {
+  const AccountantIncomeReportRoutePage({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(accountantDashboardProvider);
+
+    return state.when(
+      loading:
+          () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, stackTrace) => _AccountantRouteError(error: error),
+      data:
+          (accountant) => AccountantScaffold(
+            currentRoute: '/accountant/income/reports',
+            title: 'گزارش درآمد',
+            body: AccountantIncomeReportPage(companyId: accountant.companyId),
+          ),
+    );
+  }
+}
+
+// ============================================================
+// ACCOUNTANT RECEIVABLE PERIODS
+// ============================================================
+
+class AccountantReceivablePeriodsRoutePage extends ConsumerWidget {
+  const AccountantReceivablePeriodsRoutePage({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(accountantDashboardProvider);
+
+    return state.when(
+      loading:
+          () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, stackTrace) => _AccountantRouteError(error: error),
+      data:
+          (accountant) => AccountantScaffold(
+            currentRoute: '/accountant/income/receivables',
+            title: 'مطالبات',
+            body: _AccountantReceivablePeriodsPage(
+              companyId: accountant.companyId,
+            ),
+          ),
+    );
+  }
+}
+
+// ============================================================
+// ACCOUNTANT RECEIVABLE MONTH ROUTE
+// ============================================================
+
+class AccountantReceivablesMonthRoutePage extends ConsumerWidget {
+  final String periodId;
+
+  const AccountantReceivablesMonthRoutePage({
+    super.key,
+    required this.periodId,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(accountantDashboardProvider);
+
+    return state.when(
+      loading:
+          () =>
+              const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, stackTrace) => _AccountantRouteError(error: error),
+      data:
+          (accountant) => AccountantScaffold(
+            currentRoute: '/accountant/income/receivables/$periodId',
+            title: 'مطالبات',
+            body: AccountantIncomeReceivablesPage(periodId: periodId),
+          ),
+    );
+  }
+}
+
+// ============================================================
+// INDEPENDENT RECEIVABLE PERIODS PAGE
+// ============================================================
+
+class _AccountantReceivablePeriodsPage extends StatefulWidget {
+  final String companyId;
+
+  const _AccountantReceivablePeriodsPage({required this.companyId});
+
+  @override
+  State<_AccountantReceivablePeriodsPage> createState() =>
+      _AccountantReceivablePeriodsPageState();
+}
+
+class _AccountantReceivablePeriodsPageState
+    extends State<_AccountantReceivablePeriodsPage> {
+  late Future<List<Map<String, dynamic>>> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = _loadPeriods();
+  }
+
+  Future<List<Map<String, dynamic>>> _loadPeriods() async {
+    final response = await Supabase.instance.client
+        .from('income_receivable_fiscal_periods')
+        .select(
+          'id, fiscal_year_id, company_id, '
+          'year, month, title, status',
+        )
+        .eq('company_id', widget.companyId)
+        .order('year', ascending: false)
+        .order('month', ascending: true);
+
+    return (response as List)
+        .map((row) => Map<String, dynamic>.from(row))
+        .toList();
+  }
+
+  Future<void> _refresh() async {
+    setState(() {
+      _future = _loadPeriods();
+    });
+
+    await _future;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: FutureBuilder<List<Map<String, dynamic>>>(
+        future: _future,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          if (snapshot.hasError) {
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.error_outline, size: 52),
+                  const SizedBox(height: 12),
+                  const Text('خطا در دریافت ماه‌های مطالبات'),
+                  const SizedBox(height: 12),
+                  Text(
+                    snapshot.error.toString().replaceFirst('Exception: ', ''),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 18),
+                  FilledButton.icon(
+                    onPressed: _refresh,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('تلاش مجدد'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final periods = snapshot.data ?? [];
+
+          if (periods.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.receipt_long_outlined,
+                    size: 64,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'هنوز دوره‌ای برای مطالبات ایجاد نشده است.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'این صفحه فقط ماه‌های مستقل مطالبات را نمایش می‌دهد.',
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final grouped = <int, List<Map<String, dynamic>>>{};
+
+          for (final period in periods) {
+            final year = _toInt(period['year']);
+
+            grouped.putIfAbsent(year, () => []).add(period);
+          }
+
+          final years = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
+
+          return RefreshIndicator(
+            onRefresh: _refresh,
+            child: ListView.builder(
+              padding: const EdgeInsets.all(24),
+              itemCount: years.length,
+              itemBuilder: (context, index) {
+                final year = years[index];
+
+                final yearPeriods = grouped[year] ?? [];
+
+                return _ReceivableYearSection(year: year, periods: yearPeriods);
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ============================================================
+// RECEIVABLE YEAR SECTION
+// ============================================================
+
+class _ReceivableYearSection extends StatelessWidget {
+  final int year;
+  final List<Map<String, dynamic>> periods;
+
+  const _ReceivableYearSection({required this.year, required this.periods});
+
+  @override
+  Widget build(BuildContext context) {
+    final months = List<Map<String, dynamic>?>.filled(12, null);
+
+    for (final period in periods) {
+      final month = _toInt(period['month']);
+
+      if (month >= 1 && month <= 12) {
+        months[month - 1] = period;
+      }
+    }
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 24),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'سال مالی مطالبات $year',
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 18),
+            GridView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent: 230,
+                mainAxisExtent: 115,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+              ),
+              itemCount: 12,
+              itemBuilder: (context, index) {
+                final period = months[index];
+
+                if (period == null) {
+                  return _MissingReceivablePeriod(month: index + 1);
+                }
+
+                return _ReceivablePeriodCard(period: period);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================================
+// RECEIVABLE PERIOD CARD
+// ============================================================
+
+class _ReceivablePeriodCard extends StatelessWidget {
+  final Map<String, dynamic> period;
+
+  const _ReceivablePeriodCard({required this.period});
+
+  @override
+  Widget build(BuildContext context) {
+    final id = period['id']?.toString();
+
+    final month = _toInt(period['month']);
+
+    final status = period['status']?.toString() ?? 'open';
+
+    final title = period['title']?.toString();
+
+    final monthTitle =
+        title != null && title.trim().isNotEmpty ? title : _monthName(month);
+
+    final statusColor = _statusColor(context, status);
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap:
+          id == null
+              ? null
+              : () {
+                context.push('/accountant/income/receivables/$id');
+              },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.calendar_month_outlined,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    monthTitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 9,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: statusColor.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      _statusTitle(status),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: statusColor,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.arrow_back_ios_new,
+                  size: 14,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ============================================================
+// STATUS COLOR
+// ============================================================
+
+Color _statusColor(BuildContext context, String status) {
+  final colorScheme = Theme.of(context).colorScheme;
+
+  switch (status) {
+    case 'open':
+      return colorScheme.primary;
+
+    case 'submitted_to_company_admin':
+      return Colors.orange.shade700;
+
+    case 'submitted_to_consultant':
+      return Colors.blue.shade700;
+
+    case 'approved':
+      return Colors.green.shade700;
+
+    case 'closed':
+      return Colors.grey.shade700;
+
+    default:
+      return colorScheme.onSurfaceVariant;
+  }
+}
+
+// ============================================================
+// MISSING RECEIVABLE PERIOD
+// ============================================================
+
+class _MissingReceivablePeriod extends StatelessWidget {
+  final int month;
+
+  const _MissingReceivablePeriod({required this.month});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: Theme.of(
+          context,
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            _monthName(month),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const Text('ایجاد نشده', style: TextStyle(color: Colors.grey)),
+        ],
+      ),
     );
   }
 }
@@ -1327,7 +1890,72 @@ class _AccountantRouteError extends StatelessWidget {
 }
 
 // ============================================================
-// GO ROUTER AUTH REFRESH
+// HELPERS
+// ============================================================
+
+int _toInt(dynamic value) {
+  if (value == null) {
+    return 0;
+  }
+
+  if (value is int) {
+    return value;
+  }
+
+  if (value is num) {
+    return value.toInt();
+  }
+
+  return int.tryParse(value.toString()) ?? 0;
+}
+
+String _monthName(int month) {
+  const months = [
+    'فروردین',
+    'اردیبهشت',
+    'خرداد',
+    'تیر',
+    'مرداد',
+    'شهریور',
+    'مهر',
+    'آبان',
+    'آذر',
+    'دی',
+    'بهمن',
+    'اسفند',
+  ];
+
+  if (month < 1 || month > 12) {
+    return 'ماه';
+  }
+
+  return months[month - 1];
+}
+
+String _statusTitle(String status) {
+  switch (status) {
+    case 'open':
+      return 'در انتظار ارسال برای مدیرعامل';
+
+    case 'submitted_to_company_admin':
+      return 'ارسال‌شده برای مدیرعامل';
+
+    case 'submitted_to_consultant':
+      return 'در انتظار تأیید مشاور';
+
+    case 'approved':
+      return 'تأیید نهایی شده';
+
+    case 'closed':
+      return 'بسته شده';
+
+    default:
+      return 'وضعیت نامشخص';
+  }
+}
+
+// ============================================================
+// GO ROUTER REFRESH
 // ============================================================
 
 class GoRouterRefreshStream extends ChangeNotifier {
