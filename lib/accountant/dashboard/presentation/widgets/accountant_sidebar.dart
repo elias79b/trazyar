@@ -45,6 +45,10 @@ class _AccountantSidebarState extends State<AccountantSidebar> {
   }
 
   void _go(String route) {
+    if (widget.currentRoute == route) {
+      return;
+    }
+
     context.go(route);
   }
 
@@ -60,249 +64,276 @@ class _AccountantSidebarState extends State<AccountantSidebar> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Container(
-      width: 280,
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border(left: BorderSide(color: Colors.grey.shade200)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(.04),
-            blurRadius: 12,
-            offset: const Offset(-2, 0),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(context),
-
-            const Divider(height: 1),
-
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 14,
-                ),
-                children: [
-                  _buildSectionTitle('اصلی'),
-
-                  _buildMenuItem(
-                    context,
-                    icon: Icons.dashboard_outlined,
-                    title: 'داشبورد',
-                    route: '/accountant',
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  _buildSectionTitle('عملیات مالی'),
-
-                  _buildExpandableSection(
-                    context,
-                    icon: Icons.account_balance_outlined,
-                    title: 'نقد و بانک',
-                    expanded: _bankingExpanded,
-                    active: _isSectionActive('/accountant/banking'),
-                    onExpansionChanged: (value) {
-                      setState(() {
-                        _bankingExpanded = value;
-                      });
-                    },
-                    children: [
-                      _buildChildItem(
-                        context,
-                        title: 'داشبورد بانک و نقد',
-                        route: '/accountant/banking',
-                      ),
-                      _buildChildItem(
-                        context,
-                        title: 'حساب‌های بانکی',
-                        route: '/accountant/banking/accounts',
-                      ),
-                      _buildChildItem(
-                        context,
-                        title: 'صندوق‌ها',
-                        route: '/accountant/banking/cash-boxes',
-                      ),
-                      _buildChildItem(
-                        context,
-                        title: 'تنخواه',
-                        route: '/accountant/banking/petty-cash',
-                      ),
-                      _buildChildItem(
-                        context,
-                        title: 'تسهیلات بانکی',
-                        route: '/accountant/banking/loans',
-                      ),
-                      _buildChildItem(
-                        context,
-                        title: 'چک‌های دریافتی',
-                        route: '/accountant/banking/received-checks',
-                      ),
-                      _buildChildItem(
-                        context,
-                        title: 'چک‌های پرداختی',
-                        route: '/accountant/banking/paid-checks',
-                      ),
-                      _buildChildItem(
-                        context,
-                        title: 'دوره‌های مالی',
-                        route: '/accountant/banking/fiscal-periods',
-                      ),
-                      _buildChildItem(
-                        context,
-                        title: 'گزارش‌های بانکی',
-                        route: '/accountant/banking/reports',
-                      ),
-                    ],
-                  ),
-
-                  _buildExpandableSection(
-                    context,
-                    icon: Icons.groups_outlined,
-                    title: 'حقوق و دستمزد',
-                    expanded: _payrollExpanded,
-                    active: _isSectionActive('/accountant/payroll'),
-                    onExpansionChanged: (value) {
-                      setState(() {
-                        _payrollExpanded = value;
-                      });
-                    },
-                    children: [
-                      _buildChildItem(
-                        context,
-                        title: 'داشبورد حقوق',
-                        route: '/accountant/payroll',
-                      ),
-                      _buildChildItem(
-                        context,
-                        title: 'کارکنان',
-                        route: '/accountant/payroll/employees',
-                      ),
-                      _buildChildItem(
-                        context,
-                        title: 'قراردادها',
-                        route: '/accountant/payroll/contracts',
-                      ),
-                      _buildChildItem(
-                        context,
-                        title: 'دوره‌های حقوق',
-                        route: '/accountant/payroll/periods',
-                      ),
-                      _buildChildItem(
-                        context,
-                        title: 'مراکز هزینه',
-                        route: '/accountant/payroll/cost-centers',
-                      ),
-                    ],
-                  ),
-
-                  _buildExpandableSection(
-                    context,
-                    icon: Icons.trending_up_outlined,
-                    title: 'درآمد',
-                    expanded: _incomeExpanded,
-                    active: _isSectionActive('/accountant/income'),
-                    onExpansionChanged: (value) {
-                      setState(() {
-                        _incomeExpanded = value;
-                      });
-                    },
-                    children: [
-                      _buildChildItem(
-                        context,
-                        title: 'داشبورد درآمد',
-                        route: '/accountant/income',
-                      ),
-                      _buildChildItem(
-                        context,
-                        title: 'دوره‌های مالی',
-                        route: '/accountant/income/periods',
-                      ),
-                      _buildChildItem(
-                        context,
-                        title: 'دسته‌بندی‌ها',
-                        route: '/accountant/income/categories',
-                      ),
-                      _buildChildItem(
-                        context,
-                        title: 'ثبت درآمد',
-                        route: '/accountant/income/recognition',
-                      ),
-                      _buildChildItem(
-                        context,
-                        title: 'مطالبات',
-                        route: '/accountant/income/receivables',
-                      ),
-                      _buildChildItem(
-                        context,
-                        title: 'گزارش درآمد',
-                        route: '/accountant/income/reports',
-                      ),
-                    ],
-                  ),
-
-                  _buildExpandableSection(
-                    context,
-                    icon: Icons.trending_down_outlined,
-                    title: 'هزینه',
-                    expanded: _expenseExpanded,
-                    active: _isSectionActive('/accountant/expenses'),
-                    onExpansionChanged: (value) {
-                      setState(() {
-                        _expenseExpanded = value;
-                      });
-                    },
-                    children: [
-                      _buildChildItem(
-                        context,
-                        title: 'داشبورد هزینه',
-                        route: '/accountant/expenses',
-                      ),
-                      _buildChildItem(
-                        context,
-                        title: 'دوره‌های مالی',
-                        route: '/accountant/expenses/periods',
-                      ),
-                      _buildChildItem(
-                        context,
-                        title: 'دسته‌بندی‌ها',
-                        route: '/accountant/expenses/categories',
-                      ),
-                      _buildChildItem(
-                        context,
-                        title: 'ثبت هزینه',
-                        route: '/accountant/expenses/recognition',
-                      ),
-                      _buildChildItem(
-                        context,
-                        title: 'گزارش هزینه',
-                        route: '/accountant/expenses/reports',
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 14),
-
-                  _buildSectionTitle('سیستم'),
-
-                  _buildMenuItem(
-                    context,
-                    icon: Icons.person_outline,
-                    title: 'حساب کاربری',
-                    route: '/accountant/settings',
-                  ),
-                ],
-              ),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Container(
+        width: 280,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          border: Border(left: BorderSide(color: Colors.grey.shade200)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(.04),
+              blurRadius: 12,
+              offset: const Offset(-2, 0),
             ),
-
-            const Divider(height: 1),
-
-            _buildLogoutButton(context),
           ],
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildHeader(context),
+              const Divider(height: 1),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 14,
+                  ),
+                  children: [
+                    _buildSectionTitle('اصلی'),
+
+                    _buildMenuItem(
+                      context,
+                      icon: Icons.dashboard_outlined,
+                      title: 'داشبورد',
+                      route: '/accountant',
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    _buildSectionTitle('عملیات مالی'),
+
+                    // ==================================================
+                    // نقد و بانک
+                    // ==================================================
+                    _buildExpandableSection(
+                      context,
+                      icon: Icons.account_balance_outlined,
+                      title: 'نقد و بانک',
+                      expanded: _bankingExpanded,
+                      active: _isSectionActive('/accountant/banking'),
+                      onExpansionChanged: (value) {
+                        setState(() {
+                          _bankingExpanded = value;
+                        });
+                      },
+                      children: [
+                        _buildChildItem(
+                          context,
+                          title: 'داشبورد بانک و نقد',
+                          route: '/accountant/banking',
+                        ),
+                        _buildChildItem(
+                          context,
+                          title: 'حساب‌های بانکی',
+                          route: '/accountant/banking/accounts',
+                        ),
+                        _buildChildItem(
+                          context,
+                          title: 'صندوق‌ها',
+                          route: '/accountant/banking/cash-boxes',
+                        ),
+                        _buildChildItem(
+                          context,
+                          title: 'تنخواه',
+                          route: '/accountant/banking/petty-cash',
+                        ),
+                        _buildChildItem(
+                          context,
+                          title: 'تسهیلات بانکی',
+                          route: '/accountant/banking/loans',
+                        ),
+                        _buildChildItem(
+                          context,
+                          title: 'چک‌های دریافتی',
+                          route: '/accountant/banking/received-checks',
+                        ),
+                        _buildChildItem(
+                          context,
+                          title: 'چک‌های پرداختی',
+                          route: '/accountant/banking/paid-checks',
+                        ),
+                        _buildChildItem(
+                          context,
+                          title: 'دوره‌های مالی',
+                          route: '/accountant/banking/fiscal-periods',
+                        ),
+                        _buildChildItem(
+                          context,
+                          title: 'گزارش‌های بانکی',
+                          route: '/accountant/banking/reports',
+                        ),
+                      ],
+                    ),
+
+                    // ==================================================
+                    // حقوق و دستمزد
+                    // ==================================================
+                    _buildExpandableSection(
+                      context,
+                      icon: Icons.groups_outlined,
+                      title: 'حقوق و دستمزد',
+                      expanded: _payrollExpanded,
+                      active: _isSectionActive('/accountant/payroll'),
+                      onExpansionChanged: (value) {
+                        setState(() {
+                          _payrollExpanded = value;
+                        });
+                      },
+                      children: [
+                        _buildChildItem(
+                          context,
+                          title: 'داشبورد حقوق',
+                          route: '/accountant/payroll',
+                        ),
+                        _buildChildItem(
+                          context,
+                          title: 'کارکنان',
+                          route: '/accountant/payroll/employees',
+                        ),
+                        _buildChildItem(
+                          context,
+                          title: 'قراردادها',
+                          route: '/accountant/payroll/contracts',
+                        ),
+                        _buildChildItem(
+                          context,
+                          title: 'دوره‌های حقوق',
+                          route: '/accountant/payroll/periods',
+                        ),
+                        _buildChildItem(
+                          context,
+                          title: 'مراکز هزینه',
+                          route: '/accountant/payroll/cost-centers',
+                        ),
+                      ],
+                    ),
+
+                    // ==================================================
+                    // درآمد
+                    // ==================================================
+                    _buildExpandableSection(
+                      context,
+                      icon: Icons.trending_up_outlined,
+                      title: 'درآمد',
+                      expanded: _incomeExpanded,
+                      active: _isSectionActive('/accountant/income'),
+                      onExpansionChanged: (value) {
+                        setState(() {
+                          _incomeExpanded = value;
+                        });
+                      },
+                      children: [
+                        _buildChildItem(
+                          context,
+                          title: 'داشبورد درآمد',
+                          route: '/accountant/income',
+                        ),
+                        _buildChildItem(
+                          context,
+                          title: 'دوره‌های مالی',
+                          route: '/accountant/income/periods',
+                        ),
+                        _buildChildItem(
+                          context,
+                          title: 'دسته‌بندی‌ها',
+                          route: '/accountant/income/categories',
+                        ),
+                        _buildChildItem(
+                          context,
+                          title: 'ثبت درآمد',
+                          route: '/accountant/income/recognition',
+                        ),
+                        _buildChildItem(
+                          context,
+                          title: 'مطالبات',
+                          route: '/accountant/income/receivables',
+                        ),
+                        _buildChildItem(
+                          context,
+                          title: 'گزارش درآمد',
+                          route: '/accountant/income/reports',
+                        ),
+                      ],
+                    ),
+
+                    // ==================================================
+                    // هزینه
+                    // ==================================================
+                    _buildExpandableSection(
+                      context,
+                      icon: Icons.trending_down_outlined,
+                      title: 'هزینه',
+                      expanded: _expenseExpanded,
+                      active: _isSectionActive('/accountant/expenses'),
+                      onExpansionChanged: (value) {
+                        setState(() {
+                          _expenseExpanded = value;
+                        });
+                      },
+                      children: [
+                        _buildChildItem(
+                          context,
+                          title: 'داشبورد هزینه',
+                          route: '/accountant/expenses',
+                        ),
+                        _buildChildItem(
+                          context,
+                          title: 'دوره‌های مالی',
+                          route: '/accountant/expenses/periods',
+                        ),
+                        _buildChildItem(
+                          context,
+                          title: 'دسته‌بندی‌ها',
+                          route: '/accountant/expenses/categories',
+                        ),
+                        _buildChildItem(
+                          context,
+                          title: 'ثبت هزینه',
+                          route: '/accountant/expenses/recognition',
+                        ),
+
+                        // ==================================================
+                        // حساب‌های پرداختنی
+                        // زیرمجموعه ماژول هزینه
+                        // ==================================================
+                        _buildChildItem(
+                          context,
+                          title: 'حساب‌های پرداختنی',
+                          route: '/accountant/expenses/payables/periods',
+                        ),
+
+                        _buildChildItem(
+                          context,
+                          title: 'گزارش هزینه',
+                          route: '/accountant/expenses/reports',
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 14),
+
+                    // ==================================================
+                    // سیستم
+                    // ==================================================
+                    _buildSectionTitle('سیستم'),
+
+                    _buildMenuItem(
+                      context,
+                      icon: Icons.person_outline,
+                      title: 'حساب کاربری',
+                      route: '/accountant/settings',
+                    ),
+                  ],
+                ),
+              ),
+
+              const Divider(height: 1),
+
+              _buildLogoutButton(context),
+            ],
+          ),
         ),
       ),
     );

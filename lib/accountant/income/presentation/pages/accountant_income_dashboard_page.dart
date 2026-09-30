@@ -577,42 +577,188 @@ class _LegendRow extends StatelessWidget {
 class _CategoryBarChart extends StatelessWidget {
   final AccountantIncomeDashboardData data;
 
-  const _CategoryBarChart({required this.data});
+  const _CategoryBarChart({
+    required this.data,
+  });
 
   @override
   Widget build(BuildContext context) {
     final items = data.categorySummaries;
 
     if (items.isEmpty) {
-      return const SizedBox(height: 270, child: _NoData());
+      return const SizedBox(
+        height: 270,
+        child: _NoData(),
+      );
     }
 
-    final double maxValue = items
+    final maxValue = items
         .map((item) => item.amount)
         .fold<double>(
-          0.0,
-          (double current, double value) => math.max(current, value).toDouble(),
-        );
+      0.0,
+          (current, value) =>
+          math.max(current, value).toDouble(),
+    );
 
     return SizedBox(
-      height: 270,
+      height: 300,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final double chartWidth =
-              math.max(constraints.maxWidth, items.length * 105.0).toDouble();
+          final isSmall = constraints.maxWidth < 600;
 
           return SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             reverse: true,
             child: SizedBox(
-              width: chartWidth,
-              height: 270,
-              child: CustomPaint(
-                painter: _BarChartPainter(items: items, maxValue: maxValue),
+              width: isSmall
+                  ? math.max(
+                constraints.maxWidth,
+                items.length * 125.0,
+              )
+                  : constraints.maxWidth,
+              child: Padding(
+                padding: const EdgeInsets.only(
+                  top: 12,
+                  bottom: 8,
+                  left: 12,
+                  right: 12,
+                ),
+                child: Row(
+                  crossAxisAlignment:
+                  CrossAxisAlignment.stretch,
+                  children: items.map((item) {
+                    return Expanded(
+                      child: _IncomeBarItem(
+                        item: item,
+                        maxValue: maxValue,
+                      ),
+                    );
+                  }).toList(),
+                ),
               ),
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _IncomeBarItem extends StatelessWidget {
+  final AccountantIncomeCategorySummary item;
+  final double maxValue;
+
+  const _IncomeBarItem({
+    required this.item,
+    required this.maxValue,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final barColor = item.isOperational
+        ? const Color(0xFF2196F3)
+        : const Color(0xFF7252C7);
+
+    final ratio = maxValue <= 0
+        ? 0.0
+        : (item.amount / maxValue)
+        .clamp(0.0, 1.0)
+        .toDouble();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 8,
+      ),
+      child: Column(
+        children: [
+          // --------------------------------------------------------
+          // مقدار
+          // --------------------------------------------------------
+
+          SizedBox(
+            height: 28,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                _moneyCompact(item.amount),
+                textDirection: TextDirection.rtl,
+                style: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF526477),
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 5),
+
+          // --------------------------------------------------------
+          // BAR AREA
+          // --------------------------------------------------------
+
+          Expanded(
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: FractionallySizedBox(
+                heightFactor: ratio == 0
+                    ? 0.015
+                    : ratio,
+                widthFactor: .55,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: barColor,
+                    borderRadius:
+                    const BorderRadius.vertical(
+                      top: Radius.circular(5),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          // --------------------------------------------------------
+          // CATEGORY NAME
+          // --------------------------------------------------------
+
+          SizedBox(
+            height: 42,
+            child: Tooltip(
+              message: item.categoryName,
+              child: Text(
+                item.categoryName,
+                textAlign: TextAlign.center,
+                textDirection: TextDirection.rtl,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF667789),
+                ),
+              ),
+            ),
+          ),
+
+          // --------------------------------------------------------
+          // TYPE
+          // --------------------------------------------------------
+
+          Text(
+            item.isOperational
+                ? 'عملیاتی'
+                : 'غیرعملیاتی',
+            textDirection: TextDirection.rtl,
+            style: TextStyle(
+              fontSize: 8,
+              color: barColor,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
       ),
     );
   }
