@@ -20,9 +20,7 @@ class _UserCreateDialogState extends State<UserCreateDialog> {
   final _formKey = GlobalKey<FormState>();
 
   final _fullNameController = TextEditingController();
-
   final _emailController = TextEditingController();
-
   final _phoneController = TextEditingController();
 
   late String _selectedRole;
@@ -33,7 +31,7 @@ class _UserCreateDialogState extends State<UserCreateDialog> {
 
   final List<_RoleOption> _roles = const [
     _RoleOption('consultant', 'مشاور'),
-    _RoleOption('company_admin', 'مدیر شرکت'),
+    _RoleOption('company_admin', 'مدیرعامل'),
     _RoleOption('accountant', 'حسابدار'),
     _RoleOption('hr', 'منابع انسانی'),
     _RoleOption('observer', 'ناظر'),
@@ -42,7 +40,6 @@ class _UserCreateDialogState extends State<UserCreateDialog> {
   @override
   void initState() {
     super.initState();
-
     _selectedRole = widget.initialRole;
   }
 
@@ -51,7 +48,6 @@ class _UserCreateDialogState extends State<UserCreateDialog> {
     _fullNameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
-
     super.dispose();
   }
 
@@ -59,7 +55,36 @@ class _UserCreateDialogState extends State<UserCreateDialog> {
 
   bool get _isAccountant => _selectedRole == 'accountant';
 
-  bool get _needsCompanySelection => _isConsultant || _isAccountant;
+  bool get _isCompanyAdmin => _selectedRole == 'company_admin';
+
+  bool get _needsCompanySelection =>
+      _isConsultant || _isAccountant || _isCompanyAdmin;
+
+  bool get _singleCompanyOnly => _isAccountant || _isCompanyAdmin;
+
+  String get _companyTitle {
+    if (_isCompanyAdmin) {
+      return 'شرکت مدیرعامل';
+    }
+
+    if (_isAccountant) {
+      return 'شرکت حسابدار';
+    }
+
+    return 'شرکت‌های تحت پوشش مشاور';
+  }
+
+  String get _companyDescription {
+    if (_isCompanyAdmin) {
+      return 'مدیرعامل فقط به اطلاعات همین شرکت دسترسی خواهد داشت.';
+    }
+
+    if (_isAccountant) {
+      return 'حسابدار فقط به اطلاعات همین شرکت دسترسی خواهد داشت.';
+    }
+
+    return 'شرکت‌هایی را انتخاب کنید که این مشاور مجاز به مشاهده و مدیریت آن‌هاست.';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -178,19 +203,11 @@ class _UserCreateDialogState extends State<UserCreateDialog> {
                               setState(() {
                                 _selectedRole = value;
 
-                                // برای نقش‌های غیرمشاور
-                                // و غیرحسابدار انتخاب قبلی
-                                // پاک می‌شود.
-                                if (value != 'consultant' &&
-                                    value != 'accountant') {
+                                if (!_needsCompanySelection) {
                                   _selectedCompanyIds.clear();
                                 }
 
-                                // اگر حسابدار انتخاب شد
-                                // و قبلاً چند شرکت انتخاب شده
-                                // بود، فقط اولین شرکت
-                                // باقی می‌ماند.
-                                if (value == 'accountant' &&
+                                if (_singleCompanyOnly &&
                                     _selectedCompanyIds.length > 1) {
                                   final first = _selectedCompanyIds.first;
 
@@ -206,9 +223,7 @@ class _UserCreateDialogState extends State<UserCreateDialog> {
                     const SizedBox(height: 24),
 
                     Text(
-                      _isAccountant
-                          ? 'شرکت حسابدار'
-                          : 'شرکت‌های تحت پوشش مشاور',
+                      _companyTitle,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
@@ -218,9 +233,7 @@ class _UserCreateDialogState extends State<UserCreateDialog> {
                     const SizedBox(height: 6),
 
                     Text(
-                      _isAccountant
-                          ? 'حسابدار فقط به اطلاعات همین شرکت دسترسی خواهد داشت.'
-                          : 'شرکت‌هایی را انتخاب کنید که این مشاور مجاز به مشاهده و مدیریت آن‌هاست.',
+                      _companyDescription,
                       style: const TextStyle(color: Colors.grey, fontSize: 12),
                     ),
 
@@ -232,7 +245,7 @@ class _UserCreateDialogState extends State<UserCreateDialog> {
                       Padding(
                         padding: const EdgeInsets.only(top: 8),
                         child: Text(
-                          _isAccountant
+                          _singleCompanyOnly
                               ? 'یک شرکت را انتخاب کنید.'
                               : 'حداقل یک شرکت را انتخاب کنید.',
                           style: const TextStyle(
@@ -242,14 +255,44 @@ class _UserCreateDialogState extends State<UserCreateDialog> {
                         ),
                       ),
 
-                    if (_isAccountant && _selectedCompanyIds.length > 1)
+                    if (_singleCompanyOnly && _selectedCompanyIds.length > 1)
                       const Padding(
                         padding: EdgeInsets.only(top: 8),
                         child: Text(
-                          'حسابدار فقط می‌تواند به یک شرکت اختصاص داده شود.',
+                          'برای این نقش فقط یک شرکت قابل انتخاب است.',
                           style: TextStyle(color: Colors.red, fontSize: 12),
                         ),
                       ),
+                  ],
+
+                  if (_isCompanyAdmin) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1B4332).withValues(alpha: .06),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: const Color(0xFF1B4332).withValues(alpha: .12),
+                        ),
+                      ),
+                      child: const Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.admin_panel_settings_outlined,
+                            color: Color(0xFF1B4332),
+                          ),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'مدیرعامل پس از پذیرش دعوت‌نامه فقط به شرکت انتخاب‌شده دسترسی خواهد داشت.',
+                              style: TextStyle(fontSize: 12, height: 1.6),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
 
                   const SizedBox(height: 28),
@@ -290,7 +333,7 @@ class _UserCreateDialogState extends State<UserCreateDialog> {
               ),
               SizedBox(height: 4),
               Text(
-                'ایجاد دسترسی برای مشاور یا سایر کاربران',
+                'ایجاد دسترسی برای مشاور، مدیرعامل یا سایر کاربران',
                 style: TextStyle(color: Colors.grey, fontSize: 13),
               ),
             ],
@@ -331,7 +374,7 @@ class _UserCreateDialogState extends State<UserCreateDialog> {
             widget.companies.map((company) {
               final selected = _selectedCompanyIds.contains(company.id);
 
-              if (_isAccountant) {
+              if (_singleCompanyOnly) {
                 return RadioListTile<String>(
                   value: company.id,
                   groupValue:
@@ -436,21 +479,18 @@ class _UserCreateDialogState extends State<UserCreateDialog> {
       return;
     }
 
-    // ----------------------------------------------------------
-    // Consultant
-    // ----------------------------------------------------------
-
     if (_isConsultant && _selectedCompanyIds.isEmpty) {
       _showError('حداقل یک شرکت برای مشاور انتخاب کنید.');
       return;
     }
 
-    // ----------------------------------------------------------
-    // Accountant
-    // ----------------------------------------------------------
-
     if (_isAccountant && _selectedCompanyIds.length != 1) {
       _showError('برای حسابدار باید دقیقاً یک شرکت انتخاب کنید.');
+      return;
+    }
+
+    if (_isCompanyAdmin && _selectedCompanyIds.length != 1) {
+      _showError('برای مدیرعامل باید دقیقاً یک شرکت انتخاب کنید.');
       return;
     }
 

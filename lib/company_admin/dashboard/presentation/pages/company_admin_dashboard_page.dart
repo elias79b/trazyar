@@ -17,11 +17,11 @@ class CompanyAdminDashboardPage extends ConsumerWidget {
         loading: () => const _LoadingView(),
         error:
             (error, stack) => _ErrorView(
-              message: error.toString(),
-              onRetry: () {
-                ref.invalidate(companyAdminDashboardProvider);
-              },
-            ),
+          message: error.toString(),
+          onRetry: () {
+            ref.invalidate(companyAdminDashboardProvider);
+          },
+        ),
         data: (data) => _DashboardContent(data: data),
       ),
     );
@@ -64,7 +64,10 @@ class _DashboardContent extends StatelessWidget {
                         child: _FinancialOverviewCard(data: data),
                       ),
                       const SizedBox(width: 18),
-                      Expanded(flex: 4, child: _PeriodStatusCard(data: data)),
+                      Expanded(
+                        flex: 4,
+                        child: _PeriodStatusCard(data: data),
+                      ),
                     ],
                   )
                 else
@@ -82,9 +85,13 @@ class _DashboardContent extends StatelessWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(child: _PayablesCard(data: data)),
+                      Expanded(
+                        child: _PayablesCard(data: data),
+                      ),
                       const SizedBox(width: 18),
-                      Expanded(child: _ReceivablesCard(data: data)),
+                      Expanded(
+                        child: _ReceivablesCard(data: data),
+                      ),
                     ],
                   )
                 else
@@ -120,7 +127,9 @@ class _Header extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE4EAE7)),
+        border: Border.all(
+          color: const Color(0xFFE4EAE7),
+        ),
       ),
       child: Row(
         children: [
@@ -132,27 +141,31 @@ class _Header extends StatelessWidget {
               borderRadius: BorderRadius.circular(17),
             ),
             child:
-                data.companyLogoUrl != null &&
-                        data.companyLogoUrl!.trim().isNotEmpty
-                    ? ClipRRect(
-                      borderRadius: BorderRadius.circular(17),
-                      child: Image.network(
-                        data.companyLogoUrl!,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Icon(
-                            Icons.business_rounded,
-                            color: Color(0xFF167A4A),
-                            size: 30,
-                          );
-                        },
-                      ),
-                    )
-                    : const Icon(
-                      Icons.business_rounded,
-                      color: Color(0xFF167A4A),
-                      size: 30,
-                    ),
+            data.companyLogoUrl != null &&
+                data.companyLogoUrl!.trim().isNotEmpty
+                ? ClipRRect(
+              borderRadius: BorderRadius.circular(17),
+              child: Image.network(
+                data.companyLogoUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (
+                    context,
+                    error,
+                    stackTrace,
+                    ) {
+                  return const Icon(
+                    Icons.business_rounded,
+                    color: Color(0xFF167A4A),
+                    size: 30,
+                  );
+                },
+              ),
+            )
+                : const Icon(
+              Icons.business_rounded,
+              color: Color(0xFF167A4A),
+              size: 30,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -178,7 +191,7 @@ class _Header extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'خوش آمدید ${data.fullName}',
+                  'خوش آمدید ${data.userName}',
                   style: const TextStyle(
                     fontSize: 12,
                     color: Color(0xFF718078),
@@ -188,7 +201,10 @@ class _Header extends StatelessWidget {
             ),
           ),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 10,
+            ),
             decoration: BoxDecoration(
               color: const Color(0xFFF5F8F6),
               borderRadius: BorderRadius.circular(12),
@@ -244,16 +260,16 @@ class _FinancialCards extends StatelessWidget {
       ),
       _CardData(
         title: 'سود / زیان ماه',
-        value: data.monthlyProfitLoss,
+        value: data.monthlyProfit,
         icon: Icons.account_balance_rounded,
         iconColor:
-            data.monthlyProfitLoss >= 0
-                ? const Color(0xFF167A4A)
-                : const Color(0xFFD65A4A),
+        data.monthlyProfit >= 0
+            ? const Color(0xFF167A4A)
+            : const Color(0xFFD65A4A),
         background:
-            data.monthlyProfitLoss >= 0
-                ? const Color(0xFFEAF7F0)
-                : const Color(0xFFFCEDEA),
+        data.monthlyProfit >= 0
+            ? const Color(0xFFEAF7F0)
+            : const Color(0xFFFCEDEA),
       ),
       _CardData(
         title: 'نقدینگی',
@@ -276,22 +292,27 @@ class _FinancialCards extends StatelessWidget {
           columns = 1;
         }
 
-        final double spacing = 14;
+        const double spacing = 14;
+
         final double width =
-            (constraints.maxWidth - ((columns - 1) * spacing)) / columns;
+            (constraints.maxWidth - ((columns - 1) * spacing)) /
+                columns;
 
         return Wrap(
           spacing: spacing,
           runSpacing: spacing,
           children:
-              cards
-                  .map(
-                    (card) => SizedBox(
-                      width: columns == 1 ? constraints.maxWidth : width,
-                      child: _FinancialCard(data: card),
-                    ),
-                  )
-                  .toList(),
+          cards
+              .map(
+                (card) => SizedBox(
+              width:
+              columns == 1
+                  ? constraints.maxWidth
+                  : width,
+              child: _FinancialCard(data: card),
+            ),
+          )
+              .toList(),
         );
       },
     );
@@ -326,7 +347,9 @@ class _FinancialCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(19),
-        border: Border.all(color: const Color(0xFFE4EAE7)),
+        border: Border.all(
+          color: const Color(0xFFE4EAE7),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -340,10 +363,17 @@ class _FinancialCard extends StatelessWidget {
                   color: data.background,
                   borderRadius: BorderRadius.circular(13),
                 ),
-                child: Icon(data.icon, color: data.iconColor, size: 22),
+                child: Icon(
+                  data.icon,
+                  color: data.iconColor,
+                  size: 22,
+                ),
               ),
               const Spacer(),
-              const Icon(Icons.more_horiz_rounded, color: Color(0xFF9AA49F)),
+              const Icon(
+                Icons.more_horiz_rounded,
+                color: Color(0xFF9AA49F),
+              ),
             ],
           ),
           const SizedBox(height: 17),
@@ -369,7 +399,10 @@ class _FinancialCard extends StatelessWidget {
           const SizedBox(height: 5),
           const Text(
             'ریال',
-            style: TextStyle(fontSize: 11, color: Color(0xFF9AA49F)),
+            style: TextStyle(
+              fontSize: 11,
+              color: Color(0xFF9AA49F),
+            ),
           ),
         ],
       ),
@@ -384,11 +417,14 @@ class _FinancialOverviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double total = data.monthlyIncome + data.monthlyExpense;
+    final double total =
+        data.monthlyIncome + data.monthlyExpense;
 
-    final double incomePercent = total > 0 ? data.monthlyIncome / total : 0;
+    final double incomePercent =
+    total > 0 ? data.monthlyIncome / total : 0;
 
-    final double expensePercent = total > 0 ? data.monthlyExpense / total : 0;
+    final double expensePercent =
+    total > 0 ? data.monthlyExpense / total : 0;
 
     return _Panel(
       title: 'نمای کلی عملکرد مالی',
@@ -409,7 +445,9 @@ class _FinancialOverviewCard extends StatelessWidget {
             color: const Color(0xFFD65A4A),
           ),
           const SizedBox(height: 20),
-          const Divider(color: Color(0xFFE8ECEA)),
+          const Divider(
+            color: Color(0xFFE8ECEA),
+          ),
           const SizedBox(height: 14),
           Row(
             children: [
@@ -424,20 +462,23 @@ class _FinancialOverviewCard extends StatelessWidget {
                 ),
               ),
               Text(
-                _formatMoney(data.monthlyProfitLoss),
+                _formatMoney(data.monthlyProfit),
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w900,
                   color:
-                      data.monthlyProfitLoss >= 0
-                          ? const Color(0xFF167A4A)
-                          : const Color(0xFFD65A4A),
+                  data.monthlyProfit >= 0
+                      ? const Color(0xFF167A4A)
+                      : const Color(0xFFD65A4A),
                 ),
               ),
               const SizedBox(width: 5),
               const Text(
                 'ریال',
-                style: TextStyle(fontSize: 11, color: Color(0xFF89948E)),
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Color(0xFF89948E),
+                ),
               ),
             ],
           ),
@@ -494,7 +535,8 @@ class _ProgressRow extends StatelessWidget {
             value: percent.clamp(0, 1),
             minHeight: 8,
             backgroundColor: const Color(0xFFEFF2F0),
-            valueColor: AlwaysStoppedAnimation<Color>(color),
+            valueColor:
+            AlwaysStoppedAnimation<Color>(color),
           ),
         ),
       ],
@@ -550,13 +592,19 @@ class _StatusRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String label = !exists ? 'ایجاد نشده' : _statusTitle(status);
+    final String label =
+    !exists ? 'ایجاد نشده' : _statusTitle(status);
 
     final Color color =
-        !exists ? const Color(0xFF8A938E) : _statusColor(status);
+    !exists
+        ? const Color(0xFF8A938E)
+        : _statusColor(status);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 13),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 13,
+        vertical: 13,
+      ),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAF9),
         borderRadius: BorderRadius.circular(13),
@@ -566,7 +614,10 @@ class _StatusRow extends StatelessWidget {
           Container(
             width: 9,
             height: 9,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+            ),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -681,7 +732,7 @@ class _ReceivablesCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  _formatMoney(data.totalReceivables),
+                  _formatMoney(data.receivables),
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w900,
@@ -690,7 +741,10 @@ class _ReceivablesCard extends StatelessWidget {
                 ),
                 const Text(
                   'ریال',
-                  style: TextStyle(fontSize: 10, color: Color(0xFF718078)),
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Color(0xFF718078),
+                  ),
                 ),
               ],
             ),
@@ -719,7 +773,10 @@ class _AmountRow extends StatelessWidget {
         Container(
           width: 9,
           height: 9,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -743,7 +800,10 @@ class _AmountRow extends StatelessWidget {
         const SizedBox(width: 4),
         const Text(
           'ریال',
-          style: TextStyle(fontSize: 10, color: Color(0xFF89948E)),
+          style: TextStyle(
+            fontSize: 10,
+            color: Color(0xFF89948E),
+          ),
         ),
       ],
     );
@@ -762,39 +822,59 @@ class _CompanyInfoCard extends StatelessWidget {
       icon: Icons.business_rounded,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final bool twoColumns = constraints.maxWidth >= 700;
+          final bool twoColumns =
+              constraints.maxWidth >= 700;
 
           final items = [
-            _InfoItem(title: 'نام شرکت', value: data.companyName),
-            _InfoItem(title: 'شناسه ملی', value: data.companyNationalId),
-            _InfoItem(title: 'کد اقتصادی', value: data.companyEconomicCode),
-            _InfoItem(title: 'تلفن', value: data.companyPhone),
-            _InfoItem(title: 'ایمیل', value: data.companyEmail),
+            _InfoItem(
+              title: 'نام شرکت',
+              value: data.companyName,
+            ),
+            _InfoItem(
+              title: 'شناسه ملی',
+              value: data.companyNationalId,
+            ),
+            _InfoItem(
+              title: 'تلفن',
+              value: data.companyPhone,
+            ),
+            _InfoItem(
+              title: 'ایمیل',
+              value: data.companyEmail,
+            ),
             _InfoItem(
               title: 'استان / شهر',
-              value: _locationText(data.companyProvince, data.companyCity),
+              value: _locationText(
+                data.companyProvince,
+                data.companyCity,
+              ),
             ),
           ];
 
           if (!twoColumns) {
             return Column(
               children:
-                  items
-                      .map(
-                        (item) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: item,
-                        ),
-                      )
-                      .toList(),
+              items
+                  .map(
+                    (item) => Padding(
+                  padding:
+                  const EdgeInsets.only(
+                    bottom: 12,
+                  ),
+                  child: item,
+                ),
+              )
+                  .toList(),
             );
           }
 
           return GridView.builder(
             shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
+            physics:
+            const NeverScrollableScrollPhysics(),
             itemCount: items.length,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            gridDelegate:
+            const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
               mainAxisExtent: 62,
               crossAxisSpacing: 16,
@@ -814,15 +894,23 @@ class _InfoItem extends StatelessWidget {
   final String title;
   final String? value;
 
-  const _InfoItem({required this.title, required this.value});
+  const _InfoItem({
+    required this.title,
+    required this.value,
+  });
 
   @override
   Widget build(BuildContext context) {
     final String displayValue =
-        value == null || value!.trim().isEmpty ? 'ثبت نشده' : value!;
+    value == null || value!.trim().isEmpty
+        ? 'ثبت نشده'
+        : value!;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 10),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 13,
+        vertical: 10,
+      ),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAF9),
         borderRadius: BorderRadius.circular(12),
@@ -832,7 +920,10 @@ class _InfoItem extends StatelessWidget {
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(fontSize: 11, color: Color(0xFF89948E)),
+              style: const TextStyle(
+                fontSize: 11,
+                color: Color(0xFF89948E),
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -876,7 +967,9 @@ class _Panel extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(19),
-        border: Border.all(color: const Color(0xFFE4EAE7)),
+        border: Border.all(
+          color: const Color(0xFFE4EAE7),
+        ),
       ),
       child: Column(
         children: [
@@ -889,7 +982,11 @@ class _Panel extends StatelessWidget {
                   color: const Color(0xFFEAF7F0),
                   borderRadius: BorderRadius.circular(11),
                 ),
-                child: Icon(icon, size: 20, color: const Color(0xFF167A4A)),
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: const Color(0xFF167A4A),
+                ),
               ),
               const SizedBox(width: 11),
               Expanded(
@@ -930,7 +1027,9 @@ class _LoadingView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Center(
-      child: CircularProgressIndicator(color: Color(0xFF167A4A)),
+      child: CircularProgressIndicator(
+        color: Color(0xFF167A4A),
+      ),
     );
   }
 }
@@ -939,7 +1038,10 @@ class _ErrorView extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
 
-  const _ErrorView({required this.message, required this.onRetry});
+  const _ErrorView({
+    required this.message,
+    required this.onRetry,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -947,12 +1049,16 @@ class _ErrorView extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Container(
-          constraints: const BoxConstraints(maxWidth: 520),
+          constraints: const BoxConstraints(
+            maxWidth: 520,
+          ),
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFE4EAE7)),
+            border: Border.all(
+              color: const Color(0xFFE4EAE7),
+            ),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -982,7 +1088,10 @@ class _ErrorView extends StatelessWidget {
               ),
               const SizedBox(height: 10),
               Text(
-                message.replaceFirst('Exception: ', ''),
+                message.replaceFirst(
+                  'Exception: ',
+                  '',
+                ),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 12,
@@ -993,18 +1102,25 @@ class _ErrorView extends StatelessWidget {
               const SizedBox(height: 18),
               ElevatedButton.icon(
                 onPressed: onRetry,
-                icon: const Icon(Icons.refresh_rounded, size: 19),
+                icon: const Icon(
+                  Icons.refresh_rounded,
+                  size: 19,
+                ),
                 label: const Text('تلاش مجدد'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF167A4A),
+                  backgroundColor:
+                  const Color(0xFF167A4A),
                   foregroundColor: Colors.white,
                   elevation: 0,
-                  padding: const EdgeInsets.symmetric(
+                  padding:
+                  const EdgeInsets.symmetric(
                     horizontal: 20,
                     vertical: 12,
                   ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                  shape:
+                  RoundedRectangleBorder(
+                    borderRadius:
+                    BorderRadius.circular(12),
                   ),
                 ),
               ),
@@ -1018,12 +1134,14 @@ class _ErrorView extends StatelessWidget {
 
 String _formatMoney(double value) {
   final bool negative = value < 0;
-  final String digits = value.abs().round().toString();
+  final String digits =
+  value.abs().round().toString();
 
   final StringBuffer result = StringBuffer();
 
   for (int i = 0; i < digits.length; i++) {
-    if (i > 0 && (digits.length - i) % 3 == 0) {
+    if (i > 0 &&
+        (digits.length - i) % 3 == 0) {
       result.write(',');
     }
 
@@ -1077,14 +1195,19 @@ Color _statusColor(String? status) {
   }
 }
 
-String _locationText(String? province, String? city) {
+String _locationText(
+    String? province,
+    String? city,
+    ) {
   final List<String> parts = [];
 
-  if (province != null && province.trim().isNotEmpty) {
+  if (province != null &&
+      province.trim().isNotEmpty) {
     parts.add(province.trim());
   }
 
-  if (city != null && city.trim().isNotEmpty) {
+  if (city != null &&
+      city.trim().isNotEmpty) {
     parts.add(city.trim());
   }
 

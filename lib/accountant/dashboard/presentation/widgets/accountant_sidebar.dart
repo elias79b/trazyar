@@ -17,6 +17,8 @@ class _AccountantSidebarState extends State<AccountantSidebar> {
   bool _incomeExpanded = false;
   bool _expenseExpanded = false;
 
+  bool _loggingOut = false;
+
   @override
   void initState() {
     super.initState();
@@ -44,6 +46,10 @@ class _AccountantSidebarState extends State<AccountantSidebar> {
     _expenseExpanded = route.startsWith('/accountant/expenses');
   }
 
+  // ============================================================
+  // NAVIGATION
+  // ============================================================
+
   void _go(String route) {
     if (widget.currentRoute == route) {
       return;
@@ -59,6 +65,129 @@ class _AccountantSidebarState extends State<AccountantSidebar> {
   bool _isSectionActive(String prefix) {
     return widget.currentRoute.startsWith(prefix);
   }
+
+  // ============================================================
+  // LOGOUT
+  // ============================================================
+
+  Future<void> _logout() async {
+    if (_loggingOut) {
+      return;
+    }
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('خروج از حساب'),
+          content: const Text(
+            'آیا مطمئن هستید که می‌خواهید از حساب کاربری خارج شوید؟',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(false);
+              },
+              child: const Text('انصراف'),
+            ),
+            FilledButton.icon(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(true);
+              },
+              icon: const Icon(Icons.logout_rounded),
+              label: const Text('خروج'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _loggingOut = true;
+    });
+
+    try {
+      final supabase = Supabase.instance.client;
+
+      // ==========================================================
+      // خروج LOCAL
+      // ==========================================================
+      //
+      // این قسمت مهم است.
+      //
+      // از signOut معمولی استفاده نمی‌کنیم چون ممکن است
+      // درخواست سرور به هر دلیلی خطا بخورد.
+      //
+      // با local session همین مرورگر فوراً پاک می‌شود.
+      //
+
+      // ==========================================================
+      // خروج قطعی از Session محلی
+      // ==========================================================
+
+      await supabase.auth.signOut(scope: SignOutScope.local);
+
+      // Supabase ممکن است رویداد signedOut را کمی بعد از
+      // برگشت signOut منتشر کند. صبر می‌کنیم تا Session واقعاً
+      // پاک شده باشد تا Router دوباره کاربر را به داشبورد
+      // برنگرداند.
+      for (var i = 0; i < 20; i++) {
+        if (supabase.auth.currentSession == null) {
+          break;
+        }
+
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+      }
+
+      if (!mounted) {
+        return;
+      }
+
+      // ==========================================================
+      // انتقال به Login و حذف مسیر قبلی از Stack
+      // ==========================================================
+
+      if (supabase.auth.currentSession == null) {
+        context.go('/login');
+        return;
+      }
+
+      // اگر به هر دلیل Session هنوز باقی مانده بود، یک بار دیگر
+      // خروج محلی را اجرا می‌کنیم و بعد Router را Refresh می‌کنیم.
+      await supabase.auth.signOut(scope: SignOutScope.local);
+
+      if (!mounted) {
+        return;
+      }
+
+      context.go('/login');
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _loggingOut = false;
+      });
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('خطا در خروج از حساب: $e')));
+    }
+  }
+
+  // ============================================================
+  // BUILD
+  // ============================================================
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +212,9 @@ class _AccountantSidebarState extends State<AccountantSidebar> {
           child: Column(
             children: [
               _buildHeader(context),
+
               const Divider(height: 1),
+
               Expanded(
                 child: ListView(
                   padding: const EdgeInsets.symmetric(
@@ -293,17 +424,11 @@ class _AccountantSidebarState extends State<AccountantSidebar> {
                           title: 'ثبت هزینه',
                           route: '/accountant/expenses/recognition',
                         ),
-
-                        // ==================================================
-                        // حساب‌های پرداختنی
-                        // زیرمجموعه ماژول هزینه
-                        // ==================================================
                         _buildChildItem(
                           context,
                           title: 'حساب‌های پرداختنی',
                           route: '/accountant/expenses/payables/periods',
                         ),
-
                         _buildChildItem(
                           context,
                           title: 'گزارش هزینه',
@@ -338,6 +463,10 @@ class _AccountantSidebarState extends State<AccountantSidebar> {
       ),
     );
   }
+
+  // ============================================================
+  // HEADER
+  // ============================================================
 
   Widget _buildHeader(BuildContext context) {
     final theme = Theme.of(context);
@@ -385,6 +514,10 @@ class _AccountantSidebarState extends State<AccountantSidebar> {
     );
   }
 
+  // ============================================================
+  // SECTION TITLE
+  // ============================================================
+
   Widget _buildSectionTitle(String title) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
@@ -399,6 +532,10 @@ class _AccountantSidebarState extends State<AccountantSidebar> {
     );
   }
 
+  // ============================================================
+  // MENU ITEM
+  // ============================================================
+
   Widget _buildMenuItem(
     BuildContext context, {
     required IconData icon,
@@ -406,6 +543,7 @@ class _AccountantSidebarState extends State<AccountantSidebar> {
     required String route,
   }) {
     final active = _isActive(route);
+
     final theme = Theme.of(context);
 
     return Material(
@@ -447,6 +585,10 @@ class _AccountantSidebarState extends State<AccountantSidebar> {
       ),
     );
   }
+
+  // ============================================================
+  // EXPANDABLE SECTION
+  // ============================================================
 
   Widget _buildExpandableSection(
     BuildContext context, {
@@ -496,12 +638,17 @@ class _AccountantSidebarState extends State<AccountantSidebar> {
     );
   }
 
+  // ============================================================
+  // CHILD ITEM
+  // ============================================================
+
   Widget _buildChildItem(
     BuildContext context, {
     required String title,
     required String route,
   }) {
     final active = _isActive(route);
+
     final theme = Theme.of(context);
 
     return Material(
@@ -547,6 +694,10 @@ class _AccountantSidebarState extends State<AccountantSidebar> {
     );
   }
 
+  // ============================================================
+  // LOGOUT BUTTON
+  // ============================================================
+
   Widget _buildLogoutButton(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(12),
@@ -555,27 +706,29 @@ class _AccountantSidebarState extends State<AccountantSidebar> {
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: () async {
-            await Supabase.instance.client.auth.signOut();
-
-            if (!context.mounted) {
-              return;
-            }
-
-            context.go('/login');
-          },
+          onTap: _loggingOut ? null : _logout,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 12),
             child: Row(
               children: [
-                Icon(
-                  Icons.logout_outlined,
-                  size: 21,
-                  color: Colors.red.shade600,
-                ),
+                if (_loggingOut)
+                  SizedBox(
+                    width: 21,
+                    height: 21,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.red.shade600,
+                    ),
+                  )
+                else
+                  Icon(
+                    Icons.logout_outlined,
+                    size: 21,
+                    color: Colors.red.shade600,
+                  ),
                 const SizedBox(width: 12),
                 Text(
-                  'خروج از حساب',
+                  _loggingOut ? 'در حال خروج...' : 'خروج از حساب',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
