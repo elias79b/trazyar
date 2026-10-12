@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:tarazyar/accountant/expenses/application/accountant_expense_recognition_provider.dart';
+import 'package:tarazyar/accountant/dashboard/presentation/widgets/accountant_scaffold.dart';
 
 class AccountantExpenseRecognitionPage extends ConsumerStatefulWidget {
   final String companyId;
@@ -42,16 +43,12 @@ class _AccountantExpenseRecognitionPageState
   }
 
   @override
-  void didUpdateWidget(
-      covariant AccountantExpenseRecognitionPage oldWidget,
-      ) {
+  void didUpdateWidget(covariant AccountantExpenseRecognitionPage oldWidget) {
     super.didUpdateWidget(oldWidget);
 
     if (oldWidget.periodId != widget.periodId ||
         oldWidget.companyId != widget.companyId) {
-      ref.invalidate(
-        accountantExpenseRecognitionProvider(widget.periodId),
-      );
+      ref.invalidate(accountantExpenseRecognitionProvider(widget.periodId));
 
       _loadFiscalYears();
     }
@@ -62,23 +59,23 @@ class _AccountantExpenseRecognitionPageState
     final provider = accountantExpenseRecognitionProvider(widget.periodId);
     final state = ref.watch(provider);
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF6F7FB),
-      body: SafeArea(
-        child: state.when(
-          loading: () => const Center(
-            child: CircularProgressIndicator(),
-          ),
-          error: (error, stackTrace) => _ErrorView(
-            message: _errorMessage(error),
-            onRetry: () {
-              ref.invalidate(provider);
-              _loadFiscalYears();
-            },
-          ),
-          data: (data) => _buildContent(
-            context,
-            data,
+    return AccountantScaffold(
+      currentRoute: '/accountant/expenses/recognition/${widget.periodId}',
+      title: 'ثبت هزینه',
+      body: Container(
+        color: const Color(0xFFF6F7FB),
+        child: SafeArea(
+          child: state.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error:
+                (error, stackTrace) => _ErrorView(
+              message: _errorMessage(error),
+              onRetry: () {
+                ref.invalidate(provider);
+                _loadFiscalYears();
+              },
+            ),
+            data: (data) => _buildContent(context, data),
           ),
         ),
       ),
@@ -101,17 +98,15 @@ class _AccountantExpenseRecognitionPageState
     try {
       final response = await _supabaseClient
           .from('expense_fiscal_years')
-          .select(
-        'id, company_id, year, title, status, created_at, updated_at',
-      )
+          .select('id, company_id, year, title, status, created_at, updated_at')
           .eq('company_id', widget.companyId)
           .order('year', ascending: false);
 
-      final years = response
+      final years =
+      response
           .map(
-            (item) => _FiscalYearItem.fromMap(
-          Map<String, dynamic>.from(item),
-        ),
+            (item) =>
+            _FiscalYearItem.fromMap(Map<String, dynamic>.from(item)),
       )
           .toList();
 
@@ -157,11 +152,7 @@ class _AccountantExpenseRecognitionPageState
         _fiscalLoading = false;
       });
 
-      _showMessage(
-        context,
-        _errorMessage(error),
-        isError: true,
-      );
+      _showMessage(context, _errorMessage(error), isError: true);
     }
   }
 
@@ -188,11 +179,11 @@ class _AccountantExpenseRecognitionPageState
           .eq('fiscal_year_id', fiscalYearId)
           .order('month');
 
-      final periods = response
+      final periods =
+      response
           .map(
-            (item) => _FiscalPeriodItem.fromMap(
-          Map<String, dynamic>.from(item),
-        ),
+            (item) =>
+            _FiscalPeriodItem.fromMap(Map<String, dynamic>.from(item)),
       )
           .toList();
 
@@ -225,11 +216,7 @@ class _AccountantExpenseRecognitionPageState
         _fiscalLoading = false;
       });
 
-      _showMessage(
-        context,
-        _errorMessage(error),
-        isError: true,
-      );
+      _showMessage(context, _errorMessage(error), isError: true);
     }
   }
 
@@ -255,14 +242,13 @@ class _AccountantExpenseRecognitionPageState
   }
 
   void _openPeriod(String periodId) {
-    context.go(
-      '/accountant/expenses/recognition/$periodId',
-    );
+    context.go('/accountant/expenses/recognition/$periodId');
   }
 
   int get _currentPeriodYear {
-    final provider =
-    ref.read(accountantExpenseRecognitionProvider(widget.periodId));
+    final provider = ref.read(
+      accountantExpenseRecognitionProvider(widget.periodId),
+    );
 
     final state = provider;
 
@@ -290,9 +276,7 @@ class _AccountantExpenseRecognitionPageState
 
     return RefreshIndicator(
       onRefresh: () async {
-        ref.invalidate(
-          accountantExpenseRecognitionProvider(widget.periodId),
-        );
+        ref.invalidate(accountantExpenseRecognitionProvider(widget.periodId));
 
         await ref.read(
           accountantExpenseRecognitionProvider(widget.periodId).future,
@@ -303,52 +287,24 @@ class _AccountantExpenseRecognitionPageState
       child: CustomScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
+          SliverToBoxAdapter(child: _buildHeader(context, data, isMobile)),
           SliverToBoxAdapter(
-            child: _buildHeader(
-              context,
-              data,
-              isMobile,
-            ),
+            child: _buildFiscalSelector(context, data, isMobile),
           ),
+          SliverToBoxAdapter(child: _buildSummary(context, data, isMobile)),
           SliverToBoxAdapter(
-            child: _buildFiscalSelector(
-              context,
-              data,
-              isMobile,
-            ),
+            child: _buildRecognitionSection(context, data, isMobile),
           ),
           SliverToBoxAdapter(
-            child: _buildSummary(
-              context,
-              data,
-              isMobile,
-            ),
+            child: _buildWorkflowSection(context, data, isMobile),
           ),
-          SliverToBoxAdapter(
-            child: _buildRecognitionSection(
-              context,
-              data,
-              isMobile,
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: _buildWorkflowSection(
-              context,
-              data,
-              isMobile,
-            ),
-          ),
-          const SliverPadding(
-            padding: EdgeInsets.only(bottom: 32),
-          ),
+          const SliverPadding(padding: EdgeInsets.only(bottom: 32)),
         ],
       ),
     );
   }
 
-  void _syncSelectedYearWithData(
-      AccountantExpenseRecognitionData data,
-      ) {
+  void _syncSelectedYearWithData(AccountantExpenseRecognitionData data) {
     if (_fiscalYears.isEmpty) {
       return;
     }
@@ -387,15 +343,11 @@ class _AccountantExpenseRecognitionPageState
         isMobile ? 12 : 24,
         12,
       ),
-      padding: EdgeInsets.all(
-        isMobile ? 16 : 22,
-      ),
+      padding: EdgeInsets.all(isMobile ? 16 : 22),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
         boxShadow: [
           BoxShadow(
             blurRadius: 18,
@@ -404,7 +356,8 @@ class _AccountantExpenseRecognitionPageState
           ),
         ],
       ),
-      child: isMobile
+      child:
+      isMobile
           ? Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -415,18 +368,14 @@ class _AccountantExpenseRecognitionPageState
       )
           : Row(
         children: [
-          Expanded(
-            child: _buildTitle(data),
-          ),
+          Expanded(child: _buildTitle(data)),
           _buildStatusChip(data.period),
         ],
       ),
     );
   }
 
-  Widget _buildTitle(
-      AccountantExpenseRecognitionData data,
-      ) {
+  Widget _buildTitle(AccountantExpenseRecognitionData data) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -440,16 +389,11 @@ class _AccountantExpenseRecognitionPageState
         ),
         const SizedBox(height: 8),
         Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 7,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
           decoration: BoxDecoration(
             color: const Color(0xFFEFF6FF),
             borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: const Color(0xFFBFDBFE),
-            ),
+            border: Border.all(color: const Color(0xFFBFDBFE)),
           ),
           child: Text(
             'ماه انتخاب‌شده: ${data.period.monthTitle}',
@@ -463,31 +407,21 @@ class _AccountantExpenseRecognitionPageState
         const SizedBox(height: 7),
         Text(
           'هزینه‌های ماهانه به تفکیک سرفصل',
-          style: TextStyle(
-            fontSize: 13,
-            color: Colors.grey.shade600,
-          ),
+          style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
         ),
       ],
     );
   }
 
-  Widget _buildStatusChip(
-      AccountantExpensePeriod period,
-      ) {
+  Widget _buildStatusChip(AccountantExpensePeriod period) {
     final color = _statusColor(period.status);
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 14,
-        vertical: 9,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
       decoration: BoxDecoration(
         color: color.withOpacity(.09),
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(
-          color: color.withOpacity(.22),
-        ),
+        border: Border.all(color: color.withOpacity(.22)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -495,10 +429,7 @@ class _AccountantExpenseRecognitionPageState
           Container(
             width: 8,
             height: 8,
-            decoration: BoxDecoration(
-              color: color,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
           const SizedBox(width: 8),
           Text(
@@ -524,20 +455,15 @@ class _AccountantExpenseRecognitionPageState
       bool isMobile,
       ) {
     return Container(
-      margin: EdgeInsets.symmetric(
-        horizontal: isMobile ? 12 : 24,
-      ),
-      padding: EdgeInsets.all(
-        isMobile ? 14 : 18,
-      ),
+      margin: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 24),
+      padding: EdgeInsets.all(isMobile ? 14 : 18),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
-      child: isMobile
+      child:
+      isMobile
           ? Column(
         children: [
           _buildFiscalYearDropdown(data),
@@ -547,25 +473,17 @@ class _AccountantExpenseRecognitionPageState
       )
           : Row(
         children: [
-          Expanded(
-            child: _buildFiscalYearDropdown(data),
-          ),
+          Expanded(child: _buildFiscalYearDropdown(data)),
           const SizedBox(width: 14),
-          Expanded(
-            child: _buildFiscalPeriodDropdown(data),
-          ),
+          Expanded(child: _buildFiscalPeriodDropdown(data)),
         ],
       ),
     );
   }
 
-  Widget _buildFiscalYearDropdown(
-      AccountantExpenseRecognitionData data,
-      ) {
+  Widget _buildFiscalYearDropdown(AccountantExpenseRecognitionData data) {
     if (_fiscalLoading && _fiscalYears.isEmpty) {
-      return _selectorLoading(
-        label: 'سال مالی',
-      );
+      return _selectorLoading(label: 'سال مالی');
     }
 
     if (_fiscalYears.isEmpty) {
@@ -584,43 +502,27 @@ class _AccountantExpenseRecognitionPageState
       isExpanded: true,
       decoration: InputDecoration(
         labelText: 'سال مالی',
-        prefixIcon: const Icon(
-          Icons.calendar_month_outlined,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        prefixIcon: const Icon(Icons.calendar_month_outlined),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: Color(0xFFE5E7EB),
-          ),
+          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
         ),
       ),
-      items: _fiscalYears.map(
-            (year) {
-          return DropdownMenuItem<String>(
-            value: year.id,
-            child: Text(
-              year.displayTitle,
-              overflow: TextOverflow.ellipsis,
-            ),
-          );
-        },
-      ).toList(),
-      onChanged: _fiscalLoading
-          ? null
-          : _onFiscalYearChanged,
+      items:
+      _fiscalYears.map((year) {
+        return DropdownMenuItem<String>(
+          value: year.id,
+          child: Text(year.displayTitle, overflow: TextOverflow.ellipsis),
+        );
+      }).toList(),
+      onChanged: _fiscalLoading ? null : _onFiscalYearChanged,
     );
   }
 
-  Widget _buildFiscalPeriodDropdown(
-      AccountantExpenseRecognitionData data,
-      ) {
+  Widget _buildFiscalPeriodDropdown(AccountantExpenseRecognitionData data) {
     if (_fiscalLoading && _fiscalPeriods.isEmpty) {
-      return _selectorLoading(
-        label: 'ماه مالی',
-      );
+      return _selectorLoading(label: 'ماه مالی');
     }
 
     if (_fiscalPeriods.isEmpty) {
@@ -639,56 +541,41 @@ class _AccountantExpenseRecognitionPageState
       isExpanded: true,
       decoration: InputDecoration(
         labelText: 'ماه مالی',
-        prefixIcon: const Icon(
-          Icons.date_range_outlined,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        prefixIcon: const Icon(Icons.date_range_outlined),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: Color(0xFFE5E7EB),
-          ),
+          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
         ),
       ),
-      items: _fiscalPeriods.map(
-            (period) {
-          return DropdownMenuItem<String>(
-            value: period.id,
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    period.displayTitle,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+      items:
+      _fiscalPeriods.map((period) {
+        return DropdownMenuItem<String>(
+          value: period.id,
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  period.displayTitle,
+                  overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(width: 8),
-                _smallStatusChip(period.status),
-              ],
-            ),
-          );
-        },
-      ).toList(),
-      onChanged: _fiscalLoading
-          ? null
-          : _onFiscalPeriodChanged,
+              ),
+              const SizedBox(width: 8),
+              _smallStatusChip(period.status),
+            ],
+          ),
+        );
+      }).toList(),
+      onChanged: _fiscalLoading ? null : _onFiscalPeriodChanged,
     );
   }
 
-  Widget _selectorLoading({
-    required String label,
-  }) {
+  Widget _selectorLoading({required String label}) {
     return InputDecorator(
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: const Icon(
-          Icons.calendar_month_outlined,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        prefixIcon: const Icon(Icons.calendar_month_outlined),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
       child: const SizedBox(
         height: 24,
@@ -697,49 +584,32 @@ class _AccountantExpenseRecognitionPageState
           child: SizedBox(
             width: 18,
             height: 18,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-            ),
+            child: CircularProgressIndicator(strokeWidth: 2),
           ),
         ),
       ),
     );
   }
 
-  Widget _selectorEmpty({
-    required String label,
-    required String message,
-  }) {
+  Widget _selectorEmpty({required String label, required String message}) {
     return InputDecorator(
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: const Icon(
-          Icons.calendar_month_outlined,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        prefixIcon: const Icon(Icons.calendar_month_outlined),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
       child: Text(
         message,
-        style: TextStyle(
-          color: Colors.grey.shade600,
-          fontSize: 13,
-        ),
+        style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
       ),
     );
   }
 
-  Widget _smallStatusChip(
-      String status,
-      ) {
+  Widget _smallStatusChip(String status) {
     final color = _statusColor(status);
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 7,
-        vertical: 3,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
       decoration: BoxDecoration(
         color: color.withOpacity(.08),
         borderRadius: BorderRadius.circular(20),
@@ -791,19 +661,15 @@ class _AccountantExpenseRecognitionPageState
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final cardWidth = isMobile
-              ? constraints.maxWidth
-              : (constraints.maxWidth - 24) / 3;
+          final cardWidth =
+          isMobile ? constraints.maxWidth : (constraints.maxWidth - 24) / 3;
 
           return Wrap(
             spacing: 12,
             runSpacing: 12,
             children: [
               for (final item in cards)
-                SizedBox(
-                  width: cardWidth,
-                  child: _summaryCard(item),
-                ),
+                SizedBox(width: cardWidth, child: _summaryCard(item)),
             ],
           );
         },
@@ -811,17 +677,13 @@ class _AccountantExpenseRecognitionPageState
     );
   }
 
-  Widget _summaryCard(
-      _SummaryItem item,
-      ) {
+  Widget _summaryCard(_SummaryItem item) {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Row(
         children: [
@@ -832,10 +694,7 @@ class _AccountantExpenseRecognitionPageState
               color: const Color(0xFFF3F4F6),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(
-              item.icon,
-              color: const Color(0xFF374151),
-            ),
+            child: Icon(item.icon, color: const Color(0xFF374151)),
           ),
           const SizedBox(width: 13),
           Expanded(
@@ -886,15 +745,11 @@ class _AccountantExpenseRecognitionPageState
         isMobile ? 12 : 24,
         0,
       ),
-      padding: EdgeInsets.all(
-        isMobile ? 14 : 20,
-      ),
+      padding: EdgeInsets.all(isMobile ? 14 : 20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -927,30 +782,19 @@ class _AccountantExpenseRecognitionPageState
             isEditable
                 ? 'برای هر سرفصل مبلغ هزینه و توضیحات را ثبت کنید.'
                 : 'این دوره در وضعیت ${data.period.statusTitle} قرار دارد و قابل ویرایش نیست.',
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.grey.shade600,
-            ),
+            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
           ),
           const SizedBox(height: 18),
           if (data.categories.isEmpty)
             _emptyCategories()
           else
             ...data.categories.map(
-                  (category) => _categoryRow(
-                context,
-                data,
-                category,
-                isEditable,
-                isMobile,
-              ),
+                  (category) =>
+                  _categoryRow(context, data, category, isEditable, isMobile),
             ),
           if (isEditable) ...[
             const SizedBox(height: 12),
-            _buildSubmitButton(
-              context,
-              data,
-            ),
+            _buildSubmitButton(context, data),
           ],
         ],
       ),
@@ -964,40 +808,24 @@ class _AccountantExpenseRecognitionPageState
       bool editable,
       bool isMobile,
       ) {
-    final recognition = data.recognitionForCategory(
-      category.id,
-    );
+    final recognition = data.recognitionForCategory(category.id);
 
     return Container(
-      margin: const EdgeInsets.only(
-        bottom: 12,
-      ),
-      padding: EdgeInsets.all(
-        isMobile ? 13 : 16,
-      ),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(isMobile ? 13 : 16),
       decoration: BoxDecoration(
         color: const Color(0xFFFAFAFB),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
-      child: isMobile
+      child:
+      isMobile
           ? Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _categoryTitle(
-            category,
-            recognition,
-          ),
+          _categoryTitle(category, recognition),
           const SizedBox(height: 13),
-          _amountField(
-            context,
-            data,
-            category,
-            recognition,
-            editable,
-          ),
+          _amountField(context, data, category, recognition, editable),
           const SizedBox(height: 10),
           _descriptionField(
             context,
@@ -1013,10 +841,7 @@ class _AccountantExpenseRecognitionPageState
         children: [
           Expanded(
             flex: 3,
-            child: _categoryTitle(
-              category,
-              recognition,
-            ),
+            child: _categoryTitle(category, recognition),
           ),
           const SizedBox(width: 16),
           SizedBox(
@@ -1056,7 +881,8 @@ class _AccountantExpenseRecognitionPageState
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: category.isOperational
+            color:
+            category.isOperational
                 ? const Color(0xFFF0FDF4)
                 : const Color(0xFFFFF7ED),
             borderRadius: BorderRadius.circular(12),
@@ -1066,7 +892,8 @@ class _AccountantExpenseRecognitionPageState
                 ? Icons.trending_up_rounded
                 : Icons.swap_vertical_circle_outlined,
             size: 20,
-            color: category.isOperational
+            color:
+            category.isOperational
                 ? const Color(0xFF15803D)
                 : const Color(0xFFC2410C),
           ),
@@ -1091,7 +918,8 @@ class _AccountantExpenseRecognitionPageState
                     category.expenseTypeTitle,
                     style: TextStyle(
                       fontSize: 11,
-                      color: category.isOperational
+                      color:
+                      category.isOperational
                           ? const Color(0xFF15803D)
                           : const Color(0xFFC2410C),
                       fontWeight: FontWeight.w700,
@@ -1118,10 +946,7 @@ class _AccountantExpenseRecognitionPageState
                   recognition.description!,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                 ),
               ],
             ],
@@ -1139,7 +964,8 @@ class _AccountantExpenseRecognitionPageState
       bool editable,
       ) {
     final controller = TextEditingController(
-      text: recognition == null || recognition.amount == 0
+      text:
+      recognition == null || recognition.amount == 0
           ? ''
           : _formatNumber(recognition.amount),
     );
@@ -1147,9 +973,7 @@ class _AccountantExpenseRecognitionPageState
     return TextField(
       controller: controller,
       enabled: editable && !_busy,
-      keyboardType: const TextInputType.numberWithOptions(
-        decimal: true,
-      ),
+      keyboardType: const TextInputType.numberWithOptions(decimal: true),
       decoration: InputDecoration(
         labelText: 'مبلغ',
         suffixText: 'ریال',
@@ -1157,15 +981,11 @@ class _AccountantExpenseRecognitionPageState
         fillColor: Colors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: Color(0xFFE5E7EB),
-          ),
+          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: Color(0xFFE5E7EB),
-          ),
+          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 13,
@@ -1220,15 +1040,11 @@ class _AccountantExpenseRecognitionPageState
         fillColor: Colors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: Color(0xFFE5E7EB),
-          ),
+          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(
-            color: Color(0xFFE5E7EB),
-          ),
+          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 13,
@@ -1264,13 +1080,9 @@ class _AccountantExpenseRecognitionPageState
     return Align(
       alignment: Alignment.centerLeft,
       child: FilledButton.icon(
-        onPressed: _busy
-            ? null
-            : () => _submitToCompanyAdmin(
-          context,
-          data,
-        ),
-        icon: _busy
+        onPressed: _busy ? null : () => _submitToCompanyAdmin(context, data),
+        icon:
+        _busy
             ? const SizedBox(
           width: 17,
           height: 17,
@@ -1279,17 +1091,10 @@ class _AccountantExpenseRecognitionPageState
             color: Colors.white,
           ),
         )
-            : const Icon(
-          Icons.send_outlined,
-        ),
-        label: const Text(
-          'ارسال به مدیر شرکت',
-        ),
+            : const Icon(Icons.send_outlined),
+        label: const Text('ارسال به مدیر شرکت'),
         style: FilledButton.styleFrom(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 18,
-            vertical: 13,
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -1310,9 +1115,7 @@ class _AccountantExpenseRecognitionPageState
     required String description,
     bool showMessage = true,
   }) async {
-    final amount = _parseAmount(
-      amountController.text,
-    );
+    final amount = _parseAmount(amountController.text);
 
     if (amount <= 0) {
       return;
@@ -1323,11 +1126,7 @@ class _AccountantExpenseRecognitionPageState
       category: category,
       amount: amount,
       description: description,
-      recognitionId: data
-          .recognitionForCategory(
-        category.id,
-      )
-          ?.id,
+      recognitionId: data.recognitionForCategory(category.id)?.id,
       showMessage: showMessage,
     );
   }
@@ -1349,8 +1148,7 @@ class _AccountantExpenseRecognitionPageState
     });
 
     try {
-      final repository =
-      AccountantExpenseRecognitionRepository(
+      final repository = AccountantExpenseRecognitionRepository(
         _supabaseClient,
       );
 
@@ -1363,25 +1161,14 @@ class _AccountantExpenseRecognitionPageState
         recognitionId: recognitionId,
       );
 
-      ref.invalidate(
-        accountantExpenseRecognitionProvider(
-          widget.periodId,
-        ),
-      );
+      ref.invalidate(accountantExpenseRecognitionProvider(widget.periodId));
 
       if (mounted && showMessage) {
-        _showMessage(
-          context,
-          'هزینه با موفقیت ثبت شد.',
-        );
+        _showMessage(context, 'هزینه با موفقیت ثبت شد.');
       }
     } catch (error) {
       if (mounted) {
-        _showMessage(
-          context,
-          _errorMessage(error),
-          isError: true,
-        );
+        _showMessage(context, _errorMessage(error), isError: true);
       }
     } finally {
       if (mounted) {
@@ -1404,34 +1191,22 @@ class _AccountantExpenseRecognitionPageState
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text(
-            'ارسال دوره',
-          ),
+          title: const Text('ارسال دوره'),
           content: const Text(
             'پس از ارسال دوره به مدیر شرکت، ثبت و ویرایش هزینه‌ها متوقف می‌شود. ادامه می‌دهید؟',
           ),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(
-                  dialogContext,
-                  false,
-                );
+                Navigator.pop(dialogContext, false);
               },
-              child: const Text(
-                'انصراف',
-              ),
+              child: const Text('انصراف'),
             ),
             FilledButton(
               onPressed: () {
-                Navigator.pop(
-                  dialogContext,
-                  true,
-                );
+                Navigator.pop(dialogContext, true);
               },
-              child: const Text(
-                'ارسال',
-              ),
+              child: const Text('ارسال'),
             ),
           ],
         );
@@ -1447,8 +1222,7 @@ class _AccountantExpenseRecognitionPageState
     });
 
     try {
-      final repository =
-      AccountantExpenseRecognitionRepository(
+      final repository = AccountantExpenseRecognitionRepository(
         _supabaseClient,
       );
 
@@ -1457,25 +1231,14 @@ class _AccountantExpenseRecognitionPageState
         action: 'submit_to_company_admin',
       );
 
-      ref.invalidate(
-        accountantExpenseRecognitionProvider(
-          widget.periodId,
-        ),
-      );
+      ref.invalidate(accountantExpenseRecognitionProvider(widget.periodId));
 
       if (mounted) {
-        _showMessage(
-          context,
-          'دوره با موفقیت به مدیر شرکت ارسال شد.',
-        );
+        _showMessage(context, 'دوره با موفقیت به مدیر شرکت ارسال شد.');
       }
     } catch (error) {
       if (mounted) {
-        _showMessage(
-          context,
-          _errorMessage(error),
-          isError: true,
-        );
+        _showMessage(context, _errorMessage(error), isError: true);
       }
     } finally {
       if (mounted) {
@@ -1506,15 +1269,11 @@ class _AccountantExpenseRecognitionPageState
         isMobile ? 12 : 24,
         0,
       ),
-      padding: EdgeInsets.all(
-        isMobile ? 14 : 20,
-      ),
+      padding: EdgeInsets.all(isMobile ? 14 : 20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1528,34 +1287,23 @@ class _AccountantExpenseRecognitionPageState
             ),
           ),
           const SizedBox(height: 15),
-          ...data.workflow.map(
-                (item) => _workflowItem(item),
-          ),
+          ...data.workflow.map((item) => _workflowItem(item)),
         ],
       ),
     );
   }
 
-  Widget _workflowItem(
-      ExpenseRecognitionWorkflowItem item,
-      ) {
-    final date = item.createdAt == null
-        ? '-'
-        : _formatDateTime(
-      item.createdAt!,
-    );
+  Widget _workflowItem(ExpenseRecognitionWorkflowItem item) {
+    final date =
+    item.createdAt == null ? '-' : _formatDateTime(item.createdAt!);
 
     return Container(
-      margin: const EdgeInsets.only(
-        bottom: 10,
-      ),
+      margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(13),
       decoration: BoxDecoration(
         color: const Color(0xFFFAFAFB),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1589,20 +1337,13 @@ class _AccountantExpenseRecognitionPageState
                 const SizedBox(height: 4),
                 Text(
                   date,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
                 ),
-                if (item.note != null &&
-                    item.note!.trim().isNotEmpty) ...[
+                if (item.note != null && item.note!.trim().isNotEmpty) ...[
                   const SizedBox(height: 5),
                   Text(
                     item.note!,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade700,
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
                   ),
                 ],
               ],
@@ -1620,21 +1361,14 @@ class _AccountantExpenseRecognitionPageState
   Widget _emptyCategories() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(
-        vertical: 35,
-        horizontal: 20,
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 35, horizontal: 20),
       decoration: BoxDecoration(
         color: const Color(0xFFFAFAFB),
         borderRadius: BorderRadius.circular(15),
       ),
       child: Column(
         children: [
-          Icon(
-            Icons.category_outlined,
-            size: 42,
-            color: Colors.grey.shade400,
-          ),
+          Icon(Icons.category_outlined, size: 42, color: Colors.grey.shade400),
           const SizedBox(height: 10),
           const Text(
             'سرفصل فعالی برای این شرکت ثبت نشده است.',
@@ -1652,65 +1386,36 @@ class _AccountantExpenseRecognitionPageState
   // HELPERS
   // ============================================================
 
-  double _parseAmount(
-      String value,
-      ) {
+  double _parseAmount(String value) {
     var text = value.trim();
 
     if (text.isEmpty) {
       return 0;
     }
 
-    text = text.replaceAll(
-      ',',
-      '',
-    );
-    text = text.replaceAll(
-      '٬',
-      '',
-    );
-    text = text.replaceAll(
-      ' ',
-      '',
-    );
-    text = text.replaceAll(
-      'ریال',
-      '',
-    );
-    text = text.replaceAll(
-      'تومان',
-      '',
-    );
+    text = text.replaceAll(',', '');
+    text = text.replaceAll('٬', '');
+    text = text.replaceAll(' ', '');
+    text = text.replaceAll('ریال', '');
+    text = text.replaceAll('تومان', '');
 
     const persianDigits = '۰۱۲۳۴۵۶۷۸۹';
     const arabicDigits = '٠١٢٣٤٥٦٧٨٩';
 
     for (var i = 0; i < 10; i++) {
-      text = text.replaceAll(
-        persianDigits[i],
-        i.toString(),
-      );
+      text = text.replaceAll(persianDigits[i], i.toString());
 
-      text = text.replaceAll(
-        arabicDigits[i],
-        i.toString(),
-      );
+      text = text.replaceAll(arabicDigits[i], i.toString());
     }
 
     return double.tryParse(text) ?? 0;
   }
 
-  String _formatNumber(
-      double value,
-      ) {
-    return _numberFormat.format(
-      value.round(),
-    );
+  String _formatNumber(double value) {
+    return _numberFormat.format(value.round());
   }
 
-  String _formatDateTime(
-      DateTime value,
-      ) {
+  String _formatDateTime(DateTime value) {
     final local = value.toLocal();
 
     return '${local.year}/'
@@ -1720,9 +1425,7 @@ class _AccountantExpenseRecognitionPageState
         '${local.minute.toString().padLeft(2, '0')}';
   }
 
-  Color _statusColor(
-      String status,
-      ) {
+  Color _statusColor(String status) {
     switch (status) {
       case 'open':
         return const Color(0xFF2563EB);
@@ -1739,9 +1442,7 @@ class _AccountantExpenseRecognitionPageState
     }
   }
 
-  String _statusTitle(
-      String status,
-      ) {
+  String _statusTitle(String status) {
     switch (status) {
       case 'open':
         return 'باز';
@@ -1767,26 +1468,19 @@ class _AccountantExpenseRecognitionPageState
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(
-            message,
-          ),
+          content: Text(message),
           behavior: SnackBarBehavior.floating,
-          backgroundColor: isError
-              ? const Color(0xFFDC2626)
-              : const Color(0xFF166534),
+          backgroundColor:
+          isError ? const Color(0xFFDC2626) : const Color(0xFF166534),
         ),
       );
   }
 
-  String _errorMessage(
-      Object error,
-      ) {
+  String _errorMessage(Object error) {
     final text = error.toString();
 
     if (text.startsWith('Exception: ')) {
-      return text.substring(
-        'Exception: '.length,
-      );
+      return text.substring('Exception: '.length);
     }
 
     return text;
@@ -1812,9 +1506,7 @@ class _FiscalYearItem {
     required this.status,
   });
 
-  factory _FiscalYearItem.fromMap(
-      Map<String, dynamic> map,
-      ) {
+  factory _FiscalYearItem.fromMap(Map<String, dynamic> map) {
     return _FiscalYearItem(
       id: map['id'].toString(),
       companyId: map['company_id'].toString(),
@@ -1825,8 +1517,7 @@ class _FiscalYearItem {
   }
 
   String get displayTitle {
-    if (title != null &&
-        title!.trim().isNotEmpty) {
+    if (title != null && title!.trim().isNotEmpty) {
       return title!.trim();
     }
 
@@ -1857,9 +1548,7 @@ class _FiscalPeriodItem {
     required this.status,
   });
 
-  factory _FiscalPeriodItem.fromMap(
-      Map<String, dynamic> map,
-      ) {
+  factory _FiscalPeriodItem.fromMap(Map<String, dynamic> map) {
     return _FiscalPeriodItem(
       id: map['id'].toString(),
       fiscalYearId: map['fiscal_year_id'].toString(),
@@ -1895,8 +1584,7 @@ class _FiscalPeriodItem {
   }
 
   String get displayTitle {
-    if (title != null &&
-        title!.trim().isNotEmpty) {
+    if (title != null && title!.trim().isNotEmpty) {
       return title!.trim();
     }
 
@@ -1928,43 +1616,28 @@ class _ErrorView extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
 
-  const _ErrorView({
-    required this.message,
-    required this.onRetry,
-  });
+  const _ErrorView({required this.message, required this.onRetry});
 
   @override
-  Widget build(
-      BuildContext context,
-      ) {
+  Widget build(BuildContext context) {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 48,
-              color: Colors.red.shade400,
-            ),
+            Icon(Icons.error_outline, size: 48, color: Colors.red.shade400),
             const SizedBox(height: 12),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Color(0xFF374151),
-              ),
+              style: const TextStyle(color: Color(0xFF374151)),
             ),
             const SizedBox(height: 16),
             FilledButton.icon(
               onPressed: onRetry,
-              icon: const Icon(
-                Icons.refresh,
-              ),
-              label: const Text(
-                'تلاش مجدد',
-              ),
+              icon: const Icon(Icons.refresh),
+              label: const Text('تلاش مجدد'),
             ),
           ],
         ),
@@ -1977,9 +1650,7 @@ class _ErrorView extends StatelessWidget {
 // UTILITY
 // ============================================================
 
-int _toInt(
-    dynamic value,
-    ) {
+int _toInt(dynamic value) {
   if (value is int) {
     return value;
   }
@@ -1988,8 +1659,5 @@ int _toInt(
     return value.toInt();
   }
 
-  return int.tryParse(
-    value?.toString() ?? '',
-  ) ??
-      0;
+  return int.tryParse(value?.toString() ?? '') ?? 0;
 }

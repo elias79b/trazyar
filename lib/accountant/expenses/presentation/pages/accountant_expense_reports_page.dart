@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:tarazyar/accountant/expenses/application/accountant_expense_reports_provider.dart';
+import 'package:tarazyar/accountant/dashboard/presentation/widgets/accountant_scaffold.dart';
 
 class AccountantExpenseReportsPage extends ConsumerStatefulWidget {
   final String companyId;
@@ -28,11 +29,12 @@ class _AccountantExpenseReportsPageState
       accountantExpenseReportsProvider(widget.companyId),
     );
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: const Color(0xfff5f7f9),
-        body: state.when(
+    return AccountantScaffold(
+      currentRoute: '/accountant/expenses/reports',
+      title: 'گزارش هزینه',
+      body: Directionality(
+        textDirection: TextDirection.rtl,
+        child: state.when(
           loading: () => const Center(
             child: CircularProgressIndicator(),
           ),

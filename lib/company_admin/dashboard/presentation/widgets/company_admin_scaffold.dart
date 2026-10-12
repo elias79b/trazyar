@@ -220,28 +220,6 @@ class CompanyAdminScaffold extends StatelessWidget {
                     title: 'داشبورد مدیرعامل',
                     route: '/company-admin',
                   ),
-
-                  _menuItem(
-                    context,
-                    icon: Icons.business_rounded,
-                    title: 'اطلاعات شرکت',
-                    route: '/company-admin/company',
-                  ),
-
-                  _menuItem(
-                    context,
-                    icon: Icons.people_alt_rounded,
-                    title: 'کاربران شرکت',
-                    route: '/company-admin/users',
-                  ),
-
-                  _menuItem(
-                    context,
-                    icon: Icons.security_rounded,
-                    title: 'نقش‌ها و دسترسی‌ها',
-                    route: '/company-admin/permissions',
-                  ),
-
                   const SizedBox(
                     height: 18,
                   ),
@@ -424,7 +402,7 @@ class CompanyAdminScaffold extends StatelessWidget {
                       _subMenuItem(
                         context,
                         icon: Icons.receipt_long_outlined,
-                        title: 'مطالبات',
+                        title: 'حساب های پرداختنی',
                         route:
                         '/company-admin/income/receivables',
                       ),
@@ -469,19 +447,19 @@ class CompanyAdminScaffold extends StatelessWidget {
                         icon: Icons.category_outlined,
                         title: 'دسته‌بندی‌ها',
                         route:
-                        '/company-admin/expenses/categories',
+                        '/company-admin/expense/categories',
                       ),
                       _subMenuItem(
                         context,
                         icon: Icons.fact_check_outlined,
                         title: 'شناسایی هزینه',
                         route:
-                        '/company-admin/expenses/recognition',
+                        '/company-admin/expense/recognitions',
                       ),
                       _subMenuItem(
                         context,
                         icon: Icons.receipt_long_outlined,
-                        title: 'بدهی‌ها',
+                        title: 'حساب های پرداختنی',
                         route:
                         '/company-admin/expenses/payables',
                       ),
@@ -497,48 +475,6 @@ class CompanyAdminScaffold extends StatelessWidget {
 
                   const SizedBox(
                     height: 18,
-                  ),
-
-                  // ========================================================
-                  // گزارش‌ها
-                  // ========================================================
-
-                  _sectionTitle(
-                    'گزارش‌ها',
-                  ),
-
-                  _menuItem(
-                    context,
-                    icon: Icons.bar_chart_rounded,
-                    title: 'گزارش‌های مالی',
-                    route: '/company-admin/reports',
-                  ),
-
-                  _menuItem(
-                    context,
-                    icon: Icons.analytics_rounded,
-                    title: 'گزارش مدیریتی',
-                    route:
-                    '/company-admin/management-reports',
-                  ),
-
-                  const SizedBox(
-                    height: 18,
-                  ),
-
-                  // ========================================================
-                  // تنظیمات
-                  // ========================================================
-
-                  _sectionTitle(
-                    'تنظیمات',
-                  ),
-
-                  _menuItem(
-                    context,
-                    icon: Icons.settings_rounded,
-                    title: 'تنظیمات شرکت',
-                    route: '/company-admin/settings',
                   ),
                 ],
               ),

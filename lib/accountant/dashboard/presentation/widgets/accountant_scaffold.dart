@@ -402,7 +402,7 @@ class _AccountantScaffoldState
                       ),
                       _subMenuItem(
                         context,
-                        title: 'مطالبات',
+                        title: 'حساب های پرداختنی',
                         route: '/accountant/income/receivables',
                       ),
                       _subMenuItem(
@@ -446,12 +446,11 @@ class _AccountantScaffoldState
                         route:
                         '/accountant/expenses/categories',
                       ),
-                      _subMenuItem(
-                        context,
-                        title: 'ثبت هزینه',
-                        route:
-                        '/accountant/expenses/recognition',
-                      ),
+            _subMenuItem(
+            context,
+            title: 'ثبت هزینه',
+              route: '/accountant/expenses/periods',
+            ),
                       _subMenuItem(
                         context,
                         title: 'حساب‌های پرداختنی',
@@ -468,21 +467,6 @@ class _AccountantScaffoldState
                   ),
 
                   const SizedBox(height: 22),
-
-                  // ======================================================
-                  // SYSTEM
-                  // ======================================================
-
-                  _sectionTitle('سیستم'),
-
-                  const SizedBox(height: 8),
-
-                  _menuItem(
-                    context,
-                    icon: Icons.person_outline,
-                    title: 'حساب کاربری',
-                    route: '/accountant/profile',
-                  ),
                 ],
               ),
             ),

@@ -407,7 +407,7 @@ class _AccountantSidebarState extends State<AccountantSidebar> {
                         _buildChildItem(
                           context,
                           title: 'داشبورد هزینه',
-                          route: '/accountant/expenses',
+                          route: '/consultant/companies/:id/expenses',
                         ),
                         _buildChildItem(
                           context,

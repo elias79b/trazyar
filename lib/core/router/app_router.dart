@@ -1,3 +1,5 @@
+
+
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -59,6 +61,19 @@ import 'package:tarazyar/accountant/income/presentation/pages/accountant_income_
 import 'package:tarazyar/accountant/income/presentation/pages/accountant_income_recognition_page.dart';
 import 'package:tarazyar/accountant/income/presentation/pages/accountant_income_receivables_page.dart';
 
+
+// ============================================================
+// ACCOUNTANT EXPENSES
+// ============================================================
+
+import 'package:tarazyar/accountant/expenses/presentation/pages/accountant_expense_dashboard_page.dart';
+import 'package:tarazyar/accountant/expenses/presentation/pages/accountant_expense_fiscal_periods_page.dart';
+import 'package:tarazyar/accountant/expenses/presentation/pages/accountant_expense_categories_page.dart';
+import 'package:tarazyar/accountant/expenses/presentation/pages/accountant_expense_recognition_page.dart';
+import 'package:tarazyar/accountant/expenses/presentation/pages/accountant_expense_reports_page.dart';
+import 'package:tarazyar/accountant/expenses/presentation/pages/accountant_payable_fiscal_periods_page.dart';
+import 'package:tarazyar/accountant/expenses/presentation/pages/accountant_payable_period_page.dart';
+
 // ============================================================
 // COMPANY ADMIN / CEO BANKING
 // ============================================================
@@ -71,22 +86,13 @@ import 'package:tarazyar/company_admin/banking/presentation/pages/company_admin_
 import 'package:tarazyar/company_admin/banking/presentation/pages/company_admin_paid_checks_page.dart';
 import 'package:tarazyar/company_admin/banking/presentation/pages/company_admin_petty_cash_page.dart';
 import 'package:tarazyar/company_admin/banking/presentation/pages/company_admin_received_checks_page.dart';
+import 'package:tarazyar/company_admin/expense/presentation/pages/company_admin_expense_categories_page%20(1).dart';
 import 'package:tarazyar/company_admin/expense/presentation/pages/company_admin_expense_dashboard_page%20(1).dart';
 import 'package:tarazyar/company_admin/expense/presentation/pages/company_admin_expense_period_details_page%20(1).dart';
 import 'package:tarazyar/company_admin/expense/presentation/pages/company_admin_expense_periods_page%20(2).dart';
-import 'package:tarazyar/company_admin/income/presentation/pages/company_admin_income_categories_page.dart';
-import 'package:tarazyar/company_admin/income/presentation/pages/company_admin_income_dashboard_page.dart';
-import 'package:tarazyar/company_admin/income/presentation/pages/company_admin_income_fiscal_period_detail_page.dart';
-import 'package:tarazyar/company_admin/income/presentation/pages/company_admin_income_fiscal_periods_page.dart';
-import 'package:tarazyar/company_admin/income/presentation/pages/company_admin_income_receivables_page_with_sidebar.dart';
-import 'package:tarazyar/company_admin/income/presentation/pages/company_admin_income_recognitions_page.dart';
-import 'package:tarazyar/company_admin/income/presentation/pages/company_admin_income_reports_page.dart';
-import 'package:tarazyar/company_admin/payroll/presentation/pages/company_admin_cost_centers_page.dart';
-import 'package:tarazyar/company_admin/payroll/presentation/pages/company_admin_employment_contracts_page.dart';
-import 'package:tarazyar/company_admin/payroll/presentation/pages/company_admin_payroll_dashboard_page.dart';
-import 'package:tarazyar/company_admin/payroll/presentation/pages/company_admin_payroll_employees_page.dart';
-import 'package:tarazyar/company_admin/payroll/presentation/pages/company_admin_payroll_period_detail_page.dart';
-import 'package:tarazyar/company_admin/payroll/presentation/pages/company_admin_payroll_periods_page.dart';
+import 'package:tarazyar/company_admin/expense/presentation/pages/company_admin_expense_recognitions_page%20(1).dart';
+import 'package:tarazyar/company_admin/expense/presentation/pages/company_admin_expense_reports_page_fixed2.dart';
+import 'package:tarazyar/company_admin/expense/presentation/pages/company_admin_payables_page_workflow_fixed.dart';
 
 // ============================================================
 // CONSULTANT BANKING
@@ -188,7 +194,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/login',
 
-    refreshListenable: GoRouterRefreshStream(client.auth.onAuthStateChange),
+    refreshListenable: GoRouterRefreshStream(
+      client.auth.onAuthStateChange,
+    ),
 
     redirect: (context, state) async {
       final path = state.uri.path;
@@ -224,7 +232,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 
       final authService = AuthService(client);
 
-      final role = await authService.fetchRole(session.user.id);
+      final role = await authService.fetchRole(
+        session.user.id,
+      );
 
       if (role == null) {
         return '/login';
@@ -245,7 +255,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // --------------------------------------------------------
 
       if (role == 'owner') {
-        if (path == '/owner' || path.startsWith('/owner/')) {
+        if (
+        path == '/owner' ||
+            path.startsWith('/owner/')
+        ) {
           return null;
         }
 
@@ -257,7 +270,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // --------------------------------------------------------
 
       if (role == 'consultant') {
-        if (path == '/consultant' || path.startsWith('/consultant/')) {
+        if (
+        path == '/consultant' ||
+            path.startsWith('/consultant/')
+        ) {
           return null;
         }
 
@@ -269,7 +285,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // --------------------------------------------------------
 
       if (role == 'accountant') {
-        if (path == '/accountant' || path.startsWith('/accountant/')) {
+        if (
+        path == '/accountant' ||
+            path.startsWith('/accountant/')
+        ) {
           return null;
         }
 
@@ -281,7 +300,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // --------------------------------------------------------
 
       if (role == 'company_admin') {
-        if (path == '/company-admin' || path.startsWith('/company-admin/')) {
+        if (
+        path == '/company-admin' ||
+            path.startsWith('/company-admin/')
+        ) {
           return null;
         }
 
@@ -292,14 +314,20 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     },
 
     routes: [
+
       // ========================================================
       // ROOT
       // ========================================================
-      GoRoute(path: '/', redirect: (_, __) => '/login'),
+
+      GoRoute(
+        path: '/',
+        redirect: (_, __) => '/login',
+      ),
 
       // ========================================================
       // SPLASH
       // ========================================================
+
       GoRoute(
         path: '/splash',
         builder: (context, state) {
@@ -310,6 +338,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ========================================================
       // LOGIN
       // ========================================================
+
       GoRoute(
         path: '/login',
         builder: (context, state) {
@@ -320,6 +349,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ========================================================
       // INVITE
       // ========================================================
+
       GoRoute(
         path: '/auth/invite',
         builder: (context, state) {
@@ -330,6 +360,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ========================================================
       // ACCOUNTANT DASHBOARD
       // ========================================================
+
       GoRoute(
         path: '/accountant',
         builder: (context, state) {
@@ -340,6 +371,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ========================================================
       // COMPANY ADMIN / CEO
       // ========================================================
+
       GoRoute(
         path: '/company-admin',
         builder: (context, state) {
@@ -350,6 +382,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ========================================================
       // COMPANY ADMIN BANKING
       // ========================================================
+
       GoRoute(
         path: '/company-admin/banking',
         builder: (context, state) {
@@ -360,6 +393,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // --------------------------------------------------------
       // BANK ACCOUNTS
       // --------------------------------------------------------
+
       GoRoute(
         path: '/company-admin/banking/accounts',
         builder: (context, state) {
@@ -370,6 +404,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // --------------------------------------------------------
       // CASH BOXES
       // --------------------------------------------------------
+
       GoRoute(
         path: '/company-admin/banking/cash-boxes',
         builder: (context, state) {
@@ -380,6 +415,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // --------------------------------------------------------
       // PETTY CASH
       // --------------------------------------------------------
+
       GoRoute(
         path: '/company-admin/banking/petty-cash',
         builder: (context, state) {
@@ -390,6 +426,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // --------------------------------------------------------
       // BANK LOANS
       // --------------------------------------------------------
+
       GoRoute(
         path: '/company-admin/banking/loans',
         builder: (context, state) {
@@ -400,6 +437,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // --------------------------------------------------------
       // RECEIVED CHECKS
       // --------------------------------------------------------
+
       GoRoute(
         path: '/company-admin/banking/received-checks',
         builder: (context, state) {
@@ -410,6 +448,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // --------------------------------------------------------
       // PAID CHECKS
       // --------------------------------------------------------
+
       GoRoute(
         path: '/company-admin/banking/paid-checks',
         builder: (context, state) {
@@ -420,6 +459,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // --------------------------------------------------------
       // FISCAL PERIODS LIST
       // --------------------------------------------------------
+
       GoRoute(
         path: '/company-admin/banking/fiscal-periods',
         builder: (context, state) {
@@ -430,44 +470,40 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // --------------------------------------------------------
       // FISCAL PERIOD DETAIL
       // --------------------------------------------------------
-      //
-      // این Route برای رفع خطای:
-      //
-      // GoException:
-      // no routes for location:
-      // /company-admin/banking/fiscal-periods/:periodId
-      //
-      // است.
-      //
-      // مثال:
-      //
-      // /company-admin/banking/fiscal-periods/
-      // 0c06c4db-97c2-4e36-b8a3-c2ab80bf108a
-      //
       // --------------------------------------------------------
-      GoRoute(
-        path: '/company-admin/banking/fiscal-periods/:periodId',
-        builder: (context, state) {
-          final periodId = state.pathParameters['periodId'];
 
-          if (periodId == null || periodId.isEmpty) {
+      GoRoute(
+        path:
+        '/company-admin/banking/fiscal-periods/:periodId',
+        builder: (context, state) {
+          final periodId =
+          state.pathParameters['periodId'];
+
+          if (
+          periodId == null ||
+              periodId.isEmpty
+          ) {
             return const Scaffold(
               body: Center(
                 child: Text(
                   'شناسه دوره مالی معتبر نیست',
-                  textDirection: TextDirection.rtl,
+                  textDirection:
+                  TextDirection.rtl,
                 ),
               ),
             );
           }
 
-          return CompanyAdminCashFiscalPeriodDetailsPage(periodId: periodId);
+          return CompanyAdminCashFiscalPeriodDetailsPage(
+            periodId: periodId,
+          );
         },
       ),
 
       // ========================================================
       // ACCOUNTANT PAYROLL
       // ========================================================
+
       GoRoute(
         path: '/accountant/payroll',
         builder: (context, state) {
@@ -506,26 +542,34 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/accountant/payroll/records/:periodId',
         builder: (context, state) {
-          final periodId = state.pathParameters['periodId'];
+          final periodId =
+          state.pathParameters['periodId'];
 
-          if (periodId == null || periodId.isEmpty) {
+          if (
+          periodId == null ||
+              periodId.isEmpty
+          ) {
             return const Scaffold(
               body: Center(
                 child: Text(
                   'شناسه دوره حقوق معتبر نیست',
-                  textDirection: TextDirection.rtl,
+                  textDirection:
+                  TextDirection.rtl,
                 ),
               ),
             );
           }
 
-          return AccountantPayrollRecordsPage(periodId: periodId);
+          return AccountantPayrollRecordsPage(
+            periodId: periodId,
+          );
         },
       ),
 
       // ========================================================
       // ACCOUNTANT BANKING
       // ========================================================
+
       GoRoute(
         path: '/accountant/banking',
         builder: (context, state) {
@@ -583,22 +627,30 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
 
       GoRoute(
-        path: '/accountant/banking/fiscal-periods/:periodId',
+        path:
+        '/accountant/banking/fiscal-periods/:periodId',
         builder: (context, state) {
-          final periodId = state.pathParameters['periodId'];
+          final periodId =
+          state.pathParameters['periodId'];
 
-          if (periodId == null || periodId.isEmpty) {
+          if (
+          periodId == null ||
+              periodId.isEmpty
+          ) {
             return const Scaffold(
               body: Center(
                 child: Text(
                   'شناسه دوره مالی معتبر نیست',
-                  textDirection: TextDirection.rtl,
+                  textDirection:
+                  TextDirection.rtl,
                 ),
               ),
             );
           }
 
-          return AccountantFiscalPeriodEntryPage(periodId: periodId);
+          return AccountantFiscalPeriodEntryPage(
+            periodId: periodId,
+          );
         },
       ),
 
@@ -609,9 +661,90 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         },
       ),
 
+
+      // ========================================================
+      // ACCOUNTANT EXPENSES
+      // ========================================================
+
+      GoRoute(
+        path: '/accountant/expenses',
+        builder: (context, state) =>
+        const AccountantExpenseDashboardRoutePage(),
+      ),
+
+      GoRoute(
+        path: '/accountant/expenses/periods',
+        builder: (context, state) =>
+        const AccountantExpenseFiscalPeriodsRoutePage(),
+      ),
+
+      GoRoute(
+        path: '/accountant/expenses/categories',
+        builder: (context, state) =>
+        const AccountantExpenseCategoriesRoutePage(),
+      ),
+
+      GoRoute(
+        path: '/accountant/expenses/recognition/:periodId',
+        builder: (context, state) {
+          final periodId = state.pathParameters['periodId'];
+          if (periodId == null || periodId.isEmpty) {
+            return const Scaffold(
+              body: Center(
+                child: Text(
+                  'شناسه دوره هزینه معتبر نیست',
+                  textDirection: TextDirection.rtl,
+                ),
+              ),
+            );
+          }
+          return AccountantExpenseRecognitionRoutePage(
+            periodId: periodId,
+          );
+        },
+      ),
+
+      GoRoute(
+        path: '/accountant/expenses/reports',
+        builder: (context, state) =>
+        const AccountantExpenseReportsRoutePage(),
+      ),
+
+      GoRoute(
+        path: '/accountant/expenses/payables/periods',
+        builder: (context, state) =>
+        const AccountantPayableFiscalPeriodsRoutePage(),
+      ),
+
+      GoRoute(
+        path: '/accountant/expenses/payables/periods/:periodId',
+        builder: (context, state) {
+          final periodId = state.pathParameters['periodId'];
+          if (periodId == null || periodId.isEmpty) {
+            return const Scaffold(
+              body: Center(
+                child: Text(
+                  'شناسه دوره پرداختنی معتبر نیست',
+                  textDirection: TextDirection.rtl,
+                ),
+              ),
+            );
+          }
+          return AccountantPayablePeriodRoutePage(
+            periodId: periodId,
+          );
+        },
+      ),
+      GoRoute(
+        path: '/company-admin/expenses/reports',
+        builder: (context, state) => const CompanyAdminExpenseReportsPage(),
+      ),
+
+
       // ========================================================
       // ACCOUNTANT INCOME
       // ========================================================
+
       GoRoute(
         path: '/accountant/income',
         builder: (context, state) {
@@ -641,28 +774,37 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
 
       GoRoute(
-        path: '/accountant/income/recognition/:periodId',
+        path:
+        '/accountant/income/recognition/:periodId',
         builder: (context, state) {
-          final periodId = state.pathParameters['periodId'];
+          final periodId =
+          state.pathParameters['periodId'];
 
-          if (periodId == null || periodId.isEmpty) {
+          if (
+          periodId == null ||
+              periodId.isEmpty
+          ) {
             return const Scaffold(
               body: Center(
                 child: Text(
                   'شناسه دوره درآمد معتبر نیست',
-                  textDirection: TextDirection.rtl,
+                  textDirection:
+                  TextDirection.rtl,
                 ),
               ),
             );
           }
 
-          return AccountantIncomeRecognitionPage(periodId: periodId);
+          return AccountantIncomeRecognitionPage(
+            periodId: periodId,
+          );
         },
       ),
 
       // ========================================================
       // ACCOUNTANT RECEIVABLES
       // ========================================================
+
       GoRoute(
         path: '/accountant/income/receivables',
         builder: (context, state) {
@@ -671,54 +813,28 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
 
       GoRoute(
-        path: '/accountant/income/receivables/:periodId',
-        builder: (context, state) {
-          final periodId = state.pathParameters['periodId'];
-
-          if (periodId == null || periodId.isEmpty) {
-            return const Scaffold(
-              body: Center(
-                child: Text(
-                  'شناسه ماه مطالبات معتبر نیست',
-                  textDirection: TextDirection.rtl,
-                ),
-              ),
-            );
-          }
-
-          return AccountantReceivablesMonthRoutePage(periodId: periodId);
-        },
-      ),
-      GoRoute(
-        path: '/company-admin/payroll',
-        builder: (context, state) {
-          return const CompanyAdminPayrollDashboardPage();
-        },
-      ),
-      GoRoute(
-        path: '/company-admin/payroll/periods',
-        builder: (context, state) {
-          return const CompanyAdminPayrollPeriodsPage();
-        },
-      ),
-      GoRoute(
-        path: '/company-admin/payroll/periods/:periodId',
+        path:
+        '/accountant/income/receivables/:periodId',
         builder: (context, state) {
           final periodId =
           state.pathParameters['periodId'];
 
-          if (periodId == null ||
-              periodId.isEmpty) {
+          if (
+          periodId == null ||
+              periodId.isEmpty
+          ) {
             return const Scaffold(
               body: Center(
                 child: Text(
-                  'شناسه دوره حقوق معتبر نیست.',
+                  'شناسه ماه مطالبات معتبر نیست',
+                  textDirection:
+                  TextDirection.rtl,
                 ),
               ),
             );
           }
 
-          return CompanyAdminPayrollPeriodDetailPage(
+          return AccountantReceivablesMonthRoutePage(
             periodId: periodId,
           );
         },
@@ -727,6 +843,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ========================================================
       // CONSULTANT
       // ========================================================
+
       GoRoute(
         path: '/consultant',
         builder: (context, state) {
@@ -740,304 +857,290 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           return const ConsultantCompaniesPage();
         },
       ),
-      GoRoute(
-        path: '/company-admin/payroll/employees',
-        builder: (context, state) {
-          return const CompanyAdminPayrollEmployeesPage();
-        },
-      ),
-
-  GoRoute(
-  path: '/company-admin/payroll/contracts',
-  builder: (context, state) {
-  return const CompanyAdminEmploymentContractsPage();
-  },
-  ),
-      GoRoute(
-        path: '/company-admin/payroll/cost-centers',
-        builder: (context, state) {
-          return const CompanyAdminCostCentersPage();
-        },
-      ),
-      GoRoute(
-        path: '/company-admin/income',
-        builder: (context, state) {
-          return const CompanyAdminIncomeDashboardPage();
-        },
-      ),
-      GoRoute(
-        path: '/company-admin/income/periods',
-        builder: (context, state) =>
-        const CompanyAdminIncomeFiscalPeriodsPage(),
-      ),
-      GoRoute(
-        path: '/company-admin/income/periods/:periodId',
-        builder: (context, state) {
-          return CompanyAdminIncomeFiscalPeriodDetailPage(
-            periodId: state.pathParameters['periodId']!,
-          );
-        },
-      ),
-      GoRoute(
-        path: '/company-admin/income/categories',
-        builder: (context, state) =>
-        const CompanyAdminIncomeCategoriesPage(),
-      ),
-      GoRoute(
-        path: '/company-admin/income/recognitions',
-        builder: (context, state) =>
-        const CompanyAdminIncomeRecognitionsPage(),
-      ),
-      GoRoute(
-        path: '/company-admin/income/receivables',
-        builder: (context, state) =>
-        const CompanyAdminIncomeReceivablesPage(),
-      ),
-      GoRoute(
-        path: '/company-admin/income/reports',
-        builder: (context, state) =>
-        const CompanyAdminIncomeReportsPage(),
-      ),
-
-      GoRoute(
-        path: '/company-admin/expense',
-        name: 'company-admin-expense-dashboard',
-        builder: (context, state) =>
-        const CompanyAdminExpenseDashboardPage(),
-      ),
-
 
       // ========================================================
       // COMPANY
       // ========================================================
+
       GoRoute(
         path: '/consultant/companies/:id',
         builder: (context, state) {
-          return CompanyOverviewPage(companyId: state.pathParameters['id']!);
+          return CompanyOverviewPage(
+            companyId:
+            state.pathParameters['id']!,
+          );
         },
       ),
 
       // ========================================================
       // CONSULTANT BANKING
       // ========================================================
-      GoRoute(
-        path: '/consultant/companies/:id/banking',
-        builder: (context, state) {
-          return BankingDashboardPage(companyId: state.pathParameters['id']!);
-        },
-      ),
 
       GoRoute(
-        path: '/consultant/companies/:companyId/banking/fiscal-periods',
+        path:
+        '/consultant/companies/:id/banking',
         builder: (context, state) {
-          return CashFiscalPeriodsPage(
-            companyId: state.pathParameters['companyId']!,
-          );
-        },
-      ),
-
-      GoRoute(
-        path: '/consultant/companies/:companyId/banking/accounts',
-        builder: (context, state) {
-          return BankAccountsPage(
-            companyId: state.pathParameters['companyId']!,
-          );
-        },
-      ),
-
-      GoRoute(
-        path: '/consultant/companies/:companyId/banking/cash-boxes',
-        builder: (context, state) {
-          return CashBoxesPage(companyId: state.pathParameters['companyId']!);
-        },
-      ),
-
-      GoRoute(
-        path: '/consultant/companies/:companyId/banking/petty-cash',
-        builder: (context, state) {
-          return PettyCashAccountsPage(
-            companyId: state.pathParameters['companyId']!,
-          );
-        },
-      ),
-
-      GoRoute(
-        path: '/consultant/companies/:companyId/banking/ceo-review/:periodId',
-        builder: (context, state) {
-          return CashCeoReviewPage(
-            companyId: state.pathParameters['companyId']!,
-            periodId: state.pathParameters['periodId']!,
+          return BankingDashboardPage(
+            companyId:
+            state.pathParameters['id']!,
           );
         },
       ),
 
       GoRoute(
         path:
-            '/consultant/companies/:companyId/banking/consultant-review/:periodId',
+        '/consultant/companies/:companyId/banking/fiscal-periods',
+        builder: (context, state) {
+          return CashFiscalPeriodsPage(
+            companyId:
+            state.pathParameters['companyId']!,
+          );
+        },
+      ),
+
+      GoRoute(
+        path:
+        '/consultant/companies/:companyId/banking/accounts',
+        builder: (context, state) {
+          return BankAccountsPage(
+            companyId:
+            state.pathParameters['companyId']!,
+          );
+        },
+      ),
+
+      GoRoute(
+        path:
+        '/consultant/companies/:companyId/banking/cash-boxes',
+        builder: (context, state) {
+          return CashBoxesPage(
+            companyId:
+            state.pathParameters['companyId']!,
+          );
+        },
+      ),
+
+      GoRoute(
+        path:
+        '/consultant/companies/:companyId/banking/petty-cash',
+        builder: (context, state) {
+          return PettyCashAccountsPage(
+            companyId:
+            state.pathParameters['companyId']!,
+          );
+        },
+      ),
+
+      GoRoute(
+        path:
+        '/consultant/companies/:companyId/banking/ceo-review/:periodId',
+        builder: (context, state) {
+          return CashCeoReviewPage(
+            companyId:
+            state.pathParameters['companyId']!,
+            periodId:
+            state.pathParameters['periodId']!,
+          );
+        },
+      ),
+
+      GoRoute(
+        path:
+        '/consultant/companies/:companyId/banking/consultant-review/:periodId',
         builder: (context, state) {
           return CashConsultantReviewPage(
-            companyId: state.pathParameters['companyId']!,
-            periodId: state.pathParameters['periodId']!,
+            companyId:
+            state.pathParameters['companyId']!,
+            periodId:
+            state.pathParameters['periodId']!,
           );
         },
       ),
 
       GoRoute(
-        path: '/consultant/companies/:companyId/banking/reports',
+        path:
+        '/consultant/companies/:companyId/banking/reports',
         builder: (context, state) {
           return BankingReportsPage(
-            companyId: state.pathParameters['companyId']!,
+            companyId:
+            state.pathParameters['companyId']!,
           );
         },
       ),
 
       GoRoute(
-        path: '/consultant/companies/:companyId/banking/alerts',
+        path:
+        '/consultant/companies/:companyId/banking/alerts',
         builder: (context, state) {
           return BankingAlertsPage(
-            companyId: state.pathParameters['companyId']!,
+            companyId:
+            state.pathParameters['companyId']!,
           );
         },
       ),
 
       GoRoute(
-        path: '/consultant/companies/:companyId/banking/loans',
+        path:
+        '/consultant/companies/:companyId/banking/loans',
         builder: (context, state) {
           return BankLoansReportPage(
-            companyId: state.pathParameters['companyId']!,
+            companyId:
+            state.pathParameters['companyId']!,
           );
         },
       ),
 
       GoRoute(
-        path: '/consultant/companies/:companyId/banking/received-checks',
+        path:
+        '/consultant/companies/:companyId/banking/received-checks',
         builder: (context, state) {
           return ReceivedChecksReportPage(
-            companyId: state.pathParameters['companyId']!,
+            companyId:
+            state.pathParameters['companyId']!,
           );
         },
       ),
 
       GoRoute(
-        path: '/consultant/companies/:companyId/banking/paid-checks',
+        path:
+        '/consultant/companies/:companyId/banking/paid-checks',
         builder: (context, state) {
           return PaidChecksReportPage(
-            companyId: state.pathParameters['companyId']!,
+            companyId:
+            state.pathParameters['companyId']!,
           );
         },
-      ),
-      GoRoute(
-        path: '/company-admin/expense/periods',
-        name: 'company-admin-expense-periods',
-        builder: (context, state) =>
-        const CompanyAdminExpensePeriodsPage(),
-        routes: [
-          GoRoute(
-            path: ':periodId',
-            name: 'company-admin-expense-period-details',
-            builder: (context, state) {
-              final periodId = state.pathParameters['periodId']!;
-              return CompanyAdminExpensePeriodDetailsPage(
-                periodId: periodId,
-              );
-            },
-          ),
-        ],
       ),
 
       // ========================================================
       // CONSULTANT PAYROLL
       // ========================================================
-      GoRoute(
-        path: '/consultant/companies/:id/payroll',
-        builder: (context, state) {
-          return PayrollDashboardPage(companyId: state.pathParameters['id']!);
-        },
-      ),
 
       GoRoute(
-        path: '/consultant/companies/:id/payroll/employees',
+        path:
+        '/consultant/companies/:id/payroll',
         builder: (context, state) {
-          return EmployeesPage(companyId: state.pathParameters['id']!);
-        },
-      ),
-
-      GoRoute(
-        path: '/consultant/companies/:id/payroll/contracts',
-        builder: (context, state) {
-          return EmploymentContractsPage(
-            companyId: state.pathParameters['id']!,
+          return PayrollDashboardPage(
+            companyId:
+            state.pathParameters['id']!,
           );
         },
       ),
 
       GoRoute(
-        path: '/consultant/companies/:id/payroll/periods',
+        path:
+        '/consultant/companies/:id/payroll/employees',
         builder: (context, state) {
-          return PayrollPeriodsPage(companyId: state.pathParameters['id']!);
+          return EmployeesPage(
+            companyId:
+            state.pathParameters['id']!,
+          );
         },
       ),
 
       GoRoute(
-        path: '/consultant/companies/:id/payroll/cost-centers',
+        path:
+        '/consultant/companies/:id/payroll/contracts',
         builder: (context, state) {
-          return CostCentersPage(companyId: state.pathParameters['id']!);
+          return EmploymentContractsPage(
+            companyId:
+            state.pathParameters['id']!,
+          );
+        },
+      ),
+
+      GoRoute(
+        path:
+        '/consultant/companies/:id/payroll/periods',
+        builder: (context, state) {
+          return PayrollPeriodsPage(
+            companyId:
+            state.pathParameters['id']!,
+          );
+        },
+      ),
+
+      GoRoute(
+        path:
+        '/consultant/companies/:id/payroll/cost-centers',
+        builder: (context, state) {
+          return CostCentersPage(
+            companyId:
+            state.pathParameters['id']!,
+          );
         },
       ),
 
       // ========================================================
       // CONSULTANT INCOME
       // ========================================================
+
       GoRoute(
-        path: '/consultant/companies/:id/income',
+        path:
+        '/consultant/companies/:id/income',
         builder: (context, state) {
-          return IncomeDashboardPage(companyId: state.pathParameters['id']!);
+          return IncomeDashboardPage(
+            companyId:
+            state.pathParameters['id']!,
+          );
         },
       ),
 
       GoRoute(
-        path: '/consultant/companies/:companyId/income/periods',
+        path:
+        '/consultant/companies/:companyId/income/periods',
         builder: (context, state) {
           return IncomeFiscalPeriodsPage(
-            companyId: state.pathParameters['companyId']!,
+            companyId:
+            state.pathParameters['companyId']!,
           );
         },
       ),
 
       GoRoute(
-        path: '/consultant/companies/:companyId/income/categories',
+        path:
+        '/consultant/companies/:companyId/income/categories',
         builder: (context, state) {
           return IncomeCategoriesPage(
-            companyId: state.pathParameters['companyId']!,
+            companyId:
+            state.pathParameters['companyId']!,
           );
         },
       ),
 
       GoRoute(
-        path: '/consultant/companies/:companyId/income/recognition/:periodId',
+        path:
+        '/consultant/companies/:companyId/income/recognition/:periodId',
         builder: (context, state) {
           return IncomeRecognitionPage(
-            companyId: state.pathParameters['companyId']!,
-            periodId: state.pathParameters['periodId']!,
+            companyId:
+            state.pathParameters['companyId']!,
+            periodId:
+            state.pathParameters['periodId']!,
           );
         },
       ),
 
       GoRoute(
-        path: '/consultant/companies/:companyId/income/receivables/:periodId',
+        path:
+        '/consultant/companies/:companyId/income/receivables/:periodId',
         builder: (context, state) {
           return IncomeReceivablesPage(
-            companyId: state.pathParameters['companyId']!,
-            periodId: state.pathParameters['periodId']!,
+            companyId:
+            state.pathParameters['companyId']!,
+            periodId:
+            state.pathParameters['periodId']!,
           );
         },
       ),
 
       GoRoute(
-        path: '/consultant/companies/:companyId/income/reports',
+        path:
+        '/consultant/companies/:companyId/income/reports',
         builder: (context, state) {
           return IncomeMonthlyReportPage(
-            companyId: state.pathParameters['companyId']!,
+            companyId:
+            state.pathParameters['companyId']!,
           );
         },
       ),
@@ -1045,129 +1148,225 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ========================================================
       // CONSULTANT EXPENSES
       // ========================================================
+
       GoRoute(
-        path: '/consultant/companies/:id/expenses',
+        path:
+        '/consultant/companies/:id/expenses',
         builder: (context, state) {
-          return ExpenseDashboardPage(companyId: state.pathParameters['id']!);
+          return ExpenseDashboardPage(
+            companyId:
+            state.pathParameters['id']!,
+          );
         },
       ),
 
       GoRoute(
-        path: '/consultant/companies/:companyId/expenses/periods',
+        path:
+        '/consultant/companies/:companyId/expenses/periods',
         builder: (context, state) {
           return ExpenseFiscalPeriodsPage(
-            companyId: state.pathParameters['companyId']!,
+            companyId:
+            state.pathParameters['companyId']!,
           );
         },
       ),
 
       GoRoute(
-        path: '/consultant/companies/:companyId/expenses/recognition/:periodId',
+        path:
+        '/consultant/companies/:companyId/expenses/recognition/:periodId',
         builder: (context, state) {
           return ExpenseRecognitionPage(
-            companyId: state.pathParameters['companyId']!,
-            periodId: state.pathParameters['periodId']!,
+            companyId:
+            state.pathParameters['companyId']!,
+            periodId:
+            state.pathParameters['periodId']!,
           );
         },
       ),
 
       GoRoute(
-        path: '/consultant/companies/:companyId/expenses/reports/:periodId',
+        path:
+        '/consultant/companies/:companyId/expenses/reports/:periodId',
         builder: (context, state) {
           return ExpenseMonthlyReportPage(
-            companyId: state.pathParameters['companyId']!,
-            periodId: state.pathParameters['periodId']!,
+            companyId:
+            state.pathParameters['companyId']!,
+            periodId:
+            state.pathParameters['periodId']!,
           );
         },
       ),
 
       GoRoute(
-        path: '/consultant/companies/:id/expenses/records',
+        path:
+        '/consultant/companies/:id/expenses/records',
         builder: (context, state) {
-          return ExpenseRecordsPage(companyId: state.pathParameters['id']!);
+          return ExpenseRecordsPage(
+            companyId:
+            state.pathParameters['id']!,
+          );
         },
       ),
 
       GoRoute(
-        path: '/consultant/companies/:id/expenses/categories',
+        path:
+        '/consultant/companies/:id/expenses/categories',
         builder: (context, state) {
-          return ExpenseCategoriesPage(companyId: state.pathParameters['id']!);
+          return ExpenseCategoriesPage(
+            companyId:
+            state.pathParameters['id']!,
+          );
         },
       ),
 
       // ========================================================
       // COMPANY REPORTS
       // ========================================================
+
       GoRoute(
-        path: '/consultant/companies/:id/reports',
+        path:
+        '/consultant/companies/:id/reports',
         builder: (context, state) {
-          return CompanyReportsPage(companyId: state.pathParameters['id']!);
+          return CompanyReportsPage(
+            companyId:
+            state.pathParameters['id']!,
+          );
         },
       ),
 
       // ========================================================
       // COMPANY ACTIONS
       // ========================================================
+
       GoRoute(
-        path: '/consultant/companies/:id/actions',
+        path:
+        '/consultant/companies/:id/actions',
         builder: (context, state) {
-          return CompanyActionsPage(companyId: state.pathParameters['id']!);
+          return CompanyActionsPage(
+            companyId:
+            state.pathParameters['id']!,
+          );
         },
       ),
 
       // ========================================================
       // COMPANY WORKFLOW
       // ========================================================
+
       GoRoute(
-        path: '/consultant/companies/:id/workflow',
+        path:
+        '/consultant/companies/:id/workflow',
         builder: (context, state) {
-          return CompanyWorkflowPage(companyId: state.pathParameters['id']!);
+          return CompanyWorkflowPage(
+            companyId:
+            state.pathParameters['id']!,
+          );
         },
       ),
 
       // ========================================================
       // COMPANY DOCUMENTS
       // ========================================================
+
       GoRoute(
-        path: '/consultant/companies/:id/documents',
+        path:
+        '/consultant/companies/:id/documents',
         builder: (context, state) {
-          return CompanyDocumentsPage(companyId: state.pathParameters['id']!);
+          return CompanyDocumentsPage(
+            companyId:
+            state.pathParameters['id']!,
+          );
         },
       ),
 
       // ========================================================
       // COMPANY NOTES
       // ========================================================
+
       GoRoute(
-        path: '/consultant/companies/:id/notes',
+        path:
+        '/consultant/companies/:id/notes',
         builder: (context, state) {
-          return CompanyNotesPage(companyId: state.pathParameters['id']!);
+          return CompanyNotesPage(
+            companyId:
+            state.pathParameters['id']!,
+          );
         },
       ),
 
       // ========================================================
       // COMPANY ANALYTICS
       // ========================================================
+
       GoRoute(
-        path: '/consultant/companies/:id/analytics',
+        path:
+        '/consultant/companies/:id/analytics',
         builder: (context, state) {
-          return CompanyAnalyticsPage(companyId: state.pathParameters['id']!);
+          return CompanyAnalyticsPage(
+            companyId:
+            state.pathParameters['id']!,
+          );
         },
       ),
+
+      GoRoute(
+        path: '/company-admin/expense',
+        name: 'company-admin-expense-dashboard',
+        builder: (context, state) => const CompanyAdminExpenseDashboardPage(),
+      ),
+
+      GoRoute(
+        path: '/company-admin/expense/periods',
+        name: 'company-admin-expense-periods',
+        builder: (context, state) => const CompanyAdminExpensePeriodsPage(),
+        routes: [
+          GoRoute(
+            path: ':periodId',
+            name: 'company-admin-expense-period-details',
+            builder: (context, state) {
+              final periodId = state.pathParameters['periodId']!;
+              return CompanyAdminExpensePeriodDetailsPage(periodId: periodId);
+            },
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/company-admin/expense/categories',
+        name: 'company-admin-expense-categories',
+        builder: (context, state) => const CompanyAdminExpenseCategoriesPage(),
+      ),
+      GoRoute(
+        path: '/company-admin/expense/recognitions',
+        name: 'company-admin-expense-recognitions',
+        builder:
+            (context, state) => const CompanyAdminExpenseRecognitionsPage(),
+      ),
+      GoRoute(
+        path: '/company-admin/expenses/payables',
+        builder: (context, state) =>
+        const CompanyAdminPayablesPage(),
+      ),
+
 
       // ========================================================
       // FINANCIAL ANALYSIS
       // ========================================================
+
       GoRoute(
-        path: '/consultant/companies/:id/financial-analysis',
+        path:
+        '/consultant/companies/:id/financial-analysis',
         builder: (context, state) {
-          return FinancialAnalysisPage(companyId: state.pathParameters['id']!);
+          return FinancialAnalysisPage(
+            companyId:
+            state.pathParameters['id']!,
+          );
         },
       ),
 
       // ========================================================
       // CONSULTANT REPORTS
       // ========================================================
+
       GoRoute(
         path: '/consultant/reports',
         builder: (context, state) {
@@ -1178,6 +1377,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ========================================================
       // CONSULTANT WORKFLOW
       // ========================================================
+
       GoRoute(
         path: '/consultant/workflow',
         builder: (context, state) {
@@ -1188,6 +1388,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ========================================================
       // CONSULTANT HISTORY
       // ========================================================
+
       GoRoute(
         path: '/consultant/history',
         builder: (context, state) {
@@ -1198,6 +1399,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ========================================================
       // CONSULTANT SETTINGS
       // ========================================================
+
       GoRoute(
         path: '/consultant/settings',
         builder: (context, state) {
@@ -1208,6 +1410,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       // ========================================================
       // OWNER
       // ========================================================
+
       GoRoute(
         path: '/owner',
         builder: (context, state) {
@@ -1250,22 +1453,38 @@ final appRouterProvider = Provider<GoRouter>((ref) {
 // ACCOUNTANT PAYROLL DASHBOARD
 // ============================================================
 
-class AccountantPayrollDashboardRoutePage extends ConsumerWidget {
-  const AccountantPayrollDashboardRoutePage({super.key});
+class AccountantPayrollDashboardRoutePage
+    extends ConsumerWidget {
+  const AccountantPayrollDashboardRoutePage({
+    super.key,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(accountantDashboardProvider);
+  Widget build(
+      BuildContext context,
+      WidgetRef ref,
+      ) {
+    final state = ref.watch(
+      accountantDashboardProvider,
+    );
 
     return state.when(
       loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        return const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
       },
       error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
+        return _AccountantRouteError(
+          error: error,
+        );
       },
       data: (accountant) {
-        return AccountantPayrollDashboardPage(companyId: accountant.companyId);
+        return AccountantPayrollDashboardPage(
+          companyId: accountant.companyId,
+        );
       },
     );
   }
@@ -1275,22 +1494,38 @@ class AccountantPayrollDashboardRoutePage extends ConsumerWidget {
 // ACCOUNTANT PAYROLL EMPLOYEES
 // ============================================================
 
-class AccountantPayrollEmployeesRoutePage extends ConsumerWidget {
-  const AccountantPayrollEmployeesRoutePage({super.key});
+class AccountantPayrollEmployeesRoutePage
+    extends ConsumerWidget {
+  const AccountantPayrollEmployeesRoutePage({
+    super.key,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(accountantDashboardProvider);
+  Widget build(
+      BuildContext context,
+      WidgetRef ref,
+      ) {
+    final state = ref.watch(
+      accountantDashboardProvider,
+    );
 
     return state.when(
       loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        return const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
       },
       error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
+        return _AccountantRouteError(
+          error: error,
+        );
       },
       data: (accountant) {
-        return AccountantPayrollEmployeesPage(companyId: accountant.companyId);
+        return AccountantPayrollEmployeesPage(
+          companyId: accountant.companyId,
+        );
       },
     );
   }
@@ -1300,22 +1535,38 @@ class AccountantPayrollEmployeesRoutePage extends ConsumerWidget {
 // ACCOUNTANT PAYROLL CONTRACTS
 // ============================================================
 
-class AccountantPayrollContractsRoutePage extends ConsumerWidget {
-  const AccountantPayrollContractsRoutePage({super.key});
+class AccountantPayrollContractsRoutePage
+    extends ConsumerWidget {
+  const AccountantPayrollContractsRoutePage({
+    super.key,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(accountantDashboardProvider);
+  Widget build(
+      BuildContext context,
+      WidgetRef ref,
+      ) {
+    final state = ref.watch(
+      accountantDashboardProvider,
+    );
 
     return state.when(
       loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        return const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
       },
       error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
+        return _AccountantRouteError(
+          error: error,
+        );
       },
       data: (accountant) {
-        return AccountantPayrollContractsPage(companyId: accountant.companyId);
+        return AccountantPayrollContractsPage(
+          companyId: accountant.companyId,
+        );
       },
     );
   }
@@ -1325,22 +1576,38 @@ class AccountantPayrollContractsRoutePage extends ConsumerWidget {
 // ACCOUNTANT COST CENTERS
 // ============================================================
 
-class AccountantCostCentersRoutePage extends ConsumerWidget {
-  const AccountantCostCentersRoutePage({super.key});
+class AccountantCostCentersRoutePage
+    extends ConsumerWidget {
+  const AccountantCostCentersRoutePage({
+    super.key,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(accountantDashboardProvider);
+  Widget build(
+      BuildContext context,
+      WidgetRef ref,
+      ) {
+    final state = ref.watch(
+      accountantDashboardProvider,
+    );
 
     return state.when(
       loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        return const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
       },
       error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
+        return _AccountantRouteError(
+          error: error,
+        );
       },
       data: (accountant) {
-        return AccountantCostCentersPage(companyId: accountant.companyId);
+        return AccountantCostCentersPage(
+          companyId: accountant.companyId,
+        );
       },
     );
   }
@@ -1350,22 +1617,38 @@ class AccountantCostCentersRoutePage extends ConsumerWidget {
 // ACCOUNTANT PAYROLL PERIODS
 // ============================================================
 
-class AccountantPayrollPeriodsRoutePage extends ConsumerWidget {
-  const AccountantPayrollPeriodsRoutePage({super.key});
+class AccountantPayrollPeriodsRoutePage
+    extends ConsumerWidget {
+  const AccountantPayrollPeriodsRoutePage({
+    super.key,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(accountantDashboardProvider);
+  Widget build(
+      BuildContext context,
+      WidgetRef ref,
+      ) {
+    final state = ref.watch(
+      accountantDashboardProvider,
+    );
 
     return state.when(
       loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        return const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
       },
       error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
+        return _AccountantRouteError(
+          error: error,
+        );
       },
       data: (accountant) {
-        return AccountantPayrollPeriodsPage(companyId: accountant.companyId);
+        return AccountantPayrollPeriodsPage(
+          companyId: accountant.companyId,
+        );
       },
     );
   }
@@ -1375,22 +1658,38 @@ class AccountantPayrollPeriodsRoutePage extends ConsumerWidget {
 // ACCOUNTANT BANKING DASHBOARD
 // ============================================================
 
-class AccountantBankingDashboardRoutePage extends ConsumerWidget {
-  const AccountantBankingDashboardRoutePage({super.key});
+class AccountantBankingDashboardRoutePage
+    extends ConsumerWidget {
+  const AccountantBankingDashboardRoutePage({
+    super.key,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(accountantDashboardProvider);
+  Widget build(
+      BuildContext context,
+      WidgetRef ref,
+      ) {
+    final state = ref.watch(
+      accountantDashboardProvider,
+    );
 
     return state.when(
       loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        return const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
       },
       error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
+        return _AccountantRouteError(
+          error: error,
+        );
       },
       data: (accountant) {
-        return AccountantBankingDashboardPage(companyId: accountant.companyId);
+        return AccountantBankingDashboardPage(
+          companyId: accountant.companyId,
+        );
       },
     );
   }
@@ -1400,22 +1699,38 @@ class AccountantBankingDashboardRoutePage extends ConsumerWidget {
 // ACCOUNTANT BANK ACCOUNTS
 // ============================================================
 
-class AccountantBankAccountsRoutePage extends ConsumerWidget {
-  const AccountantBankAccountsRoutePage({super.key});
+class AccountantBankAccountsRoutePage
+    extends ConsumerWidget {
+  const AccountantBankAccountsRoutePage({
+    super.key,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(accountantDashboardProvider);
+  Widget build(
+      BuildContext context,
+      WidgetRef ref,
+      ) {
+    final state = ref.watch(
+      accountantDashboardProvider,
+    );
 
     return state.when(
       loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        return const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
       },
       error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
+        return _AccountantRouteError(
+          error: error,
+        );
       },
       data: (accountant) {
-        return AccountantBankAccountsPage(companyId: accountant.companyId);
+        return AccountantBankAccountsPage(
+          companyId: accountant.companyId,
+        );
       },
     );
   }
@@ -1425,22 +1740,38 @@ class AccountantBankAccountsRoutePage extends ConsumerWidget {
 // ACCOUNTANT CASH BOXES
 // ============================================================
 
-class AccountantCashBoxesRoutePage extends ConsumerWidget {
-  const AccountantCashBoxesRoutePage({super.key});
+class AccountantCashBoxesRoutePage
+    extends ConsumerWidget {
+  const AccountantCashBoxesRoutePage({
+    super.key,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(accountantDashboardProvider);
+  Widget build(
+      BuildContext context,
+      WidgetRef ref,
+      ) {
+    final state = ref.watch(
+      accountantDashboardProvider,
+    );
 
     return state.when(
       loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        return const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
       },
       error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
+        return _AccountantRouteError(
+          error: error,
+        );
       },
       data: (accountant) {
-        return AccountantCashBoxesPage(companyId: accountant.companyId);
+        return AccountantCashBoxesPage(
+          companyId: accountant.companyId,
+        );
       },
     );
   }
@@ -1450,22 +1781,38 @@ class AccountantCashBoxesRoutePage extends ConsumerWidget {
 // ACCOUNTANT PETTY CASH
 // ============================================================
 
-class AccountantPettyCashRoutePage extends ConsumerWidget {
-  const AccountantPettyCashRoutePage({super.key});
+class AccountantPettyCashRoutePage
+    extends ConsumerWidget {
+  const AccountantPettyCashRoutePage({
+    super.key,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(accountantDashboardProvider);
+  Widget build(
+      BuildContext context,
+      WidgetRef ref,
+      ) {
+    final state = ref.watch(
+      accountantDashboardProvider,
+    );
 
     return state.when(
       loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        return const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
       },
       error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
+        return _AccountantRouteError(
+          error: error,
+        );
       },
       data: (accountant) {
-        return AccountantPettyCashPage(companyId: accountant.companyId);
+        return AccountantPettyCashPage(
+          companyId: accountant.companyId,
+        );
       },
     );
   }
@@ -1475,22 +1822,38 @@ class AccountantPettyCashRoutePage extends ConsumerWidget {
 // ACCOUNTANT BANK LOANS
 // ============================================================
 
-class AccountantBankLoansRoutePage extends ConsumerWidget {
-  const AccountantBankLoansRoutePage({super.key});
+class AccountantBankLoansRoutePage
+    extends ConsumerWidget {
+  const AccountantBankLoansRoutePage({
+    super.key,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(accountantDashboardProvider);
+  Widget build(
+      BuildContext context,
+      WidgetRef ref,
+      ) {
+    final state = ref.watch(
+      accountantDashboardProvider,
+    );
 
     return state.when(
       loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        return const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
       },
       error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
+        return _AccountantRouteError(
+          error: error,
+        );
       },
       data: (accountant) {
-        return AccountantBankLoansPage(companyId: accountant.companyId);
+        return AccountantBankLoansPage(
+          companyId: accountant.companyId,
+        );
       },
     );
   }
@@ -1500,22 +1863,38 @@ class AccountantBankLoansRoutePage extends ConsumerWidget {
 // ACCOUNTANT RECEIVED CHECKS
 // ============================================================
 
-class AccountantReceivedChecksRoutePage extends ConsumerWidget {
-  const AccountantReceivedChecksRoutePage({super.key});
+class AccountantReceivedChecksRoutePage
+    extends ConsumerWidget {
+  const AccountantReceivedChecksRoutePage({
+    super.key,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(accountantDashboardProvider);
+  Widget build(
+      BuildContext context,
+      WidgetRef ref,
+      ) {
+    final state = ref.watch(
+      accountantDashboardProvider,
+    );
 
     return state.when(
       loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        return const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
       },
       error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
+        return _AccountantRouteError(
+          error: error,
+        );
       },
       data: (accountant) {
-        return AccountantReceivedChecksPage(companyId: accountant.companyId);
+        return AccountantReceivedChecksPage(
+          companyId: accountant.companyId,
+        );
       },
     );
   }
@@ -1525,22 +1904,38 @@ class AccountantReceivedChecksRoutePage extends ConsumerWidget {
 // ACCOUNTANT PAID CHECKS
 // ============================================================
 
-class AccountantPaidChecksRoutePage extends ConsumerWidget {
-  const AccountantPaidChecksRoutePage({super.key});
+class AccountantPaidChecksRoutePage
+    extends ConsumerWidget {
+  const AccountantPaidChecksRoutePage({
+    super.key,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(accountantDashboardProvider);
+  Widget build(
+      BuildContext context,
+      WidgetRef ref,
+      ) {
+    final state = ref.watch(
+      accountantDashboardProvider,
+    );
 
     return state.when(
       loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        return const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
       },
       error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
+        return _AccountantRouteError(
+          error: error,
+        );
       },
       data: (accountant) {
-        return AccountantPaidChecksPage(companyId: accountant.companyId);
+        return AccountantPaidChecksPage(
+          companyId: accountant.companyId,
+        );
       },
     );
   }
@@ -1550,22 +1945,38 @@ class AccountantPaidChecksRoutePage extends ConsumerWidget {
 // ACCOUNTANT FISCAL PERIODS
 // ============================================================
 
-class AccountantFiscalPeriodsRoutePage extends ConsumerWidget {
-  const AccountantFiscalPeriodsRoutePage({super.key});
+class AccountantFiscalPeriodsRoutePage
+    extends ConsumerWidget {
+  const AccountantFiscalPeriodsRoutePage({
+    super.key,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(accountantDashboardProvider);
+  Widget build(
+      BuildContext context,
+      WidgetRef ref,
+      ) {
+    final state = ref.watch(
+      accountantDashboardProvider,
+    );
 
     return state.when(
       loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        return const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
       },
       error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
+        return _AccountantRouteError(
+          error: error,
+        );
       },
       data: (accountant) {
-        return AccountantFiscalPeriodsPage(companyId: accountant.companyId);
+        return AccountantFiscalPeriodsPage(
+          companyId: accountant.companyId,
+        );
       },
     );
   }
@@ -1575,47 +1986,224 @@ class AccountantFiscalPeriodsRoutePage extends ConsumerWidget {
 // ACCOUNTANT BANKING REPORTS
 // ============================================================
 
-class AccountantBankingReportsRoutePage extends ConsumerWidget {
-  const AccountantBankingReportsRoutePage({super.key});
+class AccountantBankingReportsRoutePage
+    extends ConsumerWidget {
+  const AccountantBankingReportsRoutePage({
+    super.key,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(accountantDashboardProvider);
+  Widget build(
+      BuildContext context,
+      WidgetRef ref,
+      ) {
+    final state = ref.watch(
+      accountantDashboardProvider,
+    );
 
     return state.when(
       loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        return const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
       },
       error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
+        return _AccountantRouteError(
+          error: error,
+        );
       },
       data: (accountant) {
-        return AccountantBankingReportsPage(companyId: accountant.companyId);
+        return AccountantBankingReportsPage(
+          companyId: accountant.companyId,
+        );
       },
     );
   }
 }
 
+
+
 // ============================================================
-// ACCOUNTANT INCOME DASHBOARD
+// ACCOUNTANT EXPENSE ROUTE PAGES
 // ============================================================
 
-class AccountantIncomeDashboardRoutePage extends ConsumerWidget {
-  const AccountantIncomeDashboardRoutePage({super.key});
+class AccountantExpenseDashboardRoutePage extends ConsumerWidget {
+  const AccountantExpenseDashboardRoutePage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(accountantDashboardProvider);
+    return state.when(
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => _AccountantRouteError(error: error),
+      data: (accountant) => AccountantExpenseDashboardPage(
+        companyId: accountant.companyId,
+      ),
+    );
+  }
+}
+
+class AccountantExpenseFiscalPeriodsRoutePage extends ConsumerWidget {
+  const AccountantExpenseFiscalPeriodsRoutePage({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(accountantDashboardProvider);
+    return state.when(
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => _AccountantRouteError(error: error),
+      data: (accountant) => AccountantExpenseFiscalPeriodsPage(
+        companyId: accountant.companyId,
+      ),
+    );
+  }
+}
+
+class AccountantExpenseCategoriesRoutePage extends ConsumerWidget {
+  const AccountantExpenseCategoriesRoutePage({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(accountantDashboardProvider);
+    return state.when(
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => _AccountantRouteError(error: error),
+      data: (accountant) => AccountantExpenseCategoriesPage(
+        companyId: accountant.companyId,
+      ),
+    );
+  }
+}
+
+class AccountantExpenseRecognitionRoutePage extends ConsumerWidget {
+  const AccountantExpenseRecognitionRoutePage({
+    super.key,
+    required this.periodId,
+  });
+
+  final String periodId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(accountantDashboardProvider);
+    return state.when(
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => _AccountantRouteError(error: error),
+      data: (accountant) => AccountantExpenseRecognitionPage(
+        companyId: accountant.companyId,
+        periodId: periodId,
+      ),
+    );
+  }
+}
+
+class AccountantExpenseReportsRoutePage extends ConsumerWidget {
+  const AccountantExpenseReportsRoutePage({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(accountantDashboardProvider);
+    return state.when(
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => _AccountantRouteError(error: error),
+      data: (accountant) => AccountantExpenseReportsPage(
+        companyId: accountant.companyId,
+      ),
+    );
+  }
+}
+
+class AccountantPayableFiscalPeriodsRoutePage extends ConsumerWidget {
+  const AccountantPayableFiscalPeriodsRoutePage({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(accountantDashboardProvider);
+    return state.when(
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => _AccountantRouteError(error: error),
+      data: (accountant) => AccountantPayableFiscalPeriodsPage(
+        companyId: accountant.companyId,
+      ),
+    );
+  }
+}
+
+class AccountantPayablePeriodRoutePage extends ConsumerWidget {
+  const AccountantPayablePeriodRoutePage({
+    super.key,
+    required this.periodId,
+  });
+
+  final String periodId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final state = ref.watch(accountantDashboardProvider);
+    return state.when(
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      ),
+      error: (error, stackTrace) => _AccountantRouteError(error: error),
+      data: (accountant) => AccountantPayablePeriodPage(
+        companyId: accountant.companyId,
+        periodId: periodId,
+      ),
+    );
+  }
+}
+
+
+// ============================================================
+// ACCOUNTANT INCOME DASHBOARD
+// ============================================================
+
+class AccountantIncomeDashboardRoutePage
+    extends ConsumerWidget {
+  const AccountantIncomeDashboardRoutePage({
+    super.key,
+  });
+
+  @override
+  Widget build(
+      BuildContext context,
+      WidgetRef ref,
+      ) {
+    final state = ref.watch(
+      accountantDashboardProvider,
+    );
 
     return state.when(
       loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        return const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
       },
       error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
+        return _AccountantRouteError(
+          error: error,
+        );
       },
       data: (accountant) {
-        return AccountantIncomeDashboardPage(companyId: accountant.companyId);
+        return AccountantIncomeDashboardPage(
+          companyId: accountant.companyId,
+        );
       },
     );
   }
@@ -1625,19 +2213,33 @@ class AccountantIncomeDashboardRoutePage extends ConsumerWidget {
 // ACCOUNTANT INCOME FISCAL PERIODS
 // ============================================================
 
-class AccountantIncomeFiscalPeriodsRoutePage extends ConsumerWidget {
-  const AccountantIncomeFiscalPeriodsRoutePage({super.key});
+class AccountantIncomeFiscalPeriodsRoutePage
+    extends ConsumerWidget {
+  const AccountantIncomeFiscalPeriodsRoutePage({
+    super.key,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(accountantDashboardProvider);
+  Widget build(
+      BuildContext context,
+      WidgetRef ref,
+      ) {
+    final state = ref.watch(
+      accountantDashboardProvider,
+    );
 
     return state.when(
       loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        return const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
       },
       error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
+        return _AccountantRouteError(
+          error: error,
+        );
       },
       data: (accountant) {
         return AccountantIncomeFiscalPeriodsPage(
@@ -1652,22 +2254,38 @@ class AccountantIncomeFiscalPeriodsRoutePage extends ConsumerWidget {
 // ACCOUNTANT INCOME CATEGORIES
 // ============================================================
 
-class AccountantIncomeCategoriesRoutePage extends ConsumerWidget {
-  const AccountantIncomeCategoriesRoutePage({super.key});
+class AccountantIncomeCategoriesRoutePage
+    extends ConsumerWidget {
+  const AccountantIncomeCategoriesRoutePage({
+    super.key,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(accountantDashboardProvider);
+  Widget build(
+      BuildContext context,
+      WidgetRef ref,
+      ) {
+    final state = ref.watch(
+      accountantDashboardProvider,
+    );
 
     return state.when(
       loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        return const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
       },
       error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
+        return _AccountantRouteError(
+          error: error,
+        );
       },
       data: (accountant) {
-        return AccountantIncomeCategoriesPage(companyId: accountant.companyId);
+        return AccountantIncomeCategoriesPage(
+          companyId: accountant.companyId,
+        );
       },
     );
   }
@@ -1677,57 +2295,86 @@ class AccountantIncomeCategoriesRoutePage extends ConsumerWidget {
 // ACCOUNTANT INCOME RECOGNITION
 // ============================================================
 
-class AccountantIncomeRecognitionRoutePage extends ConsumerWidget {
-  const AccountantIncomeRecognitionRoutePage({super.key});
+class AccountantIncomeRecognitionRoutePage
+    extends ConsumerWidget {
+  const AccountantIncomeRecognitionRoutePage({
+    super.key,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final accountantState = ref.watch(accountantDashboardProvider);
+  Widget build(
+      BuildContext context,
+      WidgetRef ref,
+      ) {
+    final accountantState = ref.watch(
+      accountantDashboardProvider,
+    );
 
     return accountantState.when(
       loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        return const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
       },
       error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
+        return _AccountantRouteError(
+          error: error,
+        );
       },
       data: (accountant) {
         final periodsState = ref.watch(
-          accountantIncomeFiscalPeriodsProvider(accountant.companyId),
+          accountantIncomeFiscalPeriodsProvider(
+            accountant.companyId,
+          ),
         );
 
         return periodsState.when(
           loading: () {
             return const Scaffold(
-              body: Center(child: CircularProgressIndicator()),
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
             );
           },
           error: (error, stackTrace) {
-            return _AccountantRouteError(error: error);
+            return _AccountantRouteError(
+              error: error,
+            );
           },
           data: (data) {
             final year = data.selectedYear;
 
-            if (year == null || year.periods.isEmpty) {
+            if (
+            year == null ||
+                year.periods.isEmpty
+            ) {
               return const Scaffold(
                 body: Center(
                   child: Text(
                     'هیچ دوره درآمدی برای ثبت درآمد وجود ندارد.',
-                    textDirection: TextDirection.rtl,
+                    textDirection:
+                    TextDirection.rtl,
                   ),
                 ),
               );
             }
 
-            final openPeriods =
-                year.periods
-                    .where((period) => period.status == 'open')
-                    .toList();
+            final openPeriods = year.periods
+                .where(
+                  (period) =>
+              period.status == 'open',
+            )
+                .toList();
 
-            final period =
-                openPeriods.isNotEmpty ? openPeriods.first : year.periods.first;
+            final period = openPeriods.isNotEmpty
+                ? openPeriods.first
+                : year.periods.first;
 
-            return AccountantIncomeRecognitionPage(periodId: period.id);
+            return AccountantIncomeRecognitionPage(
+              periodId: period.id,
+            );
           },
         );
       },
@@ -1739,23 +2386,38 @@ class AccountantIncomeRecognitionRoutePage extends ConsumerWidget {
 // ACCOUNTANT RECEIVABLE PERIODS
 // ============================================================
 
-class AccountantReceivablePeriodsRoutePage extends ConsumerWidget {
-  const AccountantReceivablePeriodsRoutePage({super.key});
+class AccountantReceivablePeriodsRoutePage
+    extends ConsumerWidget {
+  const AccountantReceivablePeriodsRoutePage({
+    super.key,
+  });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(accountantDashboardProvider);
+  Widget build(
+      BuildContext context,
+      WidgetRef ref,
+      ) {
+    final state = ref.watch(
+      accountantDashboardProvider,
+    );
 
     return state.when(
       loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        return const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
       },
       error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
+        return _AccountantRouteError(
+          error: error,
+        );
       },
       data: (accountant) {
         return AccountantScaffold(
-          currentRoute: '/accountant/income/receivables',
+          currentRoute:
+          '/accountant/income/receivables',
           title: 'مطالبات',
           body: _AccountantReceivablePeriodsPage(
             companyId: accountant.companyId,
@@ -1770,7 +2432,8 @@ class AccountantReceivablePeriodsRoutePage extends ConsumerWidget {
 // ACCOUNTANT RECEIVABLE MONTH
 // ============================================================
 
-class AccountantReceivablesMonthRoutePage extends ConsumerWidget {
+class AccountantReceivablesMonthRoutePage
+    extends ConsumerWidget {
   final String periodId;
 
   const AccountantReceivablesMonthRoutePage({
@@ -1779,21 +2442,35 @@ class AccountantReceivablesMonthRoutePage extends ConsumerWidget {
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final state = ref.watch(accountantDashboardProvider);
+  Widget build(
+      BuildContext context,
+      WidgetRef ref,
+      ) {
+    final state = ref.watch(
+      accountantDashboardProvider,
+    );
 
     return state.when(
       loading: () {
-        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        return const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(),
+          ),
+        );
       },
       error: (error, stackTrace) {
-        return _AccountantRouteError(error: error);
+        return _AccountantRouteError(
+          error: error,
+        );
       },
       data: (accountant) {
         return AccountantScaffold(
-          currentRoute: '/accountant/income/receivables/$periodId',
+          currentRoute:
+          '/accountant/income/receivables/$periodId',
           title: 'مطالبات',
-          body: AccountantIncomeReceivablesPage(periodId: periodId),
+          body: AccountantIncomeReceivablesPage(
+            periodId: periodId,
+          ),
         );
       },
     );
@@ -1804,19 +2481,25 @@ class AccountantReceivablesMonthRoutePage extends ConsumerWidget {
 // INDEPENDENT RECEIVABLE PERIODS PAGE
 // ============================================================
 
-class _AccountantReceivablePeriodsPage extends StatefulWidget {
+class _AccountantReceivablePeriodsPage
+    extends StatefulWidget {
   final String companyId;
 
-  const _AccountantReceivablePeriodsPage({required this.companyId});
+  const _AccountantReceivablePeriodsPage({
+    required this.companyId,
+  });
 
   @override
-  State<_AccountantReceivablePeriodsPage> createState() =>
+  State<_AccountantReceivablePeriodsPage>
+  createState() =>
       _AccountantReceivablePeriodsPageState();
 }
 
 class _AccountantReceivablePeriodsPageState
-    extends State<_AccountantReceivablePeriodsPage> {
-  late Future<List<Map<String, dynamic>>> _future;
+    extends State<
+        _AccountantReceivablePeriodsPage> {
+  late Future<
+      List<Map<String, dynamic>>> _future;
 
   @override
   void initState() {
@@ -1825,16 +2508,35 @@ class _AccountantReceivablePeriodsPageState
     _future = _loadPeriods();
   }
 
-  Future<List<Map<String, dynamic>>> _loadPeriods() async {
-    final response = await Supabase.instance.client
-        .from('income_receivable_fiscal_periods')
-        .select('id, fiscal_year_id, company_id, year, month, title, status')
-        .eq('company_id', widget.companyId)
-        .order('year', ascending: false)
-        .order('month', ascending: true);
+  Future<List<Map<String, dynamic>>>
+  _loadPeriods() async {
+    final response = await Supabase
+        .instance
+        .client
+        .from(
+      'income_receivable_fiscal_periods',
+    )
+        .select(
+      'id, fiscal_year_id, company_id, year, month, title, status',
+    )
+        .eq(
+      'company_id',
+      widget.companyId,
+    )
+        .order(
+      'year',
+      ascending: false,
+    )
+        .order(
+      'month',
+      ascending: true,
+    );
 
     return (response as List)
-        .map((row) => Map<String, dynamic>.from(row))
+        .map(
+          (row) =>
+      Map<String, dynamic>.from(row),
+    )
         .toList();
   }
 
@@ -1847,89 +2549,169 @@ class _AccountantReceivablePeriodsPageState
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+      BuildContext context,
+      ) {
     return Directionality(
       textDirection: TextDirection.rtl,
-      child: FutureBuilder<List<Map<String, dynamic>>>(
+      child: FutureBuilder<
+          List<Map<String, dynamic>>>(
         future: _future,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+        builder: (
+            context,
+            snapshot,
+            ) {
+          if (
+          snapshot.connectionState ==
+              ConnectionState.waiting
+          ) {
+            return const Center(
+              child:
+              CircularProgressIndicator(),
+            );
           }
 
           if (snapshot.hasError) {
             return Center(
               child: Column(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisSize:
+                MainAxisSize.min,
                 children: [
-                  const Icon(Icons.error_outline, size: 52),
-                  const SizedBox(height: 12),
-                  const Text('خطا در دریافت ماه‌های مطالبات'),
-                  const SizedBox(height: 12),
-                  Text(
-                    snapshot.error.toString().replaceFirst('Exception: ', ''),
-                    textAlign: TextAlign.center,
+                  const Icon(
+                    Icons.error_outline,
+                    size: 52,
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(
+                    height: 12,
+                  ),
+                  const Text(
+                    'خطا در دریافت ماه‌های مطالبات',
+                  ),
+                  const SizedBox(
+                    height: 12,
+                  ),
+                  Text(
+                    snapshot.error
+                        .toString()
+                        .replaceFirst(
+                      'Exception: ',
+                      '',
+                    ),
+                    textAlign:
+                    TextAlign.center,
+                  ),
+                  const SizedBox(
+                    height: 18,
+                  ),
                   FilledButton.icon(
-                    onPressed: _refresh,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('تلاش مجدد'),
+                    onPressed:
+                    _refresh,
+                    icon: const Icon(
+                      Icons.refresh,
+                    ),
+                    label: const Text(
+                      'تلاش مجدد',
+                    ),
                   ),
                 ],
               ),
             );
           }
 
-          final periods = snapshot.data ?? [];
+          final periods =
+              snapshot.data ?? [];
 
           if (periods.isEmpty) {
             return Center(
               child: Column(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisSize:
+                MainAxisSize.min,
                 children: [
                   Icon(
                     Icons.receipt_long_outlined,
                     size: 64,
-                    color: Theme.of(context).colorScheme.primary,
+                    color: Theme.of(
+                      context,
+                    )
+                        .colorScheme
+                        .primary,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(
+                    height: 16,
+                  ),
                   const Text(
                     'هنوز دوره‌ای برای مطالبات ایجاد نشده است.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    textAlign:
+                    TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight:
+                      FontWeight.bold,
+                    ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(
+                    height: 8,
+                  ),
                   const Text(
                     'این صفحه فقط ماه‌های مستقل مطالبات را نمایش می‌دهد.',
-                    textAlign: TextAlign.center,
+                    textAlign:
+                    TextAlign.center,
                   ),
                 ],
               ),
             );
           }
 
-          final grouped = <int, List<Map<String, dynamic>>>{};
+          final grouped =
+          <int,
+              List<
+                  Map<String,
+                      dynamic>>>{};
 
-          for (final period in periods) {
-            final year = _toInt(period['year']);
+          for (
+          final period
+          in periods
+          ) {
+            final year =
+            _toInt(
+              period['year'],
+            );
 
-            grouped.putIfAbsent(year, () => []).add(period);
+            grouped.putIfAbsent(
+              year,
+                  () => [],
+            ).add(period);
           }
 
-          final years = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
+          final years =
+          grouped.keys.toList()
+            ..sort(
+                  (a, b) =>
+                  b.compareTo(a),
+            );
 
           return RefreshIndicator(
             onRefresh: _refresh,
             child: ListView.builder(
-              padding: const EdgeInsets.all(24),
-              itemCount: years.length,
-              itemBuilder: (context, index) {
-                final year = years[index];
+              padding:
+              const EdgeInsets.all(
+                24,
+              ),
+              itemCount:
+              years.length,
+              itemBuilder:
+                  (context, index) {
+                final year =
+                years[index];
 
-                final yearPeriods = grouped[year] ?? [];
+                final yearPeriods =
+                    grouped[year] ?? [];
 
-                return _ReceivableYearSection(year: year, periods: yearPeriods);
+                return _ReceivableYearSection(
+                  year: year,
+                  periods:
+                  yearPeriods,
+                );
               },
             ),
           );
@@ -1943,57 +2725,108 @@ class _AccountantReceivablePeriodsPageState
 // RECEIVABLE YEAR SECTION
 // ============================================================
 
-class _ReceivableYearSection extends StatelessWidget {
+class _ReceivableYearSection
+    extends StatelessWidget {
   final int year;
 
-  final List<Map<String, dynamic>> periods;
+  final List<
+      Map<String, dynamic>> periods;
 
-  const _ReceivableYearSection({required this.year, required this.periods});
+  const _ReceivableYearSection({
+    required this.year,
+    required this.periods,
+  });
 
   @override
-  Widget build(BuildContext context) {
-    final months = List<Map<String, dynamic>?>.filled(12, null);
+  Widget build(
+      BuildContext context,
+      ) {
+    final months =
+    List<Map<String, dynamic>?>.filled(
+      12,
+      null,
+    );
 
-    for (final period in periods) {
-      final month = _toInt(period['month']);
+    for (
+    final period
+    in periods
+    ) {
+      final month =
+      _toInt(
+        period['month'],
+      );
 
-      if (month >= 1 && month <= 12) {
-        months[month - 1] = period;
+      if (
+      month >= 1 &&
+          month <= 12
+      ) {
+        months[month - 1] =
+            period;
       }
     }
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 24),
+      margin:
+      const EdgeInsets.only(
+        bottom: 24,
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding:
+        const EdgeInsets.all(
+          20,
+        ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          crossAxisAlignment:
+          CrossAxisAlignment.stretch,
           children: [
             Text(
               'سال مالی مطالبات $year',
               style: Theme.of(
                 context,
-              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              )
+                  .textTheme
+                  .titleLarge
+                  ?.copyWith(
+                fontWeight:
+                FontWeight.bold,
+              ),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(
+              height: 18,
+            ),
             GridView.builder(
               shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                maxCrossAxisExtent: 230,
-                mainAxisExtent: 105,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
+              physics:
+              const NeverScrollableScrollPhysics(),
+              gridDelegate:
+              const SliverGridDelegateWithMaxCrossAxisExtent(
+                maxCrossAxisExtent:
+                230,
+                mainAxisExtent:
+                105,
+                crossAxisSpacing:
+                12,
+                mainAxisSpacing:
+                12,
               ),
               itemCount: 12,
-              itemBuilder: (context, index) {
-                final period = months[index];
+              itemBuilder:
+                  (context, index) {
+                final period =
+                months[index];
 
-                if (period == null) {
-                  return _MissingReceivablePeriod(month: index + 1);
+                if (period ==
+                    null) {
+                  return _MissingReceivablePeriod(
+                    month:
+                    index + 1,
+                  );
                 }
 
-                return _ReceivablePeriodCard(period: period);
+                return _ReceivablePeriodCard(
+                  period:
+                  period,
+                );
               },
             ),
           ],
@@ -2007,58 +2840,109 @@ class _ReceivableYearSection extends StatelessWidget {
 // RECEIVABLE PERIOD CARD
 // ============================================================
 
-class _ReceivablePeriodCard extends StatelessWidget {
+class _ReceivablePeriodCard
+    extends StatelessWidget {
   final Map<String, dynamic> period;
 
-  const _ReceivablePeriodCard({required this.period});
+  const _ReceivablePeriodCard({
+    required this.period,
+  });
 
   @override
-  Widget build(BuildContext context) {
-    final id = period['id']?.toString();
+  Widget build(
+      BuildContext context,
+      ) {
+    final id =
+    period['id']?.toString();
 
-    final month = _toInt(period['month']);
+    final month =
+    _toInt(
+      period['month'],
+    );
 
-    final status = period['status']?.toString() ?? 'open';
+    final status =
+        period['status']
+            ?.toString() ??
+            'open';
 
-    final title = period['title']?.toString();
+    final title =
+    period['title']
+        ?.toString();
 
     final monthTitle =
-        title != null && title.trim().isNotEmpty ? title : _monthName(month);
+    title != null &&
+        title
+            .trim()
+            .isNotEmpty
+        ? title
+        : _monthName(month);
 
     return InkWell(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius:
+      BorderRadius.circular(
+        16,
+      ),
       onTap:
-          id == null
-              ? null
-              : () {
-                context.push('/accountant/income/receivables/$id');
-              },
+      id == null
+          ? null
+          : () {
+        context.push(
+          '/accountant/income/receivables/$id',
+        );
+      },
       child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: Theme.of(context).colorScheme.outlineVariant,
+        padding:
+        const EdgeInsets.all(
+          16,
+        ),
+        decoration:
+        BoxDecoration(
+          borderRadius:
+          BorderRadius.circular(
+            16,
+          ),
+          border:
+          Border.all(
+            color: Theme.of(
+              context,
+            )
+                .colorScheme
+                .outlineVariant,
           ),
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment:
+          CrossAxisAlignment.start,
+          mainAxisAlignment:
+          MainAxisAlignment.spaceBetween,
           children: [
             Row(
               children: [
                 Icon(
                   Icons.calendar_month_outlined,
-                  color: Theme.of(context).colorScheme.primary,
+                  color: Theme.of(
+                    context,
+                  )
+                      .colorScheme
+                      .primary,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(
+                  width: 8,
+                ),
                 Expanded(
                   child: Text(
                     monthTitle,
                     maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+                    overflow:
+                    TextOverflow.ellipsis,
+                    style: Theme.of(
+                      context,
+                    )
+                        .textTheme
+                        .titleMedium
+                        ?.copyWith(
+                      fontWeight:
+                      FontWeight.bold,
                     ),
                   ),
                 ),
@@ -2067,34 +2951,68 @@ class _ReceivablePeriodCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 9,
-                      vertical: 5,
+                  child:
+                  Container(
+                    padding:
+                    const EdgeInsets.symmetric(
+                      horizontal:
+                      9,
+                      vertical:
+                      5,
                     ),
-                    decoration: BoxDecoration(
-                      color: _statusColor(
+                    decoration:
+                    BoxDecoration(
+                      color:
+                      _statusColor(
                         context,
                         status,
-                      ).withValues(alpha: 0.10),
-                      borderRadius: BorderRadius.circular(8),
+                      ).withValues(
+                        alpha: 0.10,
+                      ),
+                      borderRadius:
+                      BorderRadius.circular(
+                        8,
+                      ),
                     ),
-                    child: Text(
-                      _statusTitle(status),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: _statusColor(context, status),
-                        fontWeight: FontWeight.w700,
+                    child:
+                    Text(
+                      _statusTitle(
+                        status,
+                      ),
+                      maxLines:
+                      2,
+                      overflow:
+                      TextOverflow.ellipsis,
+                      style:
+                      Theme.of(
+                        context,
+                      )
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(
+                        color:
+                        _statusColor(
+                          context,
+                          status,
+                        ),
+                        fontWeight:
+                        FontWeight.w700,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(
+                  width: 8,
+                ),
                 Icon(
-                  Icons.arrow_back_ios_new,
+                  Icons
+                      .arrow_back_ios_new,
                   size: 14,
-                  color: Theme.of(context).colorScheme.primary,
+                  color: Theme.of(
+                    context,
+                  )
+                      .colorScheme
+                      .primary,
                 ),
               ],
             ),
@@ -2109,8 +3027,14 @@ class _ReceivablePeriodCard extends StatelessWidget {
 // STATUS COLOR
 // ============================================================
 
-Color _statusColor(BuildContext context, String status) {
-  final colorScheme = Theme.of(context).colorScheme;
+Color _statusColor(
+    BuildContext context,
+    String status,
+    ) {
+  final colorScheme =
+      Theme.of(
+        context,
+      ).colorScheme;
 
   switch (status) {
     case 'open':
@@ -2129,7 +3053,8 @@ Color _statusColor(BuildContext context, String status) {
       return Colors.grey.shade700;
 
     default:
-      return colorScheme.onSurfaceVariant;
+      return colorScheme
+          .onSurfaceVariant;
   }
 }
 
@@ -2137,32 +3062,62 @@ Color _statusColor(BuildContext context, String status) {
 // MISSING RECEIVABLE PERIOD
 // ============================================================
 
-class _MissingReceivablePeriod extends StatelessWidget {
+class _MissingReceivablePeriod
+    extends StatelessWidget {
   final int month;
 
-  const _MissingReceivablePeriod({required this.month});
+  const _MissingReceivablePeriod({
+    required this.month,
+  });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+      BuildContext context,
+      ) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
+      padding:
+      const EdgeInsets.all(
+        16,
+      ),
+      decoration:
+      BoxDecoration(
+        borderRadius:
+        BorderRadius.circular(
+          16,
+        ),
         color: Theme.of(
           context,
-        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+        )
+            .colorScheme
+            .surfaceContainerHighest
+            .withValues(
+          alpha: 0.4,
+        ),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment:
+        CrossAxisAlignment.start,
+        mainAxisAlignment:
+        MainAxisAlignment.spaceBetween,
         children: [
           Text(
             _monthName(month),
             style: Theme.of(
               context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            )
+                .textTheme
+                .titleMedium
+                ?.copyWith(
+              fontWeight:
+              FontWeight.bold,
+            ),
           ),
-          const Text('ایجاد نشده', style: TextStyle(color: Colors.grey)),
+          const Text(
+            'ایجاد نشده',
+            style: TextStyle(
+              color: Colors.grey,
+            ),
+          ),
         ],
       ),
     );
@@ -2173,21 +3128,31 @@ class _MissingReceivablePeriod extends StatelessWidget {
 // ACCOUNTANT ROUTE ERROR
 // ============================================================
 
-class _AccountantRouteError extends StatelessWidget {
+class _AccountantRouteError
+    extends StatelessWidget {
   final Object error;
 
-  const _AccountantRouteError({required this.error});
+  const _AccountantRouteError({
+    required this.error,
+  });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(
+      BuildContext context,
+      ) {
     return Scaffold(
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding:
+          const EdgeInsets.all(
+            24,
+          ),
           child: Text(
             'خطا در دریافت اطلاعات شرکت حسابدار\n\n$error',
-            textAlign: TextAlign.center,
-            textDirection: TextDirection.rtl,
+            textAlign:
+            TextAlign.center,
+            textDirection:
+            TextDirection.rtl,
           ),
         ),
       ),
@@ -2199,7 +3164,9 @@ class _AccountantRouteError extends StatelessWidget {
 // HELPERS
 // ============================================================
 
-int _toInt(dynamic value) {
+int _toInt(
+    dynamic value,
+    ) {
   if (value == null) {
     return 0;
   }
@@ -2212,10 +3179,15 @@ int _toInt(dynamic value) {
     return value.toInt();
   }
 
-  return int.tryParse(value.toString()) ?? 0;
+  return int.tryParse(
+    value.toString(),
+  ) ??
+      0;
 }
 
-String _monthName(int month) {
+String _monthName(
+    int month,
+    ) {
   const months = [
     'فروردین',
     'اردیبهشت',
@@ -2231,14 +3203,21 @@ String _monthName(int month) {
     'اسفند',
   ];
 
-  if (month < 1 || month > 12) {
+  if (
+  month < 1 ||
+      month > 12
+  ) {
     return 'ماه';
   }
 
-  return months[month - 1];
+  return months[
+  month - 1
+  ];
 }
 
-String _statusTitle(String status) {
+String _statusTitle(
+    String status,
+    ) {
   switch (status) {
     case 'open':
       return 'در انتظار ارسال برای مدیرعامل';
@@ -2264,14 +3243,21 @@ String _statusTitle(String status) {
 // GO ROUTER REFRESH
 // ============================================================
 
-class GoRouterRefreshStream extends ChangeNotifier {
-  GoRouterRefreshStream(Stream<dynamic> stream) {
-    _subscription = stream.asBroadcastStream().listen((_) {
-      notifyListeners();
-    });
+class GoRouterRefreshStream
+    extends ChangeNotifier {
+  GoRouterRefreshStream(
+      Stream<dynamic> stream,
+      ) {
+    _subscription =
+        stream.asBroadcastStream().listen(
+              (_) {
+            notifyListeners();
+          },
+        );
   }
 
-  late final StreamSubscription<dynamic> _subscription;
+  late final StreamSubscription<dynamic>
+  _subscription;
 
   @override
   void dispose() {

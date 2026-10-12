@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shamsi_date/shamsi_date.dart';
+import 'package:tarazyar/accountant/dashboard/presentation/widgets/accountant_scaffold.dart';
 
 class AccountantPayablePeriodPage
     extends ConsumerStatefulWidget {
@@ -460,24 +461,18 @@ class _AccountantPayablePeriodPageState
 
   @override
   Widget build(BuildContext context) {
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor:
-        const Color(0xFFF6F7FB),
-        body: SafeArea(
-          child: _loading
-              ? const Center(
-            child:
-            CircularProgressIndicator(),
-          )
-              : RefreshIndicator(
-            onRefresh: _load,
-            child:
-            _buildContent(
-              context,
-            ),
-          ),
+    return AccountantScaffold(
+      currentRoute: '/accountant/expenses/payables/periods/${widget.periodId}',
+      title: _periodTitle ?? 'دوره پرداختنی',
+      body: Directionality(
+        textDirection: TextDirection.rtl,
+        child: _loading
+            ? const Center(
+          child: CircularProgressIndicator(),
+        )
+            : RefreshIndicator(
+          onRefresh: _load,
+          child: _buildContent(context),
         ),
       ),
     );

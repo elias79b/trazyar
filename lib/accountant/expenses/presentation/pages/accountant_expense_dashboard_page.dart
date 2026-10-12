@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:tarazyar/accountant/expenses/application/accountant_expense_dashboard_provider.dart';
+import 'package:tarazyar/accountant/dashboard/presentation/widgets/accountant_scaffold.dart';
 
 class AccountantExpenseDashboardPage extends ConsumerWidget {
   const AccountantExpenseDashboardPage({super.key, required this.companyId});
@@ -13,34 +14,38 @@ class AccountantExpenseDashboardPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(accountantExpenseDashboardProvider(companyId));
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: state.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) {
-          return _ExpenseDashboardError(
-            message: error.toString(),
-            onRetry: () {
-              ref.invalidate(accountantExpenseDashboardProvider(companyId));
-            },
-          );
-        },
-        data: (data) {
-          if (!data.hasData) {
-            return _EmptyExpenseDashboard(
+    return AccountantScaffold(
+      currentRoute: '/accountant/expenses',
+      title: 'داشبورد هزینه‌ها',
+      body: Directionality(
+        textDirection: TextDirection.rtl,
+        child: state.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, stackTrace) {
+            return _ExpenseDashboardError(
+              message: error.toString(),
+              onRetry: () {
+                ref.invalidate(accountantExpenseDashboardProvider(companyId));
+              },
+            );
+          },
+          data: (data) {
+            if (!data.hasData) {
+              return _EmptyExpenseDashboard(
+                onRefresh: () {
+                  ref.invalidate(accountantExpenseDashboardProvider(companyId));
+                },
+              );
+            }
+
+            return _ExpenseDashboardContent(
+              data: data,
               onRefresh: () {
                 ref.invalidate(accountantExpenseDashboardProvider(companyId));
               },
             );
-          }
-
-          return _ExpenseDashboardContent(
-            data: data,
-            onRefresh: () {
-              ref.invalidate(accountantExpenseDashboardProvider(companyId));
-            },
-          );
-        },
+          },
+        ),
       ),
     );
   }
@@ -62,11 +67,11 @@ class _ExpenseDashboardContent extends StatelessWidget {
         final bool isTablet = width >= 700 && width < 1100;
 
         final int cardColumns =
-            isMobile
-                ? 1
-                : isTablet
-                ? 2
-                : 5;
+        isMobile
+            ? 1
+            : isTablet
+            ? 2
+            : 5;
 
         return SingleChildScrollView(
           padding: EdgeInsets.all(isMobile ? 12 : 20),
@@ -319,18 +324,18 @@ class _SummaryCard extends StatelessWidget {
                             : Icons.south_east_rounded,
                         size: 15,
                         color:
-                            isIncrease
-                                ? const Color(0xFF149B69)
-                                : const Color(0xFFD94B4B),
+                        isIncrease
+                            ? const Color(0xFF149B69)
+                            : const Color(0xFFD94B4B),
                       ),
                       const SizedBox(width: 3),
                       Text(
                         '${_formatNumber(data.changePercent!.abs(), decimals: 1)}٪',
                         style: theme.textTheme.labelSmall?.copyWith(
                           color:
-                              isIncrease
-                                  ? const Color(0xFF149B69)
-                                  : const Color(0xFFD94B4B),
+                          isIncrease
+                              ? const Color(0xFF149B69)
+                              : const Color(0xFFD94B4B),
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -520,13 +525,13 @@ class _CompositionCard extends StatelessWidget {
                     color: const Color(0xFF1688E8),
                     title: 'هزینه‌های عملیاتی',
                     value:
-                        '${_formatNumber(data.operationalShare, decimals: 1)}٪',
+                    '${_formatNumber(data.operationalShare, decimals: 1)}٪',
                   ),
                   _LegendItem(
                     color: const Color(0xFF7544C7),
                     title: 'هزینه‌های غیرعملیاتی',
                     value:
-                        '${_formatNumber(data.nonOperationalShare, decimals: 1)}٪',
+                    '${_formatNumber(data.nonOperationalShare, decimals: 1)}٪',
                   ),
                 ],
               ),
@@ -551,130 +556,130 @@ class _CategoryBarCard extends StatelessWidget {
       title: 'هزینه‌ها به تفکیک سرفصل',
       height: 370,
       child:
-          categories.isEmpty
-              ? const _NoChartData()
-              : LayoutBuilder(
-                builder: (context, constraints) {
-                  final maxValue = categories.fold<double>(
-                    0.0,
-                    (max, item) => item.amount > max ? item.amount : max,
-                  );
+      categories.isEmpty
+          ? const _NoChartData()
+          : LayoutBuilder(
+        builder: (context, constraints) {
+          final maxValue = categories.fold<double>(
+            0.0,
+                (max, item) => item.amount > max ? item.amount : max,
+          );
 
-                  return BarChart(
-                    BarChartData(
-                      maxY: maxValue == 0 ? 10 : maxValue * 1.22,
-                      minY: 0,
-                      alignment: BarChartAlignment.spaceAround,
-                      groupsSpace: 14,
-                      borderData: FlBorderData(show: false),
-                      gridData: FlGridData(
-                        show: true,
-                        drawVerticalLine: false,
-                        horizontalInterval: _chartInterval(maxValue),
-                        getDrawingHorizontalLine: (value) {
-                          return FlLine(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.outlineVariant.withValues(alpha: .55),
-                            strokeWidth: 1,
-                          );
-                        },
-                      ),
-                      titlesData: FlTitlesData(
-                        topTitles: const AxisTitles(
-                          sideTitles: SideTitles(showTitles: false),
-                        ),
-                        rightTitles: const AxisTitles(
-                          sideTitles: SideTitles(showTitles: false),
-                        ),
-                        leftTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            reservedSize: 52,
-                            interval: _chartInterval(maxValue),
-                            getTitlesWidget: (value, meta) {
-                              return Text(
-                                _formatCompactNumber(value),
-                                style: Theme.of(context).textTheme.labelSmall,
-                              );
-                            },
-                          ),
-                        ),
-                        bottomTitles: AxisTitles(
-                          sideTitles: SideTitles(
-                            showTitles: true,
-                            reservedSize: 62,
-                            getTitlesWidget: (value, meta) {
-                              final index = value.toInt();
-
-                              if (index < 0 || index >= categories.length) {
-                                return const SizedBox.shrink();
-                              }
-
-                              final category = categories[index];
-
-                              return Padding(
-                                padding: const EdgeInsets.only(top: 8),
-                                child: SizedBox(
-                                  width: 72,
-                                  child: Text(
-                                    category.categoryName,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    textAlign: TextAlign.center,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .labelSmall
-                                        ?.copyWith(fontSize: 10),
-                                  ),
-                                ),
-                              );
-                            },
-                          ),
-                        ),
-                      ),
-                      barTouchData: BarTouchData(
-                        enabled: true,
-                        touchTooltipData: BarTouchTooltipData(
-                          getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                            final category = categories[groupIndex];
-
-                            return BarTooltipItem(
-                              '${category.categoryName}\n'
-                              '${_formatMoney(category.amount)} ریال',
-                              const TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: Colors.white,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      barGroups: List.generate(categories.length, (index) {
-                        final item = categories[index];
-
-                        return BarChartGroupData(
-                          x: index,
-                          barsSpace: 0,
-                          barRods: [
-                            BarChartRodData(
-                              toY: item.amount,
-                              width: categories.length > 10 ? 12 : 20,
-                              borderRadius: const BorderRadius.vertical(
-                                top: Radius.circular(5),
-                              ),
-                              color:
-                                  item.expenseType == 'operational'
-                                      ? const Color(0xFF1688E8)
-                                      : const Color(0xFF7544C7),
-                            ),
-                          ],
-                        );
-                      }),
-                    ),
+          return BarChart(
+            BarChartData(
+              maxY: maxValue == 0 ? 10 : maxValue * 1.22,
+              minY: 0,
+              alignment: BarChartAlignment.spaceAround,
+              groupsSpace: 14,
+              borderData: FlBorderData(show: false),
+              gridData: FlGridData(
+                show: true,
+                drawVerticalLine: false,
+                horizontalInterval: _chartInterval(maxValue),
+                getDrawingHorizontalLine: (value) {
+                  return FlLine(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.outlineVariant.withValues(alpha: .55),
+                    strokeWidth: 1,
                   );
                 },
               ),
+              titlesData: FlTitlesData(
+                topTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
+                rightTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 52,
+                    interval: _chartInterval(maxValue),
+                    getTitlesWidget: (value, meta) {
+                      return Text(
+                        _formatCompactNumber(value),
+                        style: Theme.of(context).textTheme.labelSmall,
+                      );
+                    },
+                  ),
+                ),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 62,
+                    getTitlesWidget: (value, meta) {
+                      final index = value.toInt();
+
+                      if (index < 0 || index >= categories.length) {
+                        return const SizedBox.shrink();
+                      }
+
+                      final category = categories[index];
+
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: SizedBox(
+                          width: 72,
+                          child: Text(
+                            category.categoryName,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelSmall
+                                ?.copyWith(fontSize: 10),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              barTouchData: BarTouchData(
+                enabled: true,
+                touchTooltipData: BarTouchTooltipData(
+                  getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                    final category = categories[groupIndex];
+
+                    return BarTooltipItem(
+                      '${category.categoryName}\n'
+                          '${_formatMoney(category.amount)} ریال',
+                      const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    );
+                  },
+                ),
+              ),
+              barGroups: List.generate(categories.length, (index) {
+                final item = categories[index];
+
+                return BarChartGroupData(
+                  x: index,
+                  barsSpace: 0,
+                  barRods: [
+                    BarChartRodData(
+                      toY: item.amount,
+                      width: categories.length > 10 ? 12 : 20,
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(5),
+                      ),
+                      color:
+                      item.expenseType == 'operational'
+                          ? const Color(0xFF1688E8)
+                          : const Color(0xFF7544C7),
+                    ),
+                  ],
+                );
+              }),
+            ),
+          );
+        },
+      ),
     );
   }
 }
@@ -692,113 +697,113 @@ class _CategoryShareCard extends StatelessWidget {
       title: 'سهم سرفصل‌های هزینه از کل هزینه‌ها',
       height: 370,
       child:
-          categories.isEmpty
-              ? const _NoChartData()
-              : LayoutBuilder(
-                builder: (context, constraints) {
-                  return Column(
-                    children: [
-                      Expanded(
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            PieChart(
-                              PieChartData(
-                                sectionsSpace: 2,
-                                centerSpaceRadius:
-                                    constraints.maxWidth < 360 ? 52 : 64,
-                                sections: List.generate(categories.length, (
-                                  index,
-                                ) {
-                                  final item = categories[index];
+      categories.isEmpty
+          ? const _NoChartData()
+          : LayoutBuilder(
+        builder: (context, constraints) {
+          return Column(
+            children: [
+              Expanded(
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    PieChart(
+                      PieChartData(
+                        sectionsSpace: 2,
+                        centerSpaceRadius:
+                        constraints.maxWidth < 360 ? 52 : 64,
+                        sections: List.generate(categories.length, (
+                            index,
+                            ) {
+                          final item = categories[index];
 
-                                  return PieChartSectionData(
-                                    value: item.amount,
-                                    title: '',
-                                    radius:
-                                        constraints.maxWidth < 360 ? 50 : 62,
-                                    color: _chartColor(index),
-                                  );
-                                }),
+                          return PieChartSectionData(
+                            value: item.amount,
+                            title: '',
+                            radius:
+                            constraints.maxWidth < 360 ? 50 : 62,
+                            color: _chartColor(index),
+                          );
+                        }),
+                      ),
+                    ),
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          _formatCompactMoney(data.totalExpense),
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w900),
+                        ),
+                        const SizedBox(height: 3),
+                        Text(
+                          'ریال',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        Text(
+                          'کل هزینه‌ها',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 112),
+                child: SingleChildScrollView(
+                  child: Column(
+                    children:
+                    categories.map((item) {
+                      final index = categories.indexOf(item);
+
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 3,
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 10,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                color: _chartColor(index),
+                                shape: BoxShape.circle,
                               ),
                             ),
-                            Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  _formatCompactMoney(data.totalExpense),
-                                  style: Theme.of(context).textTheme.titleLarge
-                                      ?.copyWith(fontWeight: FontWeight.w900),
-                                ),
-                                const SizedBox(height: 3),
-                                Text(
-                                  'ریال',
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                ),
-                                Text(
-                                  'کل هزینه‌ها',
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                ),
-                              ],
+                            const SizedBox(width: 7),
+                            Expanded(
+                              child: Text(
+                                item.categoryName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style:
+                                Theme.of(
+                                  context,
+                                ).textTheme.labelSmall,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              '${_formatNumber(item.sharePercent, decimals: 1)}٪',
+                              style: Theme.of(
+                                context,
+                              ).textTheme.labelSmall?.copyWith(
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
                           ],
                         ),
-                      ),
-                      const SizedBox(height: 8),
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxHeight: 112),
-                        child: SingleChildScrollView(
-                          child: Column(
-                            children:
-                                categories.map((item) {
-                                  final index = categories.indexOf(item);
-
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 3,
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Container(
-                                          width: 10,
-                                          height: 10,
-                                          decoration: BoxDecoration(
-                                            color: _chartColor(index),
-                                            shape: BoxShape.circle,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 7),
-                                        Expanded(
-                                          child: Text(
-                                            item.categoryName,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style:
-                                                Theme.of(
-                                                  context,
-                                                ).textTheme.labelSmall,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          '${_formatNumber(item.sharePercent, decimals: 1)}٪',
-                                          style: Theme.of(
-                                            context,
-                                          ).textTheme.labelSmall?.copyWith(
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                }).toList(),
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
+                      );
+                    }).toList(),
+                  ),
+                ),
               ),
+            ],
+          );
+        },
+      ),
     );
   }
 }

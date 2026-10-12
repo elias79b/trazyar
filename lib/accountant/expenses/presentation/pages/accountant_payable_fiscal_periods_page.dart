@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:tarazyar/accountant/expenses/application/accountant_payable_fiscal_periods_provider.dart';
+import 'package:tarazyar/accountant/dashboard/presentation/widgets/accountant_scaffold.dart';
 
 class AccountantPayableFiscalPeriodsPage extends ConsumerStatefulWidget {
   final String companyId;
@@ -32,21 +33,25 @@ class _AccountantPayableFiscalPeriodsPageState
 
     final state = ref.watch(provider);
 
-    return Directionality(
-      textDirection: TextDirection.rtl,
-      child: Scaffold(
-        backgroundColor: const Color(0xFFF6F7FB),
-        body: SafeArea(
-          child: state.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error:
-                (error, stackTrace) => _ErrorView(
-                  message: _errorMessage(error),
-                  onRetry: () {
-                    ref.invalidate(provider);
-                  },
-                ),
-            data: (data) => _buildContent(context, data),
+    return AccountantScaffold(
+      currentRoute: '/accountant/expenses/payables/periods',
+      title: 'دوره‌های حساب‌های پرداختنی',
+      body: Directionality(
+        textDirection: TextDirection.rtl,
+        child: Container(
+          color: const Color(0xFFF6F7FB),
+          child: SafeArea(
+            child: state.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error:
+                  (error, stackTrace) => _ErrorView(
+                message: _errorMessage(error),
+                onRetry: () {
+                  ref.invalidate(provider);
+                },
+              ),
+              data: (data) => _buildContent(context, data),
+            ),
           ),
         ),
       ),
@@ -54,13 +59,13 @@ class _AccountantPayableFiscalPeriodsPageState
   }
 
   Widget _buildContent(
-    BuildContext context,
-    AccountantPayableFiscalPeriodsData data,
-  ) {
+      BuildContext context,
+      AccountantPayableFiscalPeriodsData data,
+      ) {
     if (data.years.isNotEmpty) {
       final selectedExists =
           _selectedYearId != null &&
-          data.years.any((year) => year.id == _selectedYearId);
+              data.years.any((year) => year.id == _selectedYearId);
 
       if (!selectedExists) {
         _selectedYearId = data.years.first.id;
@@ -70,12 +75,12 @@ class _AccountantPayableFiscalPeriodsPageState
     }
 
     final selectedYear =
-        _selectedYearId == null ? null : data.yearById(_selectedYearId!);
+    _selectedYearId == null ? null : data.yearById(_selectedYearId!);
 
     final periods =
-        selectedYear == null
-            ? <AccountantPayableFiscalPeriod>[]
-            : data.periodsForYear(selectedYear.id);
+    selectedYear == null
+        ? <AccountantPayableFiscalPeriod>[]
+        : data.periodsForYear(selectedYear.id);
 
     final width = MediaQuery.sizeOf(context).width;
 
@@ -108,9 +113,9 @@ class _AccountantPayableFiscalPeriodsPageState
             ),
             sliver: SliverToBoxAdapter(
               child:
-                  periods.isEmpty
-                      ? _emptyPeriods(hasYear: selectedYear != null)
-                      : _buildMonthsGrid(context, periods, isMobile),
+              periods.isEmpty
+                  ? _emptyPeriods(hasYear: selectedYear != null)
+                  : _buildMonthsGrid(context, periods, isMobile),
             ),
           ),
         ],
@@ -140,21 +145,21 @@ class _AccountantPayableFiscalPeriodsPageState
         ],
       ),
       child:
-          isMobile
-              ? Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _headerTitle(),
-                  const SizedBox(height: 14),
-                  _createYearButton(),
-                ],
-              )
-              : Row(
-                children: [
-                  Expanded(child: _headerTitle()),
-                  _createYearButton(),
-                ],
-              ),
+      isMobile
+          ? Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _headerTitle(),
+          const SizedBox(height: 14),
+          _createYearButton(),
+        ],
+      )
+          : Row(
+        children: [
+          Expanded(child: _headerTitle()),
+          _createYearButton(),
+        ],
+      ),
     );
   }
 
@@ -192,9 +197,9 @@ class _AccountantPayableFiscalPeriodsPageState
   }
 
   Widget _buildYearSelector(
-    AccountantPayableFiscalPeriodsData data,
-    bool isMobile,
-  ) {
+      AccountantPayableFiscalPeriodsData data,
+      bool isMobile,
+      ) {
     return Container(
       margin: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 24),
       padding: EdgeInsets.all(isMobile ? 14 : 18),
@@ -204,70 +209,70 @@ class _AccountantPayableFiscalPeriodsPageState
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child:
-          data.years.isEmpty
-              ? const Text(
-                'هنوز سال مالی پرداختنی ایجاد نشده است.',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF4B5563),
-                ),
-              )
-              : DropdownButtonFormField<String>(
-                value:
-                    data.years.any((year) => year.id == _selectedYearId)
-                        ? _selectedYearId
-                        : data.years.first.id,
-                isExpanded: true,
-                decoration: InputDecoration(
-                  labelText: 'سال مالی پرداختنی',
-                  prefixIcon: const Icon(Icons.calendar_month_outlined),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+      data.years.isEmpty
+          ? const Text(
+        'هنوز سال مالی پرداختنی ایجاد نشده است.',
+        style: TextStyle(
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF4B5563),
+        ),
+      )
+          : DropdownButtonFormField<String>(
+        value:
+        data.years.any((year) => year.id == _selectedYearId)
+            ? _selectedYearId
+            : data.years.first.id,
+        isExpanded: true,
+        decoration: InputDecoration(
+          labelText: 'سال مالی پرداختنی',
+          prefixIcon: const Icon(Icons.calendar_month_outlined),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+          ),
+        ),
+        items:
+        data.years.map((year) {
+          return DropdownMenuItem<String>(
+            value: year.id,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    year.displayTitle,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-                  ),
                 ),
-                items:
-                    data.years.map((year) {
-                      return DropdownMenuItem<String>(
-                        value: year.id,
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                year.displayTitle,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            _statusChip(year.status),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                onChanged:
-                    _busy
-                        ? null
-                        : (value) {
-                          if (value == null) {
-                            return;
-                          }
+                const SizedBox(width: 8),
+                _statusChip(year.status),
+              ],
+            ),
+          );
+        }).toList(),
+        onChanged:
+        _busy
+            ? null
+            : (value) {
+          if (value == null) {
+            return;
+          }
 
-                          setState(() {
-                            _selectedYearId = value;
-                          });
-                        },
-              ),
+          setState(() {
+            _selectedYearId = value;
+          });
+        },
+      ),
     );
   }
 
   Widget _buildYearSummary(
-    AccountantPayableFiscalYear? year,
-    List<AccountantPayableFiscalPeriod> periods,
-    bool isMobile,
-  ) {
+      AccountantPayableFiscalYear? year,
+      List<AccountantPayableFiscalPeriod> periods,
+      bool isMobile,
+      ) {
     if (year == null) {
       return const SizedBox.shrink();
     }
@@ -331,17 +336,17 @@ class _AccountantPayableFiscalPeriodsPageState
           final count = isMobile ? 1 : 5;
 
           final itemWidth =
-              isMobile
-                  ? constraints.maxWidth
-                  : (constraints.maxWidth - (spacing * (count - 1))) / count;
+          isMobile
+              ? constraints.maxWidth
+              : (constraints.maxWidth - (spacing * (count - 1))) / count;
 
           return Wrap(
             spacing: spacing,
             runSpacing: spacing,
             children:
-                items.map((item) {
-                  return SizedBox(width: itemWidth, child: _summaryCard(item));
-                }).toList(),
+            items.map((item) {
+              return SizedBox(width: itemWidth, child: _summaryCard(item));
+            }).toList(),
           );
         },
       ),
@@ -397,47 +402,47 @@ class _AccountantPayableFiscalPeriodsPageState
   }
 
   Widget _buildMonthsGrid(
-    BuildContext context,
-    List<AccountantPayableFiscalPeriod> periods,
-    bool isMobile,
-  ) {
+      BuildContext context,
+      List<AccountantPayableFiscalPeriod> periods,
+      bool isMobile,
+      ) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final columns =
-            isMobile
-                ? 1
-                : constraints.maxWidth >= 1200
-                ? 4
-                : constraints.maxWidth >= 800
-                ? 3
-                : 2;
+        isMobile
+            ? 1
+            : constraints.maxWidth >= 1200
+            ? 4
+            : constraints.maxWidth >= 800
+            ? 3
+            : 2;
 
         const spacing = 12.0;
 
         final cardWidth =
-            isMobile
-                ? constraints.maxWidth
-                : (constraints.maxWidth - (spacing * (columns - 1))) / columns;
+        isMobile
+            ? constraints.maxWidth
+            : (constraints.maxWidth - (spacing * (columns - 1))) / columns;
 
         return Wrap(
           spacing: spacing,
           runSpacing: spacing,
           children:
-              periods.map((period) {
-                return SizedBox(
-                  width: cardWidth,
-                  child: _periodCard(context, period),
-                );
-              }).toList(),
+          periods.map((period) {
+            return SizedBox(
+              width: cardWidth,
+              child: _periodCard(context, period),
+            );
+          }).toList(),
         );
       },
     );
   }
 
   Widget _periodCard(
-    BuildContext context,
-    AccountantPayableFiscalPeriod period,
-  ) {
+      BuildContext context,
+      AccountantPayableFiscalPeriod period,
+      ) {
     final color = _statusColor(period.status);
 
     return InkWell(
@@ -677,7 +682,7 @@ class _AccountantPayableFiscalPeriodsPageState
           _selectedYearId = yearId;
         } else {
           final createdYear =
-              freshData.years.where((item) => item.year == year).toList();
+          freshData.years.where((item) => item.year == year).toList();
 
           if (createdYear.isNotEmpty) {
             _selectedYearId = createdYear.first.id;
@@ -781,10 +786,10 @@ class _AccountantPayableFiscalPeriodsPageState
   }
 
   void _showMessage(
-    BuildContext context,
-    String message, {
-    bool isError = false,
-  }) {
+      BuildContext context,
+      String message, {
+        bool isError = false,
+      }) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
@@ -792,7 +797,7 @@ class _AccountantPayableFiscalPeriodsPageState
           content: Text(message),
           behavior: SnackBarBehavior.floating,
           backgroundColor:
-              isError ? const Color(0xFFDC2626) : const Color(0xFF166534),
+          isError ? const Color(0xFFDC2626) : const Color(0xFF166534),
         ),
       );
   }
