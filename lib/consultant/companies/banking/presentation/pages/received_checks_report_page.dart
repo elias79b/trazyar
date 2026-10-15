@@ -249,6 +249,10 @@ class _ReceivedChecksReportPageState extends State<ReceivedChecksReportPage> {
         );
   }
 
+  Color get _surface => Theme.of(context).colorScheme.surface;
+
+  Color get _outline => Theme.of(context).colorScheme.outlineVariant;
+
   Widget _kpi({
     required String title,
     required String value,
@@ -258,31 +262,42 @@ class _ReceivedChecksReportPageState extends State<ReceivedChecksReportPage> {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        color: _surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Theme.of(context).dividerColor),
+        border: Border.all(color: _outline.withOpacity(.7)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(.025),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Container(
-            width: 46,
-            height: 46,
+            width: 48,
+            height: 48,
             decoration: BoxDecoration(
-              color: color.withOpacity(.10),
-              borderRadius: BorderRadius.circular(14),
+              color: color.withOpacity(.11),
+              borderRadius: BorderRadius.circular(15),
             ),
-            child: Icon(icon, color: color),
+            child: Icon(icon, color: color, size: 24),
           ),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
                   title,
-                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
                 ),
-                const SizedBox(height: 5),
+                const SizedBox(height: 7),
                 Text(
                   value,
                   maxLines: 1,
@@ -301,62 +316,130 @@ class _ReceivedChecksReportPageState extends State<ReceivedChecksReportPage> {
   }
 
   Widget _filters() {
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide(color: _outline),
+    );
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        color: _surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Theme.of(context).dividerColor),
+        border: Border.all(color: _outline.withOpacity(.7)),
       ),
-      child: Wrap(
-        spacing: 12,
-        runSpacing: 12,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: [
-          SizedBox(
-            width: 300,
-            child: TextField(
-              onChanged: (value) {
-                setState(() {
-                  _search = value;
-                });
-              },
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.search),
-                hintText: 'جستجوی شماره، بانک، صادرکننده...',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final wide = constraints.maxWidth >= 650;
+          return Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              SizedBox(
+                width: wide ? 340 : constraints.maxWidth,
+                child: TextField(
+                  onChanged: (value) => setState(() => _search = value),
+                  decoration: InputDecoration(
+                    prefixIcon: const Icon(Icons.search_rounded),
+                    hintText: 'جستجوی شماره چک، صادرکننده یا بانک...',
+                    isDense: true,
+                    filled: true,
+                    fillColor:
+                        Theme.of(context).colorScheme.surfaceContainerLowest,
+                    border: border,
+                    enabledBorder: border,
+                    focusedBorder: border.copyWith(
+                      borderSide: BorderSide(
+                        color: Theme.of(context).colorScheme.primary,
+                        width: 1.5,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 14,
+                    ),
+                  ),
                 ),
-                isDense: true,
               ),
-            ),
-          ),
-          DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: _status,
-              items: const [
-                DropdownMenuItem(value: 'all', child: Text('همه وضعیت‌ها')),
-                DropdownMenuItem(
-                  value: 'در انتظار وصول',
-                  child: Text('در انتظار وصول'),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceContainerLowest,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: _outline),
                 ),
-                DropdownMenuItem(value: 'وصول شده', child: Text('وصول شده')),
-                DropdownMenuItem(value: 'برگشتی', child: Text('برگشتی')),
-                DropdownMenuItem(value: 'باطل', child: Text('باطل')),
-              ],
-              onChanged: (value) {
-                if (value == null) return;
+                child: DropdownButtonHideUnderline(
+                  child: DropdownButton<String>(
+                    value: _status,
+                    borderRadius: BorderRadius.circular(12),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'all',
+                        child: Text('همه وضعیت‌ها'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'در انتظار وصول',
+                        child: Text('در انتظار وصول'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'وصول شده',
+                        child: Text('وصول شده'),
+                      ),
+                      DropdownMenuItem(value: 'برگشتی', child: Text('برگشتی')),
+                      DropdownMenuItem(value: 'باطل', child: Text('باطل')),
+                    ],
+                    onChanged: (value) {
+                      if (value != null) setState(() => _status = value);
+                    },
+                  ),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: _load,
+                icon: const Icon(Icons.refresh_rounded, size: 18),
+                label: const Text('بروزرسانی'),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 15,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
 
-                setState(() {
-                  _status = value;
-                });
-              },
-            ),
+  Widget _statusBadge(String status) {
+    final color = _statusColor(status);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withOpacity(.10),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: color.withOpacity(.18)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
-          OutlinedButton.icon(
-            onPressed: _load,
-            icon: const Icon(Icons.refresh),
-            label: const Text('بروزرسانی'),
+          const SizedBox(width: 7),
+          Text(
+            status,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.w700,
+              fontSize: 12,
+            ),
           ),
         ],
       ),
@@ -365,114 +448,162 @@ class _ReceivedChecksReportPageState extends State<ReceivedChecksReportPage> {
 
   Widget _table() {
     final rows = _filteredRows;
-
-    if (rows.isEmpty) {
-      return Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(50),
-        decoration: BoxDecoration(
-          color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: Theme.of(context).dividerColor),
-        ),
-        child: const Column(
-          children: [
-            Icon(Icons.receipt_long_outlined, size: 52, color: Colors.grey),
-            SizedBox(height: 12),
-            Text(
-              'چک دریافتی ثبت نشده است',
-              style: TextStyle(fontWeight: FontWeight.w700),
-            ),
-          ],
-        ),
-      );
-    }
-
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        color: _surface,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Theme.of(context).dividerColor),
+        border: Border.all(color: _outline.withOpacity(.7)),
       ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          headingRowHeight: 52,
-          dataRowMinHeight: 58,
-          dataRowMaxHeight: 68,
-          columns: const [
-            DataColumn(label: Text('شماره چک')),
-            DataColumn(label: Text('صادرکننده')),
-            DataColumn(label: Text('بانک')),
-            DataColumn(label: Text('تاریخ سررسید')),
-            DataColumn(label: Text('مبلغ')),
-            DataColumn(label: Text('وضعیت')),
-          ],
-          rows:
-              rows.map((row) {
-                final status = _statusText(row);
-                final statusColor = _statusColor(status);
-
-                final amount =
-                    row['amount'] ??
-                    row['check_amount'] ??
-                    row['value'] ??
-                    row['nominal_amount'];
-
-                return DataRow(
-                  cells: [
-                    DataCell(
-                      Text(
-                        _text(row, [
-                          'check_number',
-                          'serial_number',
-                          'number',
-                          'serial',
-                        ]),
-                      ),
-                    ),
-                    DataCell(
-                      Text(
-                        _text(row, [
-                          'drawer_name',
-                          'customer_name',
-                          'issuer_name',
-                        ]),
-                      ),
-                    ),
-                    DataCell(Text(_text(row, ['bank_name', 'bank']))),
-                    DataCell(Text(_dateText(row))),
-                    DataCell(
-                      Text(
-                        '${_money(amount)} ریال',
-                        style: const TextStyle(fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                    DataCell(
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 6,
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withOpacity(.09),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.table_chart_outlined,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'فهرست چک‌های دریافتی شرکت',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
                         ),
-                        decoration: BoxDecoration(
-                          color: statusColor.withOpacity(.10),
-                          borderRadius: BorderRadius.circular(20),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        '${rows.length} مورد',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          fontSize: 12,
                         ),
-                        child: Text(
-                          status,
-                          style: TextStyle(
-                            color: statusColor,
-                            fontWeight: FontWeight.w700,
-                            fontSize: 12,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Divider(height: 1, color: _outline.withOpacity(.7)),
+          if (rows.isEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 42, horizontal: 20),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.receipt_long_outlined,
+                    size: 44,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurfaceVariant.withOpacity(.55),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'چکی برای نمایش وجود ندارد',
+                    style: TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    'فیلترها را تغییر دهید یا پس از ثبت اطلاعات دوباره بررسی کنید.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: DataTable(
+                headingRowHeight: 52,
+                dataRowMinHeight: 60,
+                dataRowMaxHeight: 72,
+                horizontalMargin: 22,
+                columnSpacing: 32,
+                headingTextStyle: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12,
+                ),
+                columns: const [
+                  DataColumn(label: Text('شماره چک')),
+                  DataColumn(label: Text('صادرکننده')),
+                  DataColumn(label: Text('بانک')),
+                  DataColumn(label: Text('تاریخ سررسید')),
+                  DataColumn(label: Text('مبلغ (ریال)')),
+                  DataColumn(label: Text('وضعیت')),
+                ],
+                rows:
+                    rows.map((row) {
+                      final status = _statusText(row);
+                      return DataRow(
+                        cells: [
+                          DataCell(
+                            Text(
+                              _text(row, [
+                                'check_number',
+                                'serial_number',
+                                'number',
+                                'serial',
+                              ]),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              }).toList(),
-        ),
+                          DataCell(
+                            Text(
+                              _text(row, [
+                                'drawer_name',
+                                'customer_name',
+                                'issuer_name',
+                              ]),
+                            ),
+                          ),
+                          DataCell(Text(_text(row, ['bank_name', 'bank']))),
+                          DataCell(Text(_dateText(row))),
+                          DataCell(
+                            Text(
+                              _money(
+                                row['amount'] ??
+                                    row['check_amount'] ??
+                                    row['value'] ??
+                                    row['nominal_amount'],
+                              ),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                          DataCell(_statusBadge(status)),
+                        ],
+                      );
+                    }).toList(),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -487,91 +618,157 @@ class _ReceivedChecksReportPageState extends State<ReceivedChecksReportPage> {
       body: LayoutBuilder(
         builder: (context, constraints) {
           final width = constraints.maxWidth;
-
-          final crossAxisCount =
-              width >= 1400
+          final columns =
+              width >= 1250
                   ? 4
-                  : width >= 900
+                  : width >= 820
                   ? 2
                   : 1;
-
           return RefreshIndicator(
             onRefresh: _load,
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(width < 600 ? 14 : 24),
               children: [
-                Row(
-                  children: [
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'گزارش چک‌های دریافتی',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          SizedBox(height: 6),
-                          Text(
-                            'وضعیت و مانده چک‌های دریافت‌شده شرکت',
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                        ],
+                Container(
+                  padding: EdgeInsets.all(width < 600 ? 18 : 24),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topRight,
+                      end: Alignment.bottomLeft,
+                      colors: [
+                        Theme.of(context).colorScheme.primary.withOpacity(.10),
+                        Theme.of(context).colorScheme.primary.withOpacity(.025),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withOpacity(.10),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: width < 600 ? 46 : 54,
+                        height: width < 600 ? 46 : 54,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Icon(
+                          Icons.account_balance_wallet_outlined,
+                          color: Theme.of(context).colorScheme.onPrimary,
+                          size: 27,
+                        ),
                       ),
-                    ),
-                    IconButton(
-                      onPressed: _load,
-                      icon: const Icon(Icons.refresh),
-                    ),
-                  ],
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'گزارش چک‌های دریافتی',
+                              style: TextStyle(
+                                fontSize: width < 600 ? 19 : 24,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: 7),
+                            Text(
+                              'وضعیت و مانده چک‌های دریافت‌شده شرکت',
+                              style: TextStyle(
+                                color:
+                                    Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton.filledTonal(
+                        tooltip: 'بروزرسانی اطلاعات',
+                        onPressed: _load,
+                        icon: const Icon(Icons.refresh_rounded),
+                      ),
+                    ],
+                  ),
                 ),
                 const SizedBox(height: 20),
-
                 if (_loading)
                   const Padding(
-                    padding: EdgeInsets.all(50),
+                    padding: EdgeInsets.all(56),
                     child: Center(child: CircularProgressIndicator()),
                   )
                 else if (_error != null)
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(.06),
+                      color: Colors.red.withOpacity(.07),
                       borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.red.withOpacity(.2)),
                     ),
-                    child: Text(
-                      'خطا در دریافت اطلاعات:\n$_error',
-                      style: const TextStyle(color: Colors.red),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(Icons.error_outline, color: Colors.red),
+                            SizedBox(width: 8),
+                            Text(
+                              'دریافت اطلاعات با خطا مواجه شد',
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          _error!,
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: TextButton.icon(
+                            onPressed: _load,
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('تلاش دوباره'),
+                          ),
+                        ),
+                      ],
                     ),
                   )
                 else ...[
                   GridView.count(
-                    crossAxisCount: crossAxisCount,
+                    crossAxisCount: columns,
                     crossAxisSpacing: 14,
                     mainAxisSpacing: 14,
-                    childAspectRatio: width >= 900 ? 2.5 : 2.8,
+                    childAspectRatio: width >= 820 ? 2.6 : 2.9,
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
                     children: [
                       _kpi(
                         title: 'مجموع چک‌ها',
                         value: '${_money(_totalAmount)} ریال',
-                        icon: Icons.receipt_long,
+                        icon: Icons.receipt_long_rounded,
                         color: Colors.blue,
                       ),
                       _kpi(
                         title: 'در انتظار وصول',
                         value: '${_money(_pendingAmount)} ریال',
-                        icon: Icons.schedule,
+                        icon: Icons.schedule_rounded,
                         color: Colors.orange,
                       ),
                       _kpi(
                         title: 'وصول شده',
                         value: '${_money(_receivedAmount)} ریال',
-                        icon: Icons.check_circle_outline,
+                        icon: Icons.check_circle_outline_rounded,
                         color: Colors.green,
                       ),
                       _kpi(
@@ -582,10 +779,21 @@ class _ReceivedChecksReportPageState extends State<ReceivedChecksReportPage> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 20),
                   _filters(),
                   const SizedBox(height: 18),
                   _table(),
+                  const SizedBox(height: 12),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'مبالغ بر اساس فیلترهای فعلی محاسبه شده‌اند.',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
                 ],
               ],
             ),

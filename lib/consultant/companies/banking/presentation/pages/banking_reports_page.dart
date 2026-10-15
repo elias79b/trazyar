@@ -48,22 +48,22 @@ class _BankingReportsPageState extends State<BankingReportsPage> {
         _supabase
             .from('bank_account_periods')
             .select(
-              'id, period_id, bank_account_id, '
+          'id, period_id, bank_account_id, '
               'opening_balance, debit_turnover, '
               'credit_turnover, closing_balance, '
               'ledger_balance, discrepancy, '
               'bank_accounts(bank_name, account_number)',
-            )
+        )
             .eq('company_id', widget.companyId),
         _supabase
             .from('cash_box_periods')
             .select(
-              'id, period_id, cash_box_id, '
+          'id, period_id, cash_box_id, '
               'opening_balance, total_receipts, '
               'total_payments, closing_balance, '
               'ledger_balance, discrepancy, '
               'cash_boxes(box_name)',
-            )
+        )
             .eq('company_id', widget.companyId),
         _supabase
             .from('petty_cash_periods')
@@ -124,7 +124,7 @@ class _BankingReportsPageState extends State<BankingReportsPage> {
 
     return number.toString().replaceAllMapped(
       RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-      (match) => '${match.group(1)},',
+          (match) => '${match.group(1)},',
     );
   }
 
@@ -180,21 +180,21 @@ class _BankingReportsPageState extends State<BankingReportsPage> {
   double _bankTotal() {
     return _selectedBanks().fold(
       0.0,
-      (sum, row) => sum + _num(row['closing_balance']),
+          (sum, row) => sum + _num(row['closing_balance']),
     );
   }
 
   double _cashTotal() {
     return _selectedCashBoxes().fold(
       0.0,
-      (sum, row) => sum + _num(row['closing_balance']),
+          (sum, row) => sum + _num(row['closing_balance']),
     );
   }
 
   double _pettyTotal() {
     return _selectedPettyCash().fold(
       0.0,
-      (sum, row) => sum + _num(row['closing_balance']),
+          (sum, row) => sum + _num(row['closing_balance']),
     );
   }
 
@@ -205,42 +205,42 @@ class _BankingReportsPageState extends State<BankingReportsPage> {
   double _bankLedgerTotal() {
     return _selectedBanks().fold(
       0.0,
-      (sum, row) => sum + _num(row['ledger_balance']),
+          (sum, row) => sum + _num(row['ledger_balance']),
     );
   }
 
   double _cashLedgerTotal() {
     return _selectedCashBoxes().fold(
       0.0,
-      (sum, row) => sum + _num(row['ledger_balance']),
+          (sum, row) => sum + _num(row['ledger_balance']),
     );
   }
 
   double _pettyLedgerTotal() {
     return _selectedPettyCash().fold(
       0.0,
-      (sum, row) => sum + _num(row['ledger_balance']),
+          (sum, row) => sum + _num(row['ledger_balance']),
     );
   }
 
   double _bankDiscrepancy() {
     return _selectedBanks().fold(
       0.0,
-      (sum, row) => sum + _num(row['discrepancy']),
+          (sum, row) => sum + _num(row['discrepancy']),
     );
   }
 
   double _cashDiscrepancy() {
     return _selectedCashBoxes().fold(
       0.0,
-      (sum, row) => sum + _num(row['discrepancy']),
+          (sum, row) => sum + _num(row['discrepancy']),
     );
   }
 
   double _pettyDiscrepancy() {
     return _selectedPettyCash().fold(
       0.0,
-      (sum, row) => sum + _num(row['discrepancy']),
+          (sum, row) => sum + _num(row['discrepancy']),
     );
   }
 
@@ -314,7 +314,8 @@ class _BankingReportsPageState extends State<BankingReportsPage> {
         final compact = constraints.maxWidth < 950;
 
         return ListView(
-          padding: const EdgeInsets.all(24),
+          primary: true,
+          padding: EdgeInsets.all(constraints.maxWidth < 600 ? 14 : 24),
           children: [
             _header(),
             const SizedBox(height: 18),
@@ -387,24 +388,24 @@ class _BankingReportsPageState extends State<BankingReportsPage> {
             Expanded(
               child: DropdownButtonFormField<String>(
                 value:
-                    _periods.any(
-                          (p) => p['id']?.toString() == _selectedPeriodId,
-                        )
-                        ? _selectedPeriodId
-                        : null,
+                _periods.any(
+                      (p) => p['id']?.toString() == _selectedPeriodId,
+                )
+                    ? _selectedPeriodId
+                    : null,
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
                   isDense: true,
                 ),
                 items:
-                    _periods.map((period) {
-                      final id = period['id'].toString();
+                _periods.map((period) {
+                  final id = period['id'].toString();
 
-                      return DropdownMenuItem<String>(
-                        value: id,
-                        child: Text(_periodTitle(period)),
-                      );
-                    }).toList(),
+                  return DropdownMenuItem<String>(
+                    value: id,
+                    child: Text(_periodTitle(period)),
+                  );
+                }).toList(),
                 onChanged: (value) {
                   setState(() {
                     _selectedPeriodId = value;
@@ -436,31 +437,34 @@ class _BankingReportsPageState extends State<BankingReportsPage> {
     ];
 
     if (compact) {
-      return Column(
-        children:
-            cards
-                .map(
-                  (item) => Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: item,
-                  ),
-                )
-                .toList(),
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final columns = constraints.maxWidth >= 620 ? 2 : 1;
+          return GridView.count(
+            crossAxisCount: columns,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            childAspectRatio: columns == 2 ? 2.7 : 3.2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            children: cards,
+          );
+        },
       );
     }
 
-    return Row(
-      children:
-          cards
-              .map(
-                (item) => Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 5),
-                    child: item,
-                  ),
-                ),
-              )
-              .toList(),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return GridView.count(
+          crossAxisCount: 5,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+          childAspectRatio: 2.35,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          children: cards,
+        );
+      },
     );
   }
 
@@ -539,34 +543,34 @@ class _BankingReportsPageState extends State<BankingReportsPage> {
       title: 'گزارش مقایسه بانک‌ها',
       icon: Icons.account_balance_outlined,
       child:
-          rows.isEmpty
-              ? _emptyReport()
-              : _reportTable(
-                headers: const [
-                  'بانک',
-                  'شماره حساب',
-                  'مانده',
-                  'بدهکار',
-                  'بستانکار',
-                  'مغایرت',
-                ],
-                rows:
-                    rows.map((row) {
-                      final relation = row['bank_accounts'];
+      rows.isEmpty
+          ? _emptyReport()
+          : _reportTable(
+        headers: const [
+          'بانک',
+          'شماره حساب',
+          'مانده',
+          'بدهکار',
+          'بستانکار',
+          'مغایرت',
+        ],
+        rows:
+        rows.map((row) {
+          final relation = row['bank_accounts'];
 
-                      final bank =
-                          relation is Map ? relation : <String, dynamic>{};
+          final bank =
+          relation is Map ? relation : <String, dynamic>{};
 
-                      return [
-                        bank['bank_name']?.toString() ?? '-',
-                        bank['account_number']?.toString() ?? '-',
-                        _money(row['closing_balance']),
-                        _money(row['debit_turnover']),
-                        _money(row['credit_turnover']),
-                        _money(row['discrepancy']),
-                      ];
-                    }).toList(),
-              ),
+          return [
+            bank['bank_name']?.toString() ?? '-',
+            bank['account_number']?.toString() ?? '-',
+            _money(row['closing_balance']),
+            _money(row['debit_turnover']),
+            _money(row['credit_turnover']),
+            _money(row['discrepancy']),
+          ];
+        }).toList(),
+      ),
     );
   }
 
@@ -662,39 +666,113 @@ class _BankingReportsPageState extends State<BankingReportsPage> {
     required List<String> headers,
     required List<List<String>> rows,
   }) {
-    if (rows.isEmpty) {
-      return _emptyReport();
-    }
+    if (rows.isEmpty) return _emptyReport();
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: DataTable(
-        columnSpacing: 30,
-        headingRowHeight: 52,
-        dataRowMinHeight: 54,
-        columns:
-            headers
-                .map(
-                  (header) => DataColumn(
-                    label: Text(
-                      header,
-                      style: const TextStyle(fontWeight: FontWeight.w800),
+    final columnCount = headers.length;
+    final normalizedRows = rows.map((row) {
+      if (row.length == columnCount) return row;
+      return List<String>.generate(
+        columnCount,
+            (index) => index < row.length ? row[index] : '-',
+      );
+    }).toList();
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final minTableWidth = columnCount * 150.0;
+        final tableWidth = constraints.maxWidth.isFinite
+            ? (constraints.maxWidth > minTableWidth
+            ? constraints.maxWidth
+            : minTableWidth)
+            : minTableWidth;
+
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          primary: false,
+          child: SizedBox(
+            width: tableWidth,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 13,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .surfaceContainerHighest
+                        .withOpacity(.55),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(10),
                     ),
                   ),
-                )
-                .toList(),
-        rows:
-            rows.map((row) {
-              return DataRow(
-                cells:
-                    row.map((value) {
-                      return DataCell(
-                        Text(value, style: const TextStyle(fontSize: 13)),
+                  child: Row(
+                    children: headers.map((header) {
+                      return Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 6),
+                          child: Text(
+                            header,
+                            textAlign: TextAlign.right,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              fontSize: 12,
+                              color: Theme.of(context)
+                                  .colorScheme
+                                  .onSurfaceVariant,
+                            ),
+                          ),
+                        ),
                       );
                     }).toList(),
-              );
-            }).toList(),
-      ),
+                  ),
+                ),
+                ...List.generate(normalizedRows.length, (rowIndex) {
+                  final row = normalizedRows[rowIndex];
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 15,
+                    ),
+                    decoration: BoxDecoration(
+                      color: rowIndex.isEven
+                          ? Theme.of(context).colorScheme.surface
+                          : Theme.of(context)
+                          .colorScheme
+                          .surfaceContainerLowest,
+                      border: Border(
+                        bottom: BorderSide(
+                          color: Theme.of(context)
+                              .colorScheme
+                              .outlineVariant
+                              .withOpacity(.45),
+                        ),
+                      ),
+                    ),
+                    child: Row(
+                      children: row.map((value) {
+                        return Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 6),
+                            child: Text(
+                              value,
+                              textAlign: TextAlign.right,
+                              softWrap: true,
+                              style: const TextStyle(fontSize: 13),
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
