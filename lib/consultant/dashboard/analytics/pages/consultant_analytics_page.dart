@@ -66,11 +66,11 @@ class _FinancialAnalysisContent extends StatelessWidget {
         final width = constraints.maxWidth;
 
         final horizontalPadding =
-            width >= 1200
-                ? 28.0
-                : width >= 700
-                ? 22.0
-                : 14.0;
+        width >= 1200
+            ? 28.0
+            : width >= 700
+            ? 22.0
+            : 14.0;
 
         return SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(
@@ -216,7 +216,7 @@ class _MainKpis extends StatelessWidget {
         final gap = 12.0;
 
         final cardWidth =
-            count == 1 ? width : (width - ((count - 1) * gap)) / count;
+        count == 1 ? width : (width - ((count - 1) * gap)) / count;
 
         return Wrap(
           spacing: gap,
@@ -248,13 +248,13 @@ class _MainKpis extends StatelessWidget {
                 title: data.profit >= 0 ? 'سود خالص' : 'زیان خالص',
                 value: _money(data.profit.abs()),
                 icon:
-                    data.profit >= 0
-                        ? Icons.account_balance_wallet_rounded
-                        : Icons.warning_amber_rounded,
+                data.profit >= 0
+                    ? Icons.account_balance_wallet_rounded
+                    : Icons.warning_amber_rounded,
                 iconColor:
-                    data.profit >= 0
-                        ? const Color(0xFF2563EB)
-                        : const Color(0xFFDC2626),
+                data.profit >= 0
+                    ? const Color(0xFF2563EB)
+                    : const Color(0xFFDC2626),
               ),
             ),
 
@@ -376,7 +376,7 @@ class _LiquidityCard extends StatelessWidget {
           const gap = 10.0;
 
           final itemWidth =
-              count == 1 ? width : (width - ((count - 1) * gap)) / count;
+          count == 1 ? width : (width - ((count - 1) * gap)) / count;
 
           return Wrap(
             spacing: gap,
@@ -424,21 +424,7 @@ class _LiquidityCard extends StatelessWidget {
 }
 
 extension _LiquidityExtension on FinancialAnalysisData {
-  String liquidityPart(double value) {
-    return _money(value);
-  }
-
-  double get bankBalance {
-    return 0;
-  }
-
-  double get cashBalance {
-    return 0;
-  }
-
-  double get pettyCashBalance {
-    return 0;
-  }
+  String liquidityPart(double value) => _money(value);
 }
 
 class _LiquidityItem extends StatelessWidget {
@@ -461,9 +447,9 @@ class _LiquidityItem extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color:
-            emphasized
-                ? const Color(0xFF1B4332).withOpacity(.07)
-                : const Color(0xFFF8FAFC),
+        emphasized
+            ? const Color(0xFF1B4332).withOpacity(.07)
+            : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(13),
       ),
       child: Row(
@@ -713,7 +699,7 @@ class _StructureCard extends StatelessWidget {
                   PieChartSectionData(
                     value: data.totalIncome,
                     title:
-                        '${((data.totalIncome / total) * 100).toStringAsFixed(0)}٪',
+                    '${((data.totalIncome / total) * 100).toStringAsFixed(0)}٪',
                     radius: 62,
                     titleStyle: const TextStyle(
                       color: Colors.white,
@@ -724,7 +710,7 @@ class _StructureCard extends StatelessWidget {
                   PieChartSectionData(
                     value: data.totalExpense,
                     title:
-                        '${((data.totalExpense / total) * 100).toStringAsFixed(0)}٪',
+                    '${((data.totalExpense / total) * 100).toStringAsFixed(0)}٪',
                     radius: 62,
                     titleStyle: const TextStyle(
                       color: Colors.white,
@@ -1304,7 +1290,7 @@ String _money(double value) {
 
   final formatted = raw.replaceAllMapped(
     RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-    (match) => '${match[1]},',
+        (match) => '${match[1]},',
   );
 
   final persian = formatted
@@ -1365,9 +1351,9 @@ String _compactMoney(double value) {
   }
 
   final text =
-      number.abs() >= 100
-          ? number.toStringAsFixed(0)
-          : number.toStringAsFixed(1);
+  number.abs() >= 100
+      ? number.toStringAsFixed(0)
+      : number.toStringAsFixed(1);
 
   final persian = text
       .replaceAll('0', '۰')

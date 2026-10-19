@@ -3,63 +3,80 @@ import 'package:shamsi_date/shamsi_date.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 final financialAnalysisProvider = FutureProvider.family<
-  FinancialAnalysisData,
-  String
->((ref, companyId) async {
+    FinancialAnalysisData, String>((ref, companyId) async {
   final client = Supabase.instance.client;
+
+  // آخرین دوره نقد و بانک؛ موجودی‌ها در جداول دوره‌ای نگهداری می‌شوند.
+  final periodRows = await client
+      .from('cash_fiscal_periods')
+      .select('id, year, month')
+      .eq('company_id', companyId)
+      .order('year', ascending: false)
+      .order('month', ascending: false)
+      .limit(1);
+
+  final String? cashPeriodId = periodRows.isEmpty
+      ? null
+      : periodRows.first['id']?.toString();
 
   final results = await Future.wait([
     client
         .from('income_records')
         .select(
-          'id, amount, income_date, status, category_id, income_categories(id,name)',
-        )
+      'id, amount, income_date, status, category_id, income_categories(id,name)',
+    )
         .eq('company_id', companyId),
-
     client
         .from('expenses')
         .select(
-          'id, amount, expense_date, expense_type, source_type, category_id, expense_categories(id,name)',
-        )
+      'id, amount, expense_date, expense_type, source_type, category_id, expense_categories(id,name)',
+    )
         .eq('company_id', companyId),
-
-    client
-        .from('bank_accounts')
-        .select('closing_balance')
-        .eq('company_id', companyId),
-
-    client
-        .from('cash_boxes')
-        .select('closing_balance')
-        .eq('company_id', companyId),
-
-    client
-        .from('petty_cash_accounts')
-        .select('closing_balance')
-        .eq('company_id', companyId),
-
+    if (cashPeriodId != null)
+      client
+          .from('bank_account_periods')
+          .select('closing_balance')
+          .eq('company_id', companyId)
+          .eq('period_id', cashPeriodId)
+    else
+      Future.value(<Map<String, dynamic>>[]),
+    if (cashPeriodId != null)
+      client
+          .from('cash_box_periods')
+          .select('closing_balance')
+          .eq('company_id', companyId)
+          .eq('period_id', cashPeriodId)
+    else
+      Future.value(<Map<String, dynamic>>[]),
+    if (cashPeriodId != null)
+      client
+          .from('petty_cash_periods')
+          .select('closing_balance')
+          .eq('company_id', companyId)
+          .eq('period_id', cashPeriodId)
+    else
+      Future.value(<Map<String, dynamic>>[]),
     client
         .from('bank_loans')
         .select('remaining_amount')
         .eq('company_id', companyId),
-
     client
         .from('received_checks')
         .select('amount, status')
         .eq('company_id', companyId),
-
     client
         .from('paid_checks')
         .select('amount, status')
         .eq('company_id', companyId),
-
-    client.from('employees').select('id, status').eq('company_id', companyId),
-
+    client
+        .from('employees')
+        .select('id, status')
+        .eq('company_id', companyId),
     client
         .from('payroll_records')
         .select(
-          'gross_salary, employer_insurance, payroll_period_id, payroll_periods(period_year,period_month)',
-        )
+      'gross_salary, employer_insurance, payroll_period_id, payroll_periods(period_year,period_month)',
+    )
         .eq('company_id', companyId),
   ]);
 
@@ -101,6 +118,9 @@ class FinancialAnalysisData {
   final double profitMargin;
 
   final double liquidity;
+  final double bankBalance;
+  final double cashBalance;
+  final double pettyCashBalance;
   final double loans;
   final double receivedChecks;
   final double paidChecks;
@@ -129,6 +149,9 @@ class FinancialAnalysisData {
     required this.profit,
     required this.profitMargin,
     required this.liquidity,
+    required this.bankBalance,
+    required this.cashBalance,
+    required this.pettyCashBalance,
     required this.loans,
     required this.receivedChecks,
     required this.paidChecks,
@@ -163,6 +186,9 @@ class FinancialAnalysisData {
     double operationalExpense = 0;
     double nonOperationalExpense = 0;
 
+    double bankBalance = 0;
+    double cashBalance = 0;
+    double pettyCashBalance = 0;
     double liquidity = 0;
     double loans = 0;
 
@@ -264,7 +290,7 @@ class FinancialAnalysisData {
 
         if (id != null && id.isNotEmpty) {
           incomeCategoryNames[id] =
-              (name == null || name.isEmpty) ? 'بدون دسته‌بندی' : name;
+          (name == null || name.isEmpty) ? 'بدون دسته‌بندی' : name;
 
           incomeCategoryTotals[id] = (incomeCategoryTotals[id] ?? 0) + amount;
         }
@@ -324,7 +350,7 @@ class FinancialAnalysisData {
 
         if (id != null && id.isNotEmpty) {
           expenseCategoryNames[id] =
-              (name == null || name.isEmpty) ? 'بدون دسته‌بندی' : name;
+          (name == null || name.isEmpty) ? 'بدون دسته‌بندی' : name;
 
           expenseCategoryTotals[id] = (expenseCategoryTotals[id] ?? 0) + amount;
         }
@@ -335,22 +361,24 @@ class FinancialAnalysisData {
      * موجودی بانک
      */
     for (final row in bankRows) {
-      liquidity += _num(row['closing_balance']);
+      bankBalance += _num(row['closing_balance']);
     }
 
     /*
      * موجودی صندوق
      */
     for (final row in cashRows) {
-      liquidity += _num(row['closing_balance']);
+      cashBalance += _num(row['closing_balance']);
     }
 
     /*
      * موجودی تنخواه
      */
     for (final row in pettyRows) {
-      liquidity += _num(row['closing_balance']);
+      pettyCashBalance += _num(row['closing_balance']);
     }
+
+    liquidity = bankBalance + cashBalance + pettyCashBalance;
 
     /*
      * وام‌ها
@@ -435,39 +463,39 @@ class FinancialAnalysisData {
      * تکمیل سود ماهانه
      */
     final monthlyData =
-        monthly.values.map((item) {
-          return item.copyWith(profit: item.income - item.expense);
-        }).toList();
+    monthly.values.map((item) {
+      return item.copyWith(profit: item.income - item.expense);
+    }).toList();
 
     /*
      * دسته‌بندی درآمد
      */
     final incomeCategories =
-        incomeCategoryTotals.entries
-            .map(
-              (entry) => FinancialCategoryData(
-                id: entry.key,
-                name: incomeCategoryNames[entry.key] ?? 'بدون دسته‌بندی',
-                amount: entry.value,
-              ),
-            )
-            .toList()
-          ..sort((a, b) => b.amount.compareTo(a.amount));
+    incomeCategoryTotals.entries
+        .map(
+          (entry) => FinancialCategoryData(
+        id: entry.key,
+        name: incomeCategoryNames[entry.key] ?? 'بدون دسته‌بندی',
+        amount: entry.value,
+      ),
+    )
+        .toList()
+      ..sort((a, b) => b.amount.compareTo(a.amount));
 
     /*
      * دسته‌بندی هزینه
      */
     final expenseCategories =
-        expenseCategoryTotals.entries
-            .map(
-              (entry) => FinancialCategoryData(
-                id: entry.key,
-                name: expenseCategoryNames[entry.key] ?? 'بدون دسته‌بندی',
-                amount: entry.value,
-              ),
-            )
-            .toList()
-          ..sort((a, b) => b.amount.compareTo(a.amount));
+    expenseCategoryTotals.entries
+        .map(
+          (entry) => FinancialCategoryData(
+        id: entry.key,
+        name: expenseCategoryNames[entry.key] ?? 'بدون دسته‌بندی',
+        amount: entry.value,
+      ),
+    )
+        .toList()
+      ..sort((a, b) => b.amount.compareTo(a.amount));
 
     return FinancialAnalysisData(
       totalIncome: totalIncome,
@@ -482,6 +510,9 @@ class FinancialAnalysisData {
       profitMargin: profitMargin,
 
       liquidity: liquidity,
+      bankBalance: bankBalance,
+      cashBalance: cashBalance,
+      pettyCashBalance: pettyCashBalance,
       loans: loans,
 
       receivedChecks: receivedChecks,
@@ -535,7 +566,7 @@ class FinancialAnalysisData {
     }
 
     return ((currentMonthExpense - previousMonthExpense) /
-            previousMonthExpense) *
+        previousMonthExpense) *
         100;
   }
 

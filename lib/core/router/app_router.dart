@@ -155,7 +155,6 @@ import 'package:tarazyar/consultant/companies/presentation/pages/company_dashboa
 // ============================================================
 
 import 'package:tarazyar/consultant/dashboard/analytics/pages/consultant_analytics_page.dart';
-import 'package:tarazyar/consultant/dashboard/history/presentation/pages/consultant_history_page.dart';
 import 'package:tarazyar/consultant/dashboard/presentation/pages/company_actions_page.dart';
 import 'package:tarazyar/consultant/dashboard/presentation/pages/company_analytics_page.dart';
 import 'package:tarazyar/consultant/dashboard/presentation/pages/company_documents_page.dart';
@@ -164,9 +163,6 @@ import 'package:tarazyar/consultant/dashboard/presentation/pages/company_reports
 import 'package:tarazyar/consultant/dashboard/presentation/pages/company_workflow_page.dart';
 import 'package:tarazyar/consultant/dashboard/presentation/pages/consultant_companies_page.dart';
 import 'package:tarazyar/consultant/dashboard/presentation/pages/consultant_page.dart';
-import 'package:tarazyar/consultant/dashboard/reports/presentation/pages/consultant_reports_page.dart';
-import 'package:tarazyar/consultant/dashboard/settings/presentation/pages/consultant_settings_page.dart';
-import 'package:tarazyar/consultant/dashboard/workflow/presentation/pages/consultant_workflow_page.dart';
 
 // ============================================================
 // OWNER
@@ -1362,51 +1358,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           );
         },
       ),
-
-      // ========================================================
-      // CONSULTANT REPORTS
-      // ========================================================
-
-      GoRoute(
-        path: '/consultant/reports',
-        builder: (context, state) {
-          return const ConsultantReportsPage();
-        },
-      ),
-
-      // ========================================================
-      // CONSULTANT WORKFLOW
-      // ========================================================
-
-      GoRoute(
-        path: '/consultant/workflow',
-        builder: (context, state) {
-          return const ConsultantWorkflowPage();
-        },
-      ),
-
-      // ========================================================
-      // CONSULTANT HISTORY
-      // ========================================================
-
-      GoRoute(
-        path: '/consultant/history',
-        builder: (context, state) {
-          return const ConsultantHistoryPage();
-        },
-      ),
-
-      // ========================================================
-      // CONSULTANT SETTINGS
-      // ========================================================
-
-      GoRoute(
-        path: '/consultant/settings',
-        builder: (context, state) {
-          return const ConsultantSettingsPage();
-        },
-      ),
-
       // ========================================================
       // OWNER
       // ========================================================

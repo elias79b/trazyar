@@ -24,8 +24,7 @@ class IncomeReceivablesPage extends ConsumerStatefulWidget {
       _IncomeReceivablesPageState();
 }
 
-class _IncomeReceivablesPageState
-    extends ConsumerState<IncomeReceivablesPage> {
+class _IncomeReceivablesPageState extends ConsumerState<IncomeReceivablesPage> {
   bool _saving = false;
 
   double _toDouble(dynamic value) {
@@ -36,32 +35,32 @@ class _IncomeReceivablesPageState
     }
 
     return double.tryParse(
-      value
-          .toString()
-          .replaceAll(',', '')
-          .replaceAll('٬', '')
-          .replaceAll(' ', '')
-          .replaceAll('۰', '0')
-          .replaceAll('۱', '1')
-          .replaceAll('۲', '2')
-          .replaceAll('۳', '3')
-          .replaceAll('۴', '4')
-          .replaceAll('۵', '5')
-          .replaceAll('۶', '6')
-          .replaceAll('۷', '7')
-          .replaceAll('۸', '8')
-          .replaceAll('۹', '9')
-          .replaceAll('٠', '0')
-          .replaceAll('١', '1')
-          .replaceAll('٢', '2')
-          .replaceAll('٣', '3')
-          .replaceAll('٤', '4')
-          .replaceAll('٥', '5')
-          .replaceAll('٦', '6')
-          .replaceAll('٧', '7')
-          .replaceAll('٨', '8')
-          .replaceAll('٩', '9'),
-    ) ??
+          value
+              .toString()
+              .replaceAll(',', '')
+              .replaceAll('٬', '')
+              .replaceAll(' ', '')
+              .replaceAll('۰', '0')
+              .replaceAll('۱', '1')
+              .replaceAll('۲', '2')
+              .replaceAll('۳', '3')
+              .replaceAll('۴', '4')
+              .replaceAll('۵', '5')
+              .replaceAll('۶', '6')
+              .replaceAll('۷', '7')
+              .replaceAll('۸', '8')
+              .replaceAll('۹', '9')
+              .replaceAll('٠', '0')
+              .replaceAll('١', '1')
+              .replaceAll('٢', '2')
+              .replaceAll('٣', '3')
+              .replaceAll('٤', '4')
+              .replaceAll('٥', '5')
+              .replaceAll('٦', '6')
+              .replaceAll('٧', '7')
+              .replaceAll('٨', '8')
+              .replaceAll('٩', '9'),
+        ) ??
         0;
   }
 
@@ -69,7 +68,7 @@ class _IncomeReceivablesPageState
     if (value == value.roundToDouble()) {
       return value.toInt().toString().replaceAllMapped(
         RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-            (match) => '${match.group(1)},',
+        (match) => '${match.group(1)},',
       );
     }
 
@@ -128,17 +127,15 @@ class _IncomeReceivablesPageState
     );
 
     final amountController = TextEditingController(
-      text: existing == null
-          ? ''
-          : _formatAmount(_toDouble(existing['amount'])),
+      text:
+          existing == null ? '' : _formatAmount(_toDouble(existing['amount'])),
     );
 
     final receivedController = TextEditingController(
-      text: existing == null
-          ? ''
-          : _formatAmount(
-        _toDouble(existing['received_documents_amount']),
-      ),
+      text:
+          existing == null
+              ? ''
+              : _formatAmount(_toDouble(existing['received_documents_amount'])),
     );
 
     final descriptionController = TextEditingController(
@@ -153,19 +150,17 @@ class _IncomeReceivablesPageState
           return StatefulBuilder(
             builder: (context, setDialogState) {
               final existingAmount =
-              existing == null ? 0.0 : _toDouble(existing['amount']);
+                  existing == null ? 0.0 : _toDouble(existing['amount']);
 
               final currentWithoutExisting =
                   currentReceivablesTotal - existingAmount;
 
               final enteredAmount = _toDouble(amountController.text);
 
-              final projectedTotal =
-                  currentWithoutExisting + enteredAmount;
+              final projectedTotal = currentWithoutExisting + enteredAmount;
 
               final exceedsRecognized =
-                  recognizedTotal > 0 &&
-                      projectedTotal > recognizedTotal;
+                  recognizedTotal > 0 && projectedTotal > recognizedTotal;
 
               return Directionality(
                 textDirection: TextDirection.rtl,
@@ -187,20 +182,18 @@ class _IncomeReceivablesPageState
                               padding: const EdgeInsets.all(12),
                               margin: const EdgeInsets.only(bottom: 14),
                               decoration: BoxDecoration(
-                                color: Theme.of(context)
-                                    .colorScheme
-                                    .primary
-                                    .withValues(alpha: .07),
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.primary.withValues(alpha: .07),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Column(
-                                crossAxisAlignment:
-                                CrossAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
                                     'درآمد شناسایی‌شده این ماه',
                                     style:
-                                    Theme.of(context).textTheme.bodySmall,
+                                        Theme.of(context).textTheme.bodySmall,
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
@@ -208,9 +201,7 @@ class _IncomeReceivablesPageState
                                     style: Theme.of(context)
                                         .textTheme
                                         .titleMedium
-                                        ?.copyWith(
-                                      fontWeight: FontWeight.w800,
-                                    ),
+                                        ?.copyWith(fontWeight: FontWeight.w800),
                                   ),
                                 ],
                               ),
@@ -228,8 +219,7 @@ class _IncomeReceivablesPageState
                           const SizedBox(height: 12),
                           TextField(
                             controller: amountController,
-                            keyboardType:
-                            const TextInputType.numberWithOptions(
+                            keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
                             ),
                             textDirection: TextDirection.ltr,
@@ -255,8 +245,7 @@ class _IncomeReceivablesPageState
                               child: Text(
                                 'مجموع دریافتنی‌ها از درآمد شناسایی‌شده این ماه بیشتر می‌شود.',
                                 style: TextStyle(
-                                  color:
-                                  Theme.of(context).colorScheme.error,
+                                  color: Theme.of(context).colorScheme.error,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                 ),
@@ -266,8 +255,7 @@ class _IncomeReceivablesPageState
                           const SizedBox(height: 12),
                           TextField(
                             controller: receivedController,
-                            keyboardType:
-                            const TextInputType.numberWithOptions(
+                            keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
                             ),
                             textDirection: TextDirection.ltr,
@@ -300,8 +288,7 @@ class _IncomeReceivablesPageState
                   ),
                   actions: [
                     TextButton(
-                      onPressed: () =>
-                          Navigator.of(dialogContext).pop(false),
+                      onPressed: () => Navigator.of(dialogContext).pop(false),
                       child: const Text('انصراف'),
                     ),
                     FilledButton.icon(
@@ -316,9 +303,7 @@ class _IncomeReceivablesPageState
                         }
 
                         if (amount <= 0) {
-                          _message(
-                            'مبلغ دریافتنی باید بیشتر از صفر باشد.',
-                          );
+                          _message('مبلغ دریافتنی باید بیشتر از صفر باشد.');
                           return;
                         }
 
@@ -368,10 +353,9 @@ class _IncomeReceivablesPageState
       }
 
       final existingAmount =
-      existing == null ? 0.0 : _toDouble(existing['amount']);
+          existing == null ? 0.0 : _toDouble(existing['amount']);
 
-      final projectedTotal =
-          currentReceivablesTotal - existingAmount + amount;
+      final projectedTotal = currentReceivablesTotal - existingAmount + amount;
 
       if (recognizedTotal > 0 && projectedTotal > recognizedTotal) {
         final proceed = await showDialog<bool>(
@@ -383,9 +367,9 @@ class _IncomeReceivablesPageState
                 title: const Text('مغایرت با درآمد شناسایی‌شده'),
                 content: Text(
                   'مجموع دریافتنی‌ها پس از این ثبت برابر با '
-                      '${_money(projectedTotal)} می‌شود، در حالی که درآمد '
-                      'شناسایی‌شده این ماه ${_money(recognizedTotal)} است.\n\n'
-                      'آیا می‌خواهید با این مبلغ ادامه دهید؟',
+                  '${_money(projectedTotal)} می‌شود، در حالی که درآمد '
+                  'شناسایی‌شده این ماه ${_money(recognizedTotal)} است.\n\n'
+                  'آیا می‌خواهید با این مبلغ ادامه دهید؟',
                 ),
                 actions: [
                   TextButton(
@@ -427,15 +411,9 @@ class _IncomeReceivablesPageState
           );
         }
 
-        ref.invalidate(
-          incomeReceivablesProvider(widget.periodId),
-        );
-        ref.invalidate(
-          incomeReceivablesSummaryProvider(widget.periodId),
-        );
-        ref.invalidate(
-          incomeDashboardProvider(widget.companyId),
-        );
+        ref.invalidate(incomeReceivablesProvider(widget.periodId));
+        ref.invalidate(incomeReceivablesSummaryProvider(widget.periodId));
+        ref.invalidate(incomeDashboardProvider(widget.companyId));
 
         if (mounted) {
           _message(
@@ -461,9 +439,7 @@ class _IncomeReceivablesPageState
     }
   }
 
-  Future<void> _deleteReceivable(
-      Map<String, dynamic> row,
-      ) async {
+  Future<void> _deleteReceivable(Map<String, dynamic> row) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) {
@@ -494,19 +470,11 @@ class _IncomeReceivablesPageState
     try {
       setState(() => _saving = true);
 
-      await IncomeReceivablesService.deleteReceivable(
-        row['id'].toString(),
-      );
+      await IncomeReceivablesService.deleteReceivable(row['id'].toString());
 
-      ref.invalidate(
-        incomeReceivablesProvider(widget.periodId),
-      );
-      ref.invalidate(
-        incomeReceivablesSummaryProvider(widget.periodId),
-      );
-      ref.invalidate(
-        incomeDashboardProvider(widget.companyId),
-      );
+      ref.invalidate(incomeReceivablesProvider(widget.periodId));
+      ref.invalidate(incomeReceivablesSummaryProvider(widget.periodId));
+      ref.invalidate(incomeDashboardProvider(widget.companyId));
 
       if (mounted) {
         _message('دریافتنی حذف شد.');
@@ -524,94 +492,87 @@ class _IncomeReceivablesPageState
 
   @override
   Widget build(BuildContext context) {
-    final periodAsync =
-    ref.watch(incomeFiscalPeriodProvider(widget.periodId));
+    final periodAsync = ref.watch(incomeFiscalPeriodProvider(widget.periodId));
 
-    final receivablesAsync =
-    ref.watch(incomeReceivablesProvider(widget.periodId));
+    final receivablesAsync = ref.watch(
+      incomeReceivablesProvider(widget.periodId),
+    );
 
-    final summaryAsync =
-    ref.watch(incomeReceivablesSummaryProvider(widget.periodId));
+    final summaryAsync = ref.watch(
+      incomeReceivablesSummaryProvider(widget.periodId),
+    );
 
-    final recognitionSummaryAsync =
-    ref.watch(incomeRecognitionSummaryProvider(widget.periodId));
+    final recognitionSummaryAsync = ref.watch(
+      incomeRecognitionSummaryProvider(widget.periodId),
+    );
 
     return CompanyScaffold(
       companyId: widget.companyId,
       currentRoute:
-      '/consultant/companies/${widget.companyId}/income/receivables/${widget.periodId}',
+          '/consultant/companies/${widget.companyId}/income/receivables/${widget.periodId}',
       title: 'حساب‌های دریافتنی',
       body: Directionality(
         textDirection: TextDirection.rtl,
         child: periodAsync.when(
-          loading: () => const Center(
-            child: CircularProgressIndicator(),
-          ),
-          error: (_, __) => _ErrorView(
-            message: 'اطلاعات دوره دریافت نشد.',
-            onRetry: () {
-              ref.invalidate(
-                incomeFiscalPeriodProvider(widget.periodId),
-              );
-            },
-          ),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error:
+              (_, __) => _ErrorView(
+                message: 'اطلاعات دوره دریافت نشد.',
+                onRetry: () {
+                  ref.invalidate(incomeFiscalPeriodProvider(widget.periodId));
+                },
+              ),
           data: (period) {
             if (period == null) {
-              return const _ErrorView(
-                message: 'دوره درآمد پیدا نشد.',
-              );
+              return const _ErrorView(message: 'دوره درآمد پیدا نشد.');
             }
 
             return receivablesAsync.when(
-              loading: () => const Center(
-                child: CircularProgressIndicator(),
-              ),
-              error: (_, __) => _ErrorView(
-                message: 'اطلاعات دریافتنی‌ها دریافت نشد.',
-                onRetry: () {
-                  ref.invalidate(
-                    incomeReceivablesProvider(widget.periodId),
-                  );
-                },
-              ),
-              data: (receivables) {
-                return summaryAsync.when(
-                  loading: () => const Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                  error: (_, __) => _ErrorView(
-                    message: 'خلاصه دریافتنی‌ها دریافت نشد.',
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error:
+                  (_, __) => _ErrorView(
+                    message: 'اطلاعات دریافتنی‌ها دریافت نشد.',
                     onRetry: () {
                       ref.invalidate(
-                        incomeReceivablesSummaryProvider(
-                          widget.periodId,
-                        ),
+                        incomeReceivablesProvider(widget.periodId),
                       );
                     },
                   ),
-                  data: (summary) {
-                    return recognitionSummaryAsync.when(
-                      loading: () => const Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                      error: (_, __) => _ErrorView(
-                        message:
-                        'خلاصه درآمد شناسایی‌شده دریافت نشد.',
+              data: (receivables) {
+                return summaryAsync.when(
+                  loading:
+                      () => const Center(child: CircularProgressIndicator()),
+                  error:
+                      (_, __) => _ErrorView(
+                        message: 'خلاصه دریافتنی‌ها دریافت نشد.',
                         onRetry: () {
                           ref.invalidate(
-                            incomeRecognitionSummaryProvider(
-                              widget.periodId,
-                            ),
+                            incomeReceivablesSummaryProvider(widget.periodId),
                           );
                         },
                       ),
+                  data: (summary) {
+                    return recognitionSummaryAsync.when(
+                      loading:
+                          () =>
+                              const Center(child: CircularProgressIndicator()),
+                      error:
+                          (_, __) => _ErrorView(
+                            message: 'خلاصه درآمد شناسایی‌شده دریافت نشد.',
+                            onRetry: () {
+                              ref.invalidate(
+                                incomeRecognitionSummaryProvider(
+                                  widget.periodId,
+                                ),
+                              );
+                            },
+                          ),
                       data: (recognitionSummary) {
                         return _buildContent(
                           period: period,
                           receivables: receivables,
                           summary: summary,
-                          recognizedTotal:
-                          recognitionSummary.total,
+                          recognizedTotal: recognitionSummary.total,
                         );
                       },
                     );
@@ -638,31 +599,23 @@ class _IncomeReceivablesPageState
     final receivedDocuments = summary.receivedDocuments;
     final remainingReceivable = summary.remaining;
 
-    final remainingRecognized =
-        recognizedTotal - receivablesTotal;
+    final remainingRecognized = recognizedTotal - receivablesTotal;
 
     final width = MediaQuery.sizeOf(context).width;
 
-    final horizontalPadding = width >= 1200
-        ? 32.0
-        : width >= 700
-        ? 24.0
-        : 16.0;
+    final horizontalPadding =
+        width >= 1200
+            ? 32.0
+            : width >= 700
+            ? 24.0
+            : 16.0;
 
     return RefreshIndicator(
       onRefresh: () async {
-        ref.invalidate(
-          incomeFiscalPeriodProvider(widget.periodId),
-        );
-        ref.invalidate(
-          incomeReceivablesProvider(widget.periodId),
-        );
-        ref.invalidate(
-          incomeReceivablesSummaryProvider(widget.periodId),
-        );
-        ref.invalidate(
-          incomeRecognitionSummaryProvider(widget.periodId),
-        );
+        ref.invalidate(incomeFiscalPeriodProvider(widget.periodId));
+        ref.invalidate(incomeReceivablesProvider(widget.periodId));
+        ref.invalidate(incomeReceivablesSummaryProvider(widget.periodId));
+        ref.invalidate(incomeRecognitionSummaryProvider(widget.periodId));
       },
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -673,10 +626,7 @@ class _IncomeReceivablesPageState
           32,
         ),
         children: [
-          _Header(
-            period: period,
-            isClosed: isClosed,
-          ),
+          _Header(period: period, isClosed: isClosed),
           const SizedBox(height: 18),
           _SummarySection(
             recognizedTotal: recognizedTotal,
@@ -694,13 +644,13 @@ class _IncomeReceivablesPageState
             Align(
               alignment: Alignment.centerLeft,
               child: FilledButton.icon(
-                onPressed: _saving
-                    ? null
-                    : () => _showReceivableDialog(
-                  recognizedTotal: recognizedTotal,
-                  currentReceivablesTotal:
-                  receivablesTotal,
-                ),
+                onPressed:
+                    _saving
+                        ? null
+                        : () => _showReceivableDialog(
+                          recognizedTotal: recognizedTotal,
+                          currentReceivablesTotal: receivablesTotal,
+                        ),
                 icon: const Icon(Icons.add_rounded),
                 label: const Text('ثبت دریافتنی جدید'),
               ),
@@ -709,25 +659,25 @@ class _IncomeReceivablesPageState
           if (receivables.isEmpty)
             _EmptyReceivables(
               isClosed: isClosed,
-              onAdd: isClosed
-                  ? null
-                  : () => _showReceivableDialog(
-                recognizedTotal: recognizedTotal,
-                currentReceivablesTotal:
-                receivablesTotal,
-              ),
+              onAdd:
+                  isClosed
+                      ? null
+                      : () => _showReceivableDialog(
+                        recognizedTotal: recognizedTotal,
+                        currentReceivablesTotal: receivablesTotal,
+                      ),
             )
           else
             _ReceivablesList(
               rows: receivables,
               isClosed: isClosed,
               saving: _saving,
-              onEdit: (row) => _showReceivableDialog(
-                existing: row,
-                recognizedTotal: recognizedTotal,
-                currentReceivablesTotal:
-                receivablesTotal,
-              ),
+              onEdit:
+                  (row) => _showReceivableDialog(
+                    existing: row,
+                    recognizedTotal: recognizedTotal,
+                    currentReceivablesTotal: receivablesTotal,
+                  ),
               onDelete: _deleteReceivable,
             ),
           const SizedBox(height: 22),
@@ -750,10 +700,7 @@ class _Header extends StatelessWidget {
   final Map<String, dynamic> period;
   final bool isClosed;
 
-  const _Header({
-    required this.period,
-    required this.isClosed,
-  });
+  const _Header({required this.period, required this.isClosed});
 
   @override
   Widget build(BuildContext context) {
@@ -767,10 +714,7 @@ class _Header extends StatelessWidget {
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: Theme.of(context)
-              .colorScheme
-              .outline
-              .withValues(alpha: .12),
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: .12),
         ),
       ),
       child: Row(
@@ -779,10 +723,9 @@ class _Header extends StatelessWidget {
             width: 54,
             height: 54,
             decoration: BoxDecoration(
-              color: Theme.of(context)
-                  .colorScheme
-                  .primary
-                  .withValues(alpha: .10),
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: .10),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(
@@ -798,35 +741,22 @@ class _Header extends StatelessWidget {
               children: [
                 Text(
                   'حساب‌های دریافتنی',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleLarge
-                      ?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
                 ),
                 const SizedBox(height: 5),
                 Text(
                   title,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurfaceVariant,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
                 if (year.isNotEmpty || month.isNotEmpty)
                   Text(
                     'سال $year • ماه $month',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurfaceVariant,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
               ],
@@ -857,7 +787,7 @@ class _SummarySection extends StatelessWidget {
     if (value == value.roundToDouble()) {
       return value.toInt().toString().replaceAllMapped(
         RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-            (match) => '${match.group(1)},',
+        (match) => '${match.group(1)},',
       );
     }
 
@@ -902,8 +832,7 @@ class _SummarySection extends StatelessWidget {
             children: [
               for (int i = 0; i < items.length; i++) ...[
                 items[i],
-                if (i != items.length - 1)
-                  const SizedBox(height: 12),
+                if (i != items.length - 1) const SizedBox(height: 12),
               ],
             ],
           );
@@ -913,8 +842,7 @@ class _SummarySection extends StatelessWidget {
           children: [
             for (int i = 0; i < items.length; i++) ...[
               Expanded(child: items[i]),
-              if (i != items.length - 1)
-                const SizedBox(width: 12),
+              if (i != items.length - 1) const SizedBox(width: 12),
             ],
           ],
         );
@@ -936,7 +864,7 @@ class _FlowBanner extends StatelessWidget {
     if (value == value.roundToDouble()) {
       return value.toInt().toString().replaceAllMapped(
         RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-            (match) => '${match.group(1)},',
+        (match) => '${match.group(1)},',
       );
     }
 
@@ -951,16 +879,12 @@ class _FlowBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Theme.of(context)
-            .colorScheme
-            .surfaceContainerHighest
-            .withValues(alpha: .45),
+        color: Theme.of(
+          context,
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: .45),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: Theme.of(context)
-              .colorScheme
-              .outline
-              .withValues(alpha: .10),
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: .10),
         ),
       ),
       child: Row(
@@ -969,9 +893,10 @@ class _FlowBanner extends StatelessWidget {
             hasDifference
                 ? Icons.info_outline_rounded
                 : Icons.check_circle_outline_rounded,
-            color: hasDifference
-                ? Theme.of(context).colorScheme.primary
-                : Colors.green,
+            color:
+                hasDifference
+                    ? Theme.of(context).colorScheme.primary
+                    : Colors.green,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -981,12 +906,9 @@ class _FlowBanner extends StatelessWidget {
                   : hasDifference
                   ? 'از درآمد شناسایی‌شده، ${_format(difference)} ریال هنوز در دریافتنی‌ها ثبت نشده است.'
                   : 'مجموع دریافتنی‌ها با درآمد شناسایی‌شده این ماه پوشش داده شده است.',
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
             ),
           ),
         ],
@@ -1017,14 +939,12 @@ class _ReceivablesList extends StatelessWidget {
   }
 
   String _money(double value) {
-    final text = value == value.roundToDouble()
-        ? value.toInt().toString()
-        : value.toString();
+    final text =
+        value == value.roundToDouble()
+            ? value.toInt().toString()
+            : value.toString();
 
-    return '${text.replaceAllMapped(
-      RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-          (match) => '${match.group(1)},',
-    )} ریال';
+    return '${text.replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (match) => '${match.group(1)},')} ریال';
   }
 
   @override
@@ -1033,20 +953,21 @@ class _ReceivablesList extends StatelessWidget {
       builder: (context, constraints) {
         if (constraints.maxWidth < 760) {
           return Column(
-            children: rows
-                .map(
-                  (row) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _ReceivableCard(
-                  row: row,
-                  isClosed: isClosed,
-                  saving: saving,
-                  onEdit: () => onEdit(row),
-                  onDelete: () => onDelete(row),
-                ),
-              ),
-            )
-                .toList(),
+            children:
+                rows
+                    .map(
+                      (row) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: _ReceivableCard(
+                          row: row,
+                          isClosed: isClosed,
+                          saving: saving,
+                          onEdit: () => onEdit(row),
+                          onDelete: () => onDelete(row),
+                        ),
+                      ),
+                    )
+                    .toList(),
           );
         }
 
@@ -1055,10 +976,9 @@ class _ReceivablesList extends StatelessWidget {
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: Theme.of(context)
-                  .colorScheme
-                  .outline
-                  .withValues(alpha: .12),
+              color: Theme.of(
+                context,
+              ).colorScheme.outline.withValues(alpha: .12),
             ),
           ),
           child: SingleChildScrollView(
@@ -1073,60 +993,60 @@ class _ReceivablesList extends StatelessWidget {
                 DataColumn(label: Text('توضیحات')),
                 DataColumn(label: Text('عملیات')),
               ],
-              rows: rows.map((row) {
-                final amount = _toDouble(row['amount']);
-                final received =
-                _toDouble(row['received_documents_amount']);
+              rows:
+                  rows.map((row) {
+                    final amount = _toDouble(row['amount']);
+                    final received = _toDouble(
+                      row['received_documents_amount'],
+                    );
 
-                final remaining =
-                (amount - received).clamp(0, double.infinity);
+                    final remaining = (amount - received).clamp(
+                      0,
+                      double.infinity,
+                    );
 
-                return DataRow(
-                  cells: [
-                    DataCell(
-                      Text(row['title']?.toString() ?? ''),
-                    ),
-                    DataCell(Text(_money(amount))),
-                    DataCell(Text(_money(received))),
-                    DataCell(
-                      Text(_money(remaining.toDouble())),
-                    ),
-                    DataCell(
-                      SizedBox(
-                        width: 220,
-                        child: Text(
-                          row['description']?.toString() ?? '-',
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ),
-                    DataCell(
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            tooltip: 'ویرایش',
-                            onPressed: isClosed || saving
-                                ? null
-                                : () => onEdit(row),
-                            icon: const Icon(Icons.edit_rounded),
-                          ),
-                          IconButton(
-                            tooltip: 'حذف',
-                            onPressed: isClosed || saving
-                                ? null
-                                : () => onDelete(row),
-                            icon: const Icon(
-                              Icons.delete_outline_rounded,
+                    return DataRow(
+                      cells: [
+                        DataCell(Text(row['title']?.toString() ?? '')),
+                        DataCell(Text(_money(amount))),
+                        DataCell(Text(_money(received))),
+                        DataCell(Text(_money(remaining.toDouble()))),
+                        DataCell(
+                          SizedBox(
+                            width: 220,
+                            child: Text(
+                              row['description']?.toString() ?? '-',
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                  ],
-                );
-              }).toList(),
+                        ),
+                        DataCell(
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                tooltip: 'ویرایش',
+                                onPressed:
+                                    isClosed || saving
+                                        ? null
+                                        : () => onEdit(row),
+                                icon: const Icon(Icons.edit_rounded),
+                              ),
+                              IconButton(
+                                tooltip: 'حذف',
+                                onPressed:
+                                    isClosed || saving
+                                        ? null
+                                        : () => onDelete(row),
+                                icon: const Icon(Icons.delete_outline_rounded),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  }).toList(),
             ),
           ),
         );
@@ -1157,24 +1077,20 @@ class _ReceivableCard extends StatelessWidget {
   }
 
   String _money(double value) {
-    final text = value == value.roundToDouble()
-        ? value.toInt().toString()
-        : value.toString();
+    final text =
+        value == value.roundToDouble()
+            ? value.toInt().toString()
+            : value.toString();
 
-    return '${text.replaceAllMapped(
-      RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-          (match) => '${match.group(1)},',
-    )} ریال';
+    return '${text.replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (match) => '${match.group(1)},')} ریال';
   }
 
   @override
   Widget build(BuildContext context) {
     final amount = _toDouble(row['amount']);
-    final received =
-    _toDouble(row['received_documents_amount']);
+    final received = _toDouble(row['received_documents_amount']);
 
-    final remaining =
-    (amount - received).clamp(0, double.infinity);
+    final remaining = (amount - received).clamp(0, double.infinity);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1182,10 +1098,7 @@ class _ReceivableCard extends StatelessWidget {
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: Theme.of(context)
-              .colorScheme
-              .outline
-              .withValues(alpha: .12),
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: .12),
         ),
       ),
       child: Column(
@@ -1196,10 +1109,7 @@ class _ReceivableCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   row['title']?.toString() ?? '',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -1214,48 +1124,30 @@ class _ReceivableCard extends StatelessWidget {
                       onDelete();
                     }
                   },
-                  itemBuilder: (context) => const [
-                    PopupMenuItem(
-                      value: 'edit',
-                      child: Text('ویرایش'),
-                    ),
-                    PopupMenuItem(
-                      value: 'delete',
-                      child: Text('حذف'),
-                    ),
-                  ],
+                  itemBuilder:
+                      (context) => const [
+                        PopupMenuItem(value: 'edit', child: Text('ویرایش')),
+                        PopupMenuItem(value: 'delete', child: Text('حذف')),
+                      ],
                 ),
             ],
           ),
           const SizedBox(height: 14),
-          _InfoLine(
-            title: 'مبلغ دریافتنی',
-            value: _money(amount),
-          ),
+          _InfoLine(title: 'مبلغ دریافتنی', value: _money(amount)),
           const SizedBox(height: 8),
-          _InfoLine(
-            title: 'اسناد دریافت‌شده',
-            value: _money(received),
-          ),
+          _InfoLine(title: 'اسناد دریافت‌شده', value: _money(received)),
           const SizedBox(height: 8),
           _InfoLine(
             title: 'مانده',
             value: _money(remaining.toDouble()),
             bold: true,
           ),
-          if ((row['description']?.toString() ?? '')
-              .trim()
-              .isNotEmpty) ...[
+          if ((row['description']?.toString() ?? '').trim().isNotEmpty) ...[
             const SizedBox(height: 12),
             Text(
               row['description'].toString(),
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(
-                color: Theme.of(context)
-                    .colorScheme
-                    .onSurfaceVariant,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -1283,24 +1175,15 @@ class _InfoLine extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(
-              color: Theme.of(context)
-                  .colorScheme
-                  .onSurfaceVariant,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
         ),
         Text(
           value,
-          style: Theme.of(context)
-              .textTheme
-              .bodyMedium
-              ?.copyWith(
-            fontWeight:
-            bold ? FontWeight.w800 : FontWeight.w600,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            fontWeight: bold ? FontWeight.w800 : FontWeight.w600,
           ),
         ),
       ],
@@ -1327,10 +1210,7 @@ class _SummaryItem extends StatelessWidget {
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: Theme.of(context)
-              .colorScheme
-              .outline
-              .withValues(alpha: .12),
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: .12),
         ),
       ),
       child: Row(
@@ -1339,16 +1219,12 @@ class _SummaryItem extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: Theme.of(context)
-                  .colorScheme
-                  .primary
-                  .withValues(alpha: .10),
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: .10),
               borderRadius: BorderRadius.circular(13),
             ),
-            child: Icon(
-              icon,
-              color: Theme.of(context).colorScheme.primary,
-            ),
+            child: Icon(icon, color: Theme.of(context).colorScheme.primary),
           ),
           const SizedBox(width: 11),
           Expanded(
@@ -1357,13 +1233,8 @@ class _SummaryItem extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurfaceVariant,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -1371,12 +1242,9 @@ class _SummaryItem extends StatelessWidget {
                   value,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleSmall
-                      ?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
                 ),
               ],
             ),
@@ -1391,10 +1259,7 @@ class _EmptyReceivables extends StatelessWidget {
   final bool isClosed;
   final VoidCallback? onAdd;
 
-  const _EmptyReceivables({
-    required this.isClosed,
-    required this.onAdd,
-  });
+  const _EmptyReceivables({required this.isClosed, required this.onAdd});
 
   @override
   Widget build(BuildContext context) {
@@ -1404,10 +1269,7 @@ class _EmptyReceivables extends StatelessWidget {
         color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: Theme.of(context)
-              .colorScheme
-              .outline
-              .withValues(alpha: .12),
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: .12),
         ),
       ),
       child: Column(
@@ -1415,20 +1277,15 @@ class _EmptyReceivables extends StatelessWidget {
           Icon(
             Icons.request_quote_outlined,
             size: 48,
-            color: Theme.of(context)
-                .colorScheme
-                .onSurfaceVariant,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
           const SizedBox(height: 12),
           Text(
             'هنوز حساب دریافتنی برای این ماه ثبت نشده است.',
             textAlign: TextAlign.center,
-            style: Theme.of(context)
-                .textTheme
-                .titleMedium
-                ?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
           if (!isClosed && onAdd != null) ...[
             const SizedBox(height: 16),
@@ -1447,21 +1304,17 @@ class _EmptyReceivables extends StatelessWidget {
 class _StatusChip extends StatelessWidget {
   final bool closed;
 
-  const _StatusChip({
-    required this.closed,
-  });
+  const _StatusChip({required this.closed});
 
   @override
   Widget build(BuildContext context) {
-    final color = closed
-        ? Theme.of(context).colorScheme.error
-        : Theme.of(context).colorScheme.primary;
+    final color =
+        closed
+            ? Theme.of(context).colorScheme.error
+            : Theme.of(context).colorScheme.primary;
 
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 11,
-        vertical: 7,
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
       decoration: BoxDecoration(
         color: color.withValues(alpha: .09),
         borderRadius: BorderRadius.circular(10),
@@ -1470,19 +1323,14 @@ class _StatusChip extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
-            closed
-                ? Icons.lock_rounded
-                : Icons.lock_open_rounded,
+            closed ? Icons.lock_rounded : Icons.lock_open_rounded,
             size: 16,
             color: color,
           ),
           const SizedBox(width: 5),
           Text(
             closed ? 'بسته' : 'باز',
-            style: Theme.of(context)
-                .textTheme
-                .labelMedium
-                ?.copyWith(
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
               color: color,
               fontWeight: FontWeight.w800,
             ),
@@ -1497,10 +1345,7 @@ class _ErrorView extends StatelessWidget {
   final String message;
   final VoidCallback? onRetry;
 
-  const _ErrorView({
-    required this.message,
-    this.onRetry,
-  });
+  const _ErrorView({required this.message, this.onRetry});
 
   @override
   Widget build(BuildContext context) {
@@ -1516,10 +1361,7 @@ class _ErrorView extends StatelessWidget {
               color: Theme.of(context).colorScheme.error,
             ),
             const SizedBox(height: 12),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-            ),
+            Text(message, textAlign: TextAlign.center),
             if (onRetry != null) ...[
               const SizedBox(height: 16),
               OutlinedButton.icon(
