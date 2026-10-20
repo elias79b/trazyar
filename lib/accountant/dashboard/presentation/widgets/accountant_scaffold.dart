@@ -402,7 +402,7 @@ class _AccountantScaffoldState
                       ),
                       _subMenuItem(
                         context,
-                        title: 'حساب های پرداختنی',
+                        title: 'حساب های دریافتنی',
                         route: '/accountant/income/receivables',
                       ),
                       _subMenuItem(
