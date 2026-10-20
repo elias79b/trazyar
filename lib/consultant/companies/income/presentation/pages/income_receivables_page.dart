@@ -1,10 +1,10 @@
+
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:tarazyar/consultant/companies/income/application/income_dashboard_provider.dart';
-import 'package:tarazyar/consultant/companies/income/data/income_fiscal_provider.dart';
+import 'package:tarazyar/consultant/companies/income/data/income_receivable_fiscal_provider.dart';
 import 'package:tarazyar/consultant/companies/income/data/income_recognition_provider.dart';
 import 'package:tarazyar/consultant/companies/income/data/income_receivables_provider.dart';
 import 'package:tarazyar/consultant/dashboard/presentation/widgets/company_scaffold.dart';
@@ -35,32 +35,32 @@ class _IncomeReceivablesPageState extends ConsumerState<IncomeReceivablesPage> {
     }
 
     return double.tryParse(
-          value
-              .toString()
-              .replaceAll(',', '')
-              .replaceAll('٬', '')
-              .replaceAll(' ', '')
-              .replaceAll('۰', '0')
-              .replaceAll('۱', '1')
-              .replaceAll('۲', '2')
-              .replaceAll('۳', '3')
-              .replaceAll('۴', '4')
-              .replaceAll('۵', '5')
-              .replaceAll('۶', '6')
-              .replaceAll('۷', '7')
-              .replaceAll('۸', '8')
-              .replaceAll('۹', '9')
-              .replaceAll('٠', '0')
-              .replaceAll('١', '1')
-              .replaceAll('٢', '2')
-              .replaceAll('٣', '3')
-              .replaceAll('٤', '4')
-              .replaceAll('٥', '5')
-              .replaceAll('٦', '6')
-              .replaceAll('٧', '7')
-              .replaceAll('٨', '8')
-              .replaceAll('٩', '9'),
-        ) ??
+      value
+          .toString()
+          .replaceAll(',', '')
+          .replaceAll('٬', '')
+          .replaceAll(' ', '')
+          .replaceAll('۰', '0')
+          .replaceAll('۱', '1')
+          .replaceAll('۲', '2')
+          .replaceAll('۳', '3')
+          .replaceAll('۴', '4')
+          .replaceAll('۵', '5')
+          .replaceAll('۶', '6')
+          .replaceAll('۷', '7')
+          .replaceAll('۸', '8')
+          .replaceAll('۹', '9')
+          .replaceAll('٠', '0')
+          .replaceAll('١', '1')
+          .replaceAll('٢', '2')
+          .replaceAll('٣', '3')
+          .replaceAll('٤', '4')
+          .replaceAll('٥', '5')
+          .replaceAll('٦', '6')
+          .replaceAll('٧', '7')
+          .replaceAll('٨', '8')
+          .replaceAll('٩', '9'),
+    ) ??
         0;
   }
 
@@ -68,7 +68,7 @@ class _IncomeReceivablesPageState extends ConsumerState<IncomeReceivablesPage> {
     if (value == value.roundToDouble()) {
       return value.toInt().toString().replaceAllMapped(
         RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-        (match) => '${match.group(1)},',
+            (match) => '${match.group(1)},',
       );
     }
 
@@ -109,390 +109,145 @@ class _IncomeReceivablesPageState extends ConsumerState<IncomeReceivablesPage> {
     return 'عملیات انجام نشد. دوباره تلاش کنید.';
   }
 
-  Future<void> _showReceivableDialog({
-    Map<String, dynamic>? existing,
-    required double recognizedTotal,
-    required double currentReceivablesTotal,
-  }) async {
-    final period =
-        ref.read(incomeFiscalPeriodProvider(widget.periodId)).valueOrNull;
-
-    if (period?['status']?.toString() == 'closed') {
-      _message('این دوره بسته شده و امکان ثبت دریافتنی وجود ندارد.');
+  Future<void> _approveReceivable(Map<String, dynamic> row) async {
+    if (row['status']?.toString() != 'submitted_to_consultant') {
+      _message('این حساب در انتظار بررسی مشاور نیست.');
       return;
     }
 
-    final titleController = TextEditingController(
-      text: existing?['title']?.toString() ?? '',
-    );
-
-    final amountController = TextEditingController(
-      text:
-          existing == null ? '' : _formatAmount(_toDouble(existing['amount'])),
-    );
-
-    final receivedController = TextEditingController(
-      text:
-          existing == null
-              ? ''
-              : _formatAmount(_toDouble(existing['received_documents_amount'])),
-    );
-
-    final descriptionController = TextEditingController(
-      text: existing?['description']?.toString() ?? '',
-    );
-
-    try {
-      final result = await showDialog<bool>(
-        context: context,
-        barrierDismissible: false,
-        builder: (dialogContext) {
-          return StatefulBuilder(
-            builder: (context, setDialogState) {
-              final existingAmount =
-                  existing == null ? 0.0 : _toDouble(existing['amount']);
-
-              final currentWithoutExisting =
-                  currentReceivablesTotal - existingAmount;
-
-              final enteredAmount = _toDouble(amountController.text);
-
-              final projectedTotal = currentWithoutExisting + enteredAmount;
-
-              final exceedsRecognized =
-                  recognizedTotal > 0 && projectedTotal > recognizedTotal;
-
-              return Directionality(
-                textDirection: TextDirection.rtl,
-                child: AlertDialog(
-                  title: Text(
-                    existing == null
-                        ? 'ثبت حساب دریافتنی'
-                        : 'ویرایش حساب دریافتنی',
-                  ),
-                  content: SizedBox(
-                    width: 520,
-                    child: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          if (recognizedTotal > 0)
-                            Container(
-                              width: double.infinity,
-                              padding: const EdgeInsets.all(12),
-                              margin: const EdgeInsets.only(bottom: 14),
-                              decoration: BoxDecoration(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.primary.withValues(alpha: .07),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'درآمد شناسایی‌شده این ماه',
-                                    style:
-                                        Theme.of(context).textTheme.bodySmall,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    _money(recognizedTotal),
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.copyWith(fontWeight: FontWeight.w800),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          TextField(
-                            controller: titleController,
-                            textDirection: TextDirection.rtl,
-                            autofocus: true,
-                            decoration: const InputDecoration(
-                              labelText: 'عنوان دریافتنی',
-                              hintText: 'مثلاً مطالبات فروش فروردین',
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          TextField(
-                            controller: amountController,
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
-                            textDirection: TextDirection.ltr,
-                            textAlign: TextAlign.left,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(
-                                RegExp(r'[0-9۰-۹٠-٩,٬.]'),
-                              ),
-                            ],
-                            onChanged: (_) {
-                              setDialogState(() {});
-                            },
-                            decoration: const InputDecoration(
-                              labelText: 'مبلغ دریافتنی',
-                              suffixText: 'ریال',
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
-                          if (exceedsRecognized) ...[
-                            const SizedBox(height: 8),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: Text(
-                                'مجموع دریافتنی‌ها از درآمد شناسایی‌شده این ماه بیشتر می‌شود.',
-                                style: TextStyle(
-                                  color: Theme.of(context).colorScheme.error,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ],
-                          const SizedBox(height: 12),
-                          TextField(
-                            controller: receivedController,
-                            keyboardType: const TextInputType.numberWithOptions(
-                              decimal: true,
-                            ),
-                            textDirection: TextDirection.ltr,
-                            textAlign: TextAlign.left,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.allow(
-                                RegExp(r'[0-9۰-۹٠-٩,٬.]'),
-                              ),
-                            ],
-                            decoration: const InputDecoration(
-                              labelText: 'مبلغ اسناد دریافت‌شده',
-                              suffixText: 'ریال',
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          TextField(
-                            controller: descriptionController,
-                            textDirection: TextDirection.rtl,
-                            maxLines: 3,
-                            decoration: const InputDecoration(
-                              labelText: 'توضیحات',
-                              hintText: 'اختیاری',
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(dialogContext).pop(false),
-                      child: const Text('انصراف'),
-                    ),
-                    FilledButton.icon(
-                      onPressed: () {
-                        final title = titleController.text.trim();
-                        final amount = _toDouble(amountController.text);
-                        final received = _toDouble(receivedController.text);
-
-                        if (title.isEmpty) {
-                          _message('عنوان دریافتنی را وارد کنید.');
-                          return;
-                        }
-
-                        if (amount <= 0) {
-                          _message('مبلغ دریافتنی باید بیشتر از صفر باشد.');
-                          return;
-                        }
-
-                        if (received < 0) {
-                          _message(
-                            'مبلغ اسناد دریافت‌شده نمی‌تواند منفی باشد.',
-                          );
-                          return;
-                        }
-
-                        if (received > amount) {
-                          _message(
-                            'مبلغ اسناد دریافت‌شده نمی‌تواند بیشتر از مبلغ دریافتنی باشد.',
-                          );
-                          return;
-                        }
-
-                        Navigator.of(dialogContext).pop(true);
-                      },
-                      icon: const Icon(Icons.save_rounded),
-                      label: const Text('ذخیره'),
-                    ),
-                  ],
-                ),
-              );
-            },
-          );
-        },
-      );
-
-      if (result != true) return;
-
-      final title = titleController.text.trim();
-      final amount = _toDouble(amountController.text);
-      final received = _toDouble(receivedController.text);
-      final description = descriptionController.text.trim();
-
-      if (title.isEmpty || amount <= 0 || received < 0) {
-        return;
-      }
-
-      if (received > amount) {
-        _message(
-          'مبلغ اسناد دریافت‌شده نمی‌تواند بیشتر از مبلغ دریافتنی باشد.',
-        );
-        return;
-      }
-
-      final existingAmount =
-          existing == null ? 0.0 : _toDouble(existing['amount']);
-
-      final projectedTotal = currentReceivablesTotal - existingAmount + amount;
-
-      if (recognizedTotal > 0 && projectedTotal > recognizedTotal) {
-        final proceed = await showDialog<bool>(
-          context: context,
-          builder: (context) {
-            return Directionality(
-              textDirection: TextDirection.rtl,
-              child: AlertDialog(
-                title: const Text('مغایرت با درآمد شناسایی‌شده'),
-                content: Text(
-                  'مجموع دریافتنی‌ها پس از این ثبت برابر با '
-                  '${_money(projectedTotal)} می‌شود، در حالی که درآمد '
-                  'شناسایی‌شده این ماه ${_money(recognizedTotal)} است.\n\n'
-                  'آیا می‌خواهید با این مبلغ ادامه دهید؟',
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(false),
-                    child: const Text('انصراف'),
-                  ),
-                  FilledButton(
-                    onPressed: () => Navigator.of(context).pop(true),
-                    child: const Text('ادامه'),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-
-        if (proceed != true) return;
-      }
-
-      setState(() => _saving = true);
-
-      try {
-        if (existing == null) {
-          await IncomeReceivablesService.saveReceivable(
-            companyId: widget.companyId,
-            fiscalPeriodId: widget.periodId,
-            title: title,
-            amount: amount,
-            receivedDocumentsAmount: received,
-            description: description.isEmpty ? null : description,
-          );
-        } else {
-          await IncomeReceivablesService.updateReceivable(
-            id: existing['id'].toString(),
-            title: title,
-            amount: amount,
-            receivedDocumentsAmount: received,
-            description: description.isEmpty ? null : description,
-          );
-        }
-
-        ref.invalidate(incomeReceivablesProvider(widget.periodId));
-        ref.invalidate(incomeReceivablesSummaryProvider(widget.periodId));
-        ref.invalidate(incomeDashboardProvider(widget.companyId));
-
-        if (mounted) {
-          _message(
-            existing == null
-                ? 'حساب دریافتنی ثبت شد.'
-                : 'حساب دریافتنی ویرایش شد.',
-          );
-        }
-      } catch (e) {
-        if (mounted) {
-          _message(_friendlyError(e));
-        }
-      } finally {
-        if (mounted) {
-          setState(() => _saving = false);
-        }
-      }
-    } finally {
-      titleController.dispose();
-      amountController.dispose();
-      receivedController.dispose();
-      descriptionController.dispose();
-    }
-  }
-
-  Future<void> _deleteReceivable(Map<String, dynamic> row) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) {
-        return Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            title: const Text('حذف دریافتنی'),
-            content: Text(
-              'آیا از حذف «${row['title']?.toString() ?? ''}» مطمئن هستید؟',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('انصراف'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                child: const Text('حذف'),
-              ),
-            ],
+      builder: (dialogContext) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          title: const Text('تأیید حساب دریافتنی'),
+          content: Text(
+            'آیا حساب «${row['title']?.toString() ?? ''}» را تأیید می‌کنید؟',
           ),
-        );
-      },
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('انصراف'),
+            ),
+            FilledButton.icon(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              icon: const Icon(Icons.check_circle_outline),
+              label: const Text('تأیید'),
+            ),
+          ],
+        ),
+      ),
     );
 
-    if (confirmed != true) return;
+    if (confirmed != true || !mounted) return;
 
+    setState(() => _saving = true);
     try {
-      setState(() => _saving = true);
-
-      await IncomeReceivablesService.deleteReceivable(row['id'].toString());
+      await IncomeReceivablesService.approveByConsultant(
+        receivableId: row['id'].toString(),
+      );
 
       ref.invalidate(incomeReceivablesProvider(widget.periodId));
       ref.invalidate(incomeReceivablesSummaryProvider(widget.periodId));
       ref.invalidate(incomeDashboardProvider(widget.companyId));
 
-      if (mounted) {
-        _message('دریافتنی حذف شد.');
-      }
-    } catch (e) {
-      if (mounted) {
-        _message(_friendlyError(e));
+      _message('حساب دریافتنی تأیید شد.');
+    } catch (error) {
+      _message(_friendlyError(error));
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _returnReceivable(Map<String, dynamic> row) async {
+    if (row['status']?.toString() != 'submitted_to_consultant') {
+      _message('این حساب در انتظار بررسی مشاور نیست.');
+      return;
+    }
+
+    final noteController = TextEditingController();
+    try {
+      final note = await showDialog<String>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => Directionality(
+          textDirection: TextDirection.rtl,
+          child: AlertDialog(
+            title: const Text('برگشت حساب دریافتنی'),
+            content: SizedBox(
+              width: 440,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'علت برگشت حساب «${row['title']?.toString() ?? ''}» را وارد کنید.',
+                  ),
+                  const SizedBox(height: 14),
+                  TextField(
+                    controller: noteController,
+                    autofocus: true,
+                    maxLines: 3,
+                    textDirection: TextDirection.rtl,
+                    decoration: const InputDecoration(
+                      labelText: 'علت برگشت',
+                      hintText: 'توضیح دهید چه چیزی باید اصلاح شود',
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('انصراف'),
+              ),
+              FilledButton.icon(
+                onPressed: () {
+                  final value = noteController.text.trim();
+                  if (value.isEmpty) {
+                    ScaffoldMessenger.of(dialogContext).showSnackBar(
+                      const SnackBar(content: Text('علت برگشت را وارد کنید.')),
+                    );
+                    return;
+                  }
+                  Navigator.of(dialogContext).pop(value);
+                },
+                icon: const Icon(Icons.undo_rounded),
+                label: const Text('برگشت به اصلاح'),
+              ),
+            ],
+          ),
+        ),
+      );
+
+      if (note == null || note.trim().isEmpty || !mounted) return;
+
+      setState(() => _saving = true);
+      try {
+        await IncomeReceivablesService.returnByConsultant(
+          receivableId: row['id'].toString(),
+          note: note.trim(),
+        );
+
+        ref.invalidate(incomeReceivablesProvider(widget.periodId));
+        ref.invalidate(incomeReceivablesSummaryProvider(widget.periodId));
+        ref.invalidate(incomeDashboardProvider(widget.companyId));
+
+        _message('حساب برای اصلاح برگشت داده شد.');
+      } catch (error) {
+        _message(_friendlyError(error));
+      } finally {
+        if (mounted) setState(() => _saving = false);
       }
     } finally {
-      if (mounted) {
-        setState(() => _saving = false);
-      }
+      noteController.dispose();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final periodAsync = ref.watch(incomeFiscalPeriodProvider(widget.periodId));
+    final periodAsync = ref.watch(incomeReceivableFiscalPeriodProvider(widget.periodId));
 
     final receivablesAsync = ref.watch(
       incomeReceivablesProvider(widget.periodId),
@@ -509,7 +264,7 @@ class _IncomeReceivablesPageState extends ConsumerState<IncomeReceivablesPage> {
     return CompanyScaffold(
       companyId: widget.companyId,
       currentRoute:
-          '/consultant/companies/${widget.companyId}/income/receivables/${widget.periodId}',
+      '/consultant/companies/${widget.companyId}/income/receivables/${widget.periodId}',
       title: 'حساب‌های دریافتنی',
       body: Directionality(
         textDirection: TextDirection.rtl,
@@ -517,56 +272,66 @@ class _IncomeReceivablesPageState extends ConsumerState<IncomeReceivablesPage> {
           loading: () => const Center(child: CircularProgressIndicator()),
           error:
               (_, __) => _ErrorView(
-                message: 'اطلاعات دوره دریافت نشد.',
-                onRetry: () {
-                  ref.invalidate(incomeFiscalPeriodProvider(widget.periodId));
-                },
-              ),
+            message: 'اطلاعات دوره دریافت نشد.',
+            onRetry: () {
+              ref.invalidate(incomeReceivableFiscalPeriodProvider(widget.periodId));
+            },
+          ),
           data: (period) {
             if (period == null) {
-              return const _ErrorView(message: 'دوره درآمد پیدا نشد.');
+              // آدرس‌های قدیمی ممکن است شناسه income_fiscal_periods را
+              // بفرستند؛ اما صفحه جدید به دوره‌های اختصاصی دریافتنی متصل است.
+              // در این حالت کاربر را به فهرست سال‌های مالی دریافتنی هدایت می‌کنیم.
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (context.mounted) {
+                  context.go(
+                    '/consultant/companies/${widget.companyId}/income/receivables',
+                  );
+                }
+              });
+              return const Center(child: CircularProgressIndicator());
             }
 
             return receivablesAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error:
                   (_, __) => _ErrorView(
-                    message: 'اطلاعات دریافتنی‌ها دریافت نشد.',
-                    onRetry: () {
-                      ref.invalidate(
-                        incomeReceivablesProvider(widget.periodId),
-                      );
-                    },
-                  ),
+                message: 'اطلاعات دریافتنی‌ها دریافت نشد.',
+                onRetry: () {
+                  ref.invalidate(
+                    incomeReceivablesProvider(widget.periodId),
+                  );
+                },
+              ),
               data: (receivables) {
                 return summaryAsync.when(
                   loading:
                       () => const Center(child: CircularProgressIndicator()),
                   error:
                       (_, __) => _ErrorView(
-                        message: 'خلاصه دریافتنی‌ها دریافت نشد.',
-                        onRetry: () {
-                          ref.invalidate(
-                            incomeReceivablesSummaryProvider(widget.periodId),
-                          );
-                        },
-                      ),
+                    message: 'خلاصه دریافتنی‌ها دریافت نشد.',
+                    onRetry: () {
+                      ref.invalidate(
+                        incomeReceivablesSummaryProvider(widget.periodId),
+                      );
+                    },
+                  ),
                   data: (summary) {
                     return recognitionSummaryAsync.when(
                       loading:
                           () =>
-                              const Center(child: CircularProgressIndicator()),
+                      const Center(child: CircularProgressIndicator()),
                       error:
                           (_, __) => _ErrorView(
-                            message: 'خلاصه درآمد شناسایی‌شده دریافت نشد.',
-                            onRetry: () {
-                              ref.invalidate(
-                                incomeRecognitionSummaryProvider(
-                                  widget.periodId,
-                                ),
-                              );
-                            },
-                          ),
+                        message: 'خلاصه درآمد شناسایی‌شده دریافت نشد.',
+                        onRetry: () {
+                          ref.invalidate(
+                            incomeRecognitionSummaryProvider(
+                              widget.periodId,
+                            ),
+                          );
+                        },
+                      ),
                       data: (recognitionSummary) {
                         return _buildContent(
                           period: period,
@@ -599,20 +364,18 @@ class _IncomeReceivablesPageState extends ConsumerState<IncomeReceivablesPage> {
     final receivedDocuments = summary.receivedDocuments;
     final remainingReceivable = summary.remaining;
 
-    final remainingRecognized = recognizedTotal - receivablesTotal;
-
     final width = MediaQuery.sizeOf(context).width;
 
     final horizontalPadding =
-        width >= 1200
-            ? 32.0
-            : width >= 700
-            ? 24.0
-            : 16.0;
+    width >= 1200
+        ? 32.0
+        : width >= 700
+        ? 24.0
+        : 16.0;
 
     return RefreshIndicator(
       onRefresh: () async {
-        ref.invalidate(incomeFiscalPeriodProvider(widget.periodId));
+        ref.invalidate(incomeReceivableFiscalPeriodProvider(widget.periodId));
         ref.invalidate(incomeReceivablesProvider(widget.periodId));
         ref.invalidate(incomeReceivablesSummaryProvider(widget.periodId));
         ref.invalidate(incomeRecognitionSummaryProvider(widget.periodId));
@@ -640,45 +403,14 @@ class _IncomeReceivablesPageState extends ConsumerState<IncomeReceivablesPage> {
             receivablesTotal: receivablesTotal,
           ),
           const SizedBox(height: 22),
-          if (!isClosed)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: FilledButton.icon(
-                onPressed:
-                    _saving
-                        ? null
-                        : () => _showReceivableDialog(
-                          recognizedTotal: recognizedTotal,
-                          currentReceivablesTotal: receivablesTotal,
-                        ),
-                icon: const Icon(Icons.add_rounded),
-                label: const Text('ثبت دریافتنی جدید'),
-              ),
-            ),
-          if (!isClosed) const SizedBox(height: 18),
           if (receivables.isEmpty)
-            _EmptyReceivables(
-              isClosed: isClosed,
-              onAdd:
-                  isClosed
-                      ? null
-                      : () => _showReceivableDialog(
-                        recognizedTotal: recognizedTotal,
-                        currentReceivablesTotal: receivablesTotal,
-                      ),
-            )
+            const _EmptyReceivables()
           else
             _ReceivablesList(
               rows: receivables,
-              isClosed: isClosed,
               saving: _saving,
-              onEdit:
-                  (row) => _showReceivableDialog(
-                    existing: row,
-                    recognizedTotal: recognizedTotal,
-                    currentReceivablesTotal: receivablesTotal,
-                  ),
-              onDelete: _deleteReceivable,
+              onApprove: _approveReceivable,
+              onReturn: _returnReceivable,
             ),
           const SizedBox(height: 22),
           OutlinedButton.icon(
@@ -787,7 +519,7 @@ class _SummarySection extends StatelessWidget {
     if (value == value.roundToDouble()) {
       return value.toInt().toString().replaceAllMapped(
         RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-        (match) => '${match.group(1)},',
+            (match) => '${match.group(1)},',
       );
     }
 
@@ -864,7 +596,7 @@ class _FlowBanner extends StatelessWidget {
     if (value == value.roundToDouble()) {
       return value.toInt().toString().replaceAllMapped(
         RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-        (match) => '${match.group(1)},',
+            (match) => '${match.group(1)},',
       );
     }
 
@@ -894,9 +626,9 @@ class _FlowBanner extends StatelessWidget {
                 ? Icons.info_outline_rounded
                 : Icons.check_circle_outline_rounded,
             color:
-                hasDifference
-                    ? Theme.of(context).colorScheme.primary
-                    : Colors.green,
+            hasDifference
+                ? Theme.of(context).colorScheme.primary
+                : Colors.green,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -919,17 +651,15 @@ class _FlowBanner extends StatelessWidget {
 
 class _ReceivablesList extends StatelessWidget {
   final List<Map<String, dynamic>> rows;
-  final bool isClosed;
   final bool saving;
-  final void Function(Map<String, dynamic>) onEdit;
-  final void Function(Map<String, dynamic>) onDelete;
+  final Future<void> Function(Map<String, dynamic>) onApprove;
+  final Future<void> Function(Map<String, dynamic>) onReturn;
 
   const _ReceivablesList({
     required this.rows,
-    required this.isClosed,
     required this.saving,
-    required this.onEdit,
-    required this.onDelete,
+    required this.onApprove,
+    required this.onReturn,
   });
 
   double _toDouble(dynamic value) {
@@ -939,220 +669,131 @@ class _ReceivablesList extends StatelessWidget {
   }
 
   String _money(double value) {
-    final text =
-        value == value.roundToDouble()
-            ? value.toInt().toString()
-            : value.toString();
-
+    final text = value == value.roundToDouble()
+        ? value.toInt().toString()
+        : value.toString();
     return '${text.replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (match) => '${match.group(1)},')} ریال';
+  }
+
+  String _statusLabel(String status) {
+    switch (status) {
+      case 'open':
+        return 'باز';
+      case 'submitted_to_company_admin':
+        return 'ارسال‌شده به مدیر شرکت';
+      case 'submitted_to_consultant':
+        return 'در انتظار بررسی مشاور';
+      case 'approved':
+        return 'تأییدشده';
+      case 'closed':
+        return 'بسته';
+      default:
+        return status.isEmpty ? 'نامشخص' : status;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth < 760) {
-          return Column(
-            children:
-                rows
-                    .map(
-                      (row) => Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: _ReceivableCard(
-                          row: row,
-                          isClosed: isClosed,
-                          saving: saving,
-                          onEdit: () => onEdit(row),
-                          onDelete: () => onDelete(row),
-                        ),
-                      ),
-                    )
-                    .toList(),
-          );
-        }
+    return Column(
+      children: rows.map((row) {
+        final amount = _toDouble(row['amount']);
+        final received = _toDouble(row['received_documents_amount']);
+        final remaining = (amount - received).clamp(0.0, double.infinity);
+        final status = row['status']?.toString() ?? '';
+        final canReview = status == 'submitted_to_consultant';
 
         return Container(
+          width: double.infinity,
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
             color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: Theme.of(
-                context,
-              ).colorScheme.outline.withValues(alpha: .12),
+              color: Theme.of(context).colorScheme.outline.withValues(alpha: .12),
             ),
           ),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: DataTable(
-              columnSpacing: 30,
-              columns: const [
-                DataColumn(label: Text('عنوان')),
-                DataColumn(label: Text('مبلغ')),
-                DataColumn(label: Text('اسناد دریافت‌شده')),
-                DataColumn(label: Text('مانده')),
-                DataColumn(label: Text('توضیحات')),
-                DataColumn(label: Text('عملیات')),
-              ],
-              rows:
-                  rows.map((row) {
-                    final amount = _toDouble(row['amount']);
-                    final received = _toDouble(
-                      row['received_documents_amount'],
-                    );
-
-                    final remaining = (amount - received).clamp(
-                      0,
-                      double.infinity,
-                    );
-
-                    return DataRow(
-                      cells: [
-                        DataCell(Text(row['title']?.toString() ?? '')),
-                        DataCell(Text(_money(amount))),
-                        DataCell(Text(_money(received))),
-                        DataCell(Text(_money(remaining.toDouble()))),
-                        DataCell(
-                          SizedBox(
-                            width: 220,
-                            child: Text(
-                              row['description']?.toString() ?? '-',
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ),
-                        DataCell(
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                tooltip: 'ویرایش',
-                                onPressed:
-                                    isClosed || saving
-                                        ? null
-                                        : () => onEdit(row),
-                                icon: const Icon(Icons.edit_rounded),
-                              ),
-                              IconButton(
-                                tooltip: 'حذف',
-                                onPressed:
-                                    isClosed || saving
-                                        ? null
-                                        : () => onDelete(row),
-                                icon: const Icon(Icons.delete_outline_rounded),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    );
-                  }).toList(),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _ReceivableCard extends StatelessWidget {
-  final Map<String, dynamic> row;
-  final bool isClosed;
-  final bool saving;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
-
-  const _ReceivableCard({
-    required this.row,
-    required this.isClosed,
-    required this.saving,
-    required this.onEdit,
-    required this.onDelete,
-  });
-
-  double _toDouble(dynamic value) {
-    if (value == null) return 0;
-    if (value is num) return value.toDouble();
-    return double.tryParse(value.toString()) ?? 0;
-  }
-
-  String _money(double value) {
-    final text =
-        value == value.roundToDouble()
-            ? value.toInt().toString()
-            : value.toString();
-
-    return '${text.replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (match) => '${match.group(1)},')} ریال';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final amount = _toDouble(row['amount']);
-    final received = _toDouble(row['received_documents_amount']);
-
-    final remaining = (amount - received).clamp(0, double.infinity);
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: Theme.of(context).colorScheme.outline.withValues(alpha: .12),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  row['title']?.toString() ?? '',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      row['title']?.toString() ?? '',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: (canReview
+                            ? Theme.of(context).colorScheme.primary
+                            : Theme.of(context).colorScheme.outline)
+                            .withValues(alpha: .10),
+                        borderRadius: BorderRadius.circular(9),
+                      ),
+                      child: Text(
+                        _statusLabel(status),
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              _InfoLine(title: 'مبلغ دریافتنی', value: _money(amount)),
+              const SizedBox(height: 8),
+              _InfoLine(title: 'اسناد دریافت‌شده', value: _money(received)),
+              const SizedBox(height: 8),
+              _InfoLine(
+                title: 'مانده',
+                value: _money(remaining),
+                bold: true,
+              ),
+              if ((row['description']?.toString() ?? '').trim().isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Text(
+                  row['description'].toString(),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
-              ),
-              if (!isClosed)
-                PopupMenuButton<String>(
-                  enabled: !saving,
-                  onSelected: (value) {
-                    if (value == 'edit') {
-                      onEdit();
-                    } else if (value == 'delete') {
-                      onDelete();
-                    }
-                  },
-                  itemBuilder:
-                      (context) => const [
-                        PopupMenuItem(value: 'edit', child: Text('ویرایش')),
-                        PopupMenuItem(value: 'delete', child: Text('حذف')),
-                      ],
+              ],
+              if (canReview) ...[
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 8,
+                  children: [
+                    FilledButton.icon(
+                      onPressed: saving ? null : () => onApprove(row),
+                      icon: const Icon(Icons.check_circle_outline_rounded),
+                      label: const Text('تأیید حساب'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: saving ? null : () => onReturn(row),
+                      icon: const Icon(Icons.undo_rounded),
+                      label: const Text('برگشت برای اصلاح'),
+                    ),
+                  ],
                 ),
+              ],
             ],
           ),
-          const SizedBox(height: 14),
-          _InfoLine(title: 'مبلغ دریافتنی', value: _money(amount)),
-          const SizedBox(height: 8),
-          _InfoLine(title: 'اسناد دریافت‌شده', value: _money(received)),
-          const SizedBox(height: 8),
-          _InfoLine(
-            title: 'مانده',
-            value: _money(remaining.toDouble()),
-            bold: true,
-          ),
-          if ((row['description']?.toString() ?? '').trim().isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Text(
-              row['description'].toString(),
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ],
-      ),
+        );
+      }).toList(),
     );
   }
 }
@@ -1256,10 +897,7 @@ class _SummaryItem extends StatelessWidget {
 }
 
 class _EmptyReceivables extends StatelessWidget {
-  final bool isClosed;
-  final VoidCallback? onAdd;
-
-  const _EmptyReceivables({required this.isClosed, required this.onAdd});
+  const _EmptyReceivables();
 
   @override
   Widget build(BuildContext context) {
@@ -1283,18 +921,10 @@ class _EmptyReceivables extends StatelessWidget {
           Text(
             'هنوز حساب دریافتنی برای این ماه ثبت نشده است.',
             textAlign: TextAlign.center,
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          if (!isClosed && onAdd != null) ...[
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: onAdd,
-              icon: const Icon(Icons.add_rounded),
-              label: const Text('ثبت دریافتنی'),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
             ),
-          ],
+          ),
         ],
       ),
     );
@@ -1309,9 +939,9 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color =
-        closed
-            ? Theme.of(context).colorScheme.error
-            : Theme.of(context).colorScheme.primary;
+    closed
+        ? Theme.of(context).colorScheme.error
+        : Theme.of(context).colorScheme.primary;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
@@ -1376,3 +1006,4 @@ class _ErrorView extends StatelessWidget {
     );
   }
 }
+

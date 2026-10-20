@@ -247,7 +247,7 @@ class _IncomeRecognitionPageState extends ConsumerState<IncomeRecognitionPage> {
         }
 
         context.push(
-          '/consultant/companies/${widget.companyId}/income/receivables/${widget.periodId}',
+          '/consultant/companies/${widget.companyId}/income/receivables',
         );
       }
     } catch (error, stackTrace) {
@@ -743,7 +743,7 @@ class _IncomeRecognitionPageState extends ConsumerState<IncomeRecognitionPage> {
         child: OutlinedButton.icon(
           onPressed: () {
             context.push(
-              '/consultant/companies/${widget.companyId}/income/receivables/${widget.periodId}',
+              '/consultant/companies/${widget.companyId}/income/receivables',
             );
           },
           icon: const Icon(Icons.arrow_back_rounded),

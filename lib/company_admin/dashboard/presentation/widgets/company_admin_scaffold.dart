@@ -402,7 +402,7 @@ class CompanyAdminScaffold extends StatelessWidget {
                       _subMenuItem(
                         context,
                         icon: Icons.receipt_long_outlined,
-                        title: 'حساب های پرداختنی',
+                        title: 'حساب های دریافتنی',
                         route:
                         '/company-admin/income/receivables',
                       ),

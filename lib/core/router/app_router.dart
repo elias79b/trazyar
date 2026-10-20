@@ -110,6 +110,10 @@ import 'package:tarazyar/consultant/companies/banking/presentation/pages/cash_fi
 import 'package:tarazyar/consultant/companies/banking/presentation/pages/paid_checks_report_page.dart';
 import 'package:tarazyar/consultant/companies/banking/presentation/pages/petty_cash_accounts_page.dart';
 import 'package:tarazyar/consultant/companies/banking/presentation/pages/received_checks_report_page.dart';
+import 'package:tarazyar/consultant/companies/income/presentation/pages/expense_payables_period_detail_page.dart';
+import 'package:tarazyar/consultant/companies/income/presentation/pages/expense_payables_periods_page.dart';
+import 'package:tarazyar/consultant/companies/income/presentation/pages/expense_payables_years_page.dart';
+import 'package:tarazyar/consultant/companies/income/presentation/pages/income_receivable_years_page.dart';
 
 // ============================================================
 // CONSULTANT PAYROLL
@@ -1118,16 +1122,17 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
 
       GoRoute(
-        path:
-        '/consultant/companies/:companyId/income/receivables/:periodId',
-        builder: (context, state) {
-          return IncomeReceivablesPage(
-            companyId:
-            state.pathParameters['companyId']!,
-            periodId:
-            state.pathParameters['periodId']!,
-          );
-        },
+        path: '/consultant/companies/:companyId/income/receivables',
+        builder: (context, state) => IncomeReceivableYearsPage(
+          companyId: state.pathParameters['companyId']!,
+        ),
+      ),
+      GoRoute(
+        path: '/consultant/companies/:companyId/income/receivables/:periodId',
+        builder: (context, state) => IncomeReceivablesPage(
+          companyId: state.pathParameters['companyId']!,
+          periodId: state.pathParameters['periodId']!,
+        ),
       ),
 
       GoRoute(
@@ -1213,6 +1218,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             state.pathParameters['id']!,
           );
         },
+      ),
+      GoRoute(
+        path: '/consultant/companies/:id/expenses/payables',
+        builder: (context, state) => PayableConsultantYearsPage(
+          companyId: state.pathParameters['id']!,
+        ),
+      ),
+      GoRoute(
+        path: '/consultant/companies/:companyId/expenses/payables/years/:yearId',
+        builder: (context, state) => PayableConsultantPeriodsPage(
+          companyId: state.pathParameters['companyId']!,
+          yearId: state.pathParameters['yearId']!,
+        ),
+      ),
+      GoRoute(
+        path: '/consultant/companies/:companyId/expenses/payables/periods/:periodId',
+        builder: (context, state) => PayableConsultantPeriodDetailPage(
+          companyId: state.pathParameters['companyId']!,
+          periodId: state.pathParameters['periodId']!,
+        ),
       ),
 
       // ========================================================

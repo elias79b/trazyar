@@ -945,11 +945,10 @@ class _PeriodCard extends StatelessWidget {
                   onPressed:
                   _canOpenReceivables
                       ? () {
-                    context.push(
+                    context.go(
                       '/consultant/companies/'
                           '$companyId'
-                          '/income/receivables/'
-                          '$_periodId',
+                          '/income/receivables',
                     );
                   }
                       : null,
