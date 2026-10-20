@@ -78,8 +78,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       children: [
                         Image.asset(
                           'assets/images/logo.png',
-                          width: 88,
-                          height: 88,
+                          width: 188,
+                          height: 188,
                           fit: BoxFit.contain,
                         ),
                         const SizedBox(height: 16),

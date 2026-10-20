@@ -5,7 +5,7 @@
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#26364f",
-  "description": "سامانه ترازیار",
+  "description": "ترازیار",
   "orientation": "portrait-primary",
   "prefer_related_applications": false,
   "icons": [
