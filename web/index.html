@@ -1,38 +1,48 @@
-```html
-<script>
-  (function () {
-    var params = new URLSearchParams(window.location.search);
-    var savedPath = params.get('__gh_pages_path');
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <base href="$FLUTTER_BASE_HREF">
 
-    if (!savedPath) {
-      return;
-    }
+  <meta charset="UTF-8">
+  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+  <meta name="description" content="سامانه ترازیار">
 
-    var target;
+  <title>ترازیار</title>
 
-    try {
-      target = new URL(savedPath, window.location.origin);
-    } catch (_) {
-      return;
-    }
+  <script>
+    (function () {
+      var params = new URLSearchParams(window.location.search);
+      var savedPath = params.get('__gh_pages_path');
 
-    // فقط مسیرهای داخلی برنامه مجاز هستند.
-    if (
-      target.origin !== window.location.origin ||
-      !target.pathname.startsWith('/auth/invite') &&
-      target.pathname !== '/' &&
-      !target.pathname.startsWith('/login')
-    ) {
-      return;
-    }
+      if (!savedPath) return;
 
-    window.history.replaceState(
-      null,
-      '',
-      '/trazyar' + target.pathname
-        + target.search
-        + target.hash
-    );
-  })();
-</script>
+      var target;
+
+      try {
+        target = new URL(savedPath, window.location.origin);
+      } catch (_) {
+        return;
+      }
+
+      if (
+        target.origin !== window.location.origin ||
+        !(
+          target.pathname === '/auth/invite' ||
+          target.pathname === '/' ||
+          target.pathname === '/login'
+        )
+      ) {
+        return;
+      }
+
+      window.history.replaceState(
+        null,
+        '',
+        '/trazyar' + target.pathname +
+          target.search +
+          target.hash
+      );
+    })();
+  </script>
+</head>
 ```
