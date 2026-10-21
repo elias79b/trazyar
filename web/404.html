@@ -1,4 +1,4 @@
-
+```html
 <!DOCTYPE html>
 <html lang="fa">
 <head>
@@ -19,15 +19,17 @@
       }
 
       var appPath = currentPath.substring(basePath.length);
-      var originalPath = "/" + appPath + window.location.search;
+      var originalPath = "/" + appPath
+        + window.location.search
+        + window.location.hash;
 
       var target = basePath
         + "?__gh_pages_path="
-        + encodeURIComponent(originalPath)
-        + window.location.hash;
+        + encodeURIComponent(originalPath);
 
       window.location.replace(target);
     })();
 </script>
 </body>
 </html>
+```

@@ -1,63 +1,38 @@
+```html
+<script>
+  (function () {
+    var params = new URLSearchParams(window.location.search);
+    var savedPath = params.get('__gh_pages_path');
 
-<!DOCTYPE html>
-<html lang="fa">
-<head>
-  <base href="$FLUTTER_BASE_HREF">
+    if (!savedPath) {
+      return;
+    }
 
-  <meta charset="UTF-8">
-  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="سامانه ترازیار">
+    var target;
 
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="ترازیار">
-  <meta name="application-name" content="ترازیار">
+    try {
+      target = new URL(savedPath, window.location.origin);
+    } catch (_) {
+      return;
+    }
 
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
-  <link rel="icon" type="image/png" href="favicon.png">
-  <link rel="manifest" href="manifest.json">
+    // فقط مسیرهای داخلی برنامه مجاز هستند.
+    if (
+      target.origin !== window.location.origin ||
+      !target.pathname.startsWith('/auth/invite') &&
+      target.pathname !== '/' &&
+      !target.pathname.startsWith('/login')
+    ) {
+      return;
+    }
 
-  <title>ترازیار</title>
-
-  <script>
-    (function () {
-      var params = new URLSearchParams(window.location.search);
-      var savedPath = params.get('__gh_pages_path');
-
-      if (savedPath) {
-        var targetPath = savedPath.startsWith('/')
-          ? savedPath
-          : '/' + savedPath;
-
-        var basePath = '/trazyar';
-
-        if (
-          targetPath === basePath ||
-          targetPath.startsWith(basePath + '/')
-        ) {
-          var queryIndex = targetPath.indexOf('?');
-          var pathOnly = queryIndex >= 0
-            ? targetPath.substring(0, queryIndex)
-            : targetPath;
-
-          var query = queryIndex >= 0
-            ? targetPath.substring(queryIndex)
-            : '';
-
-          var cleanPath = pathOnly + query;
-
-          window.history.replaceState(
-            null,
-            '',
-            cleanPath + window.location.hash
-          );
-        }
-      }
-    })();
-  </script>
-</head>
-<body>
-<script src="flutter_bootstrap.js" async></script>
-</body>
-</html>
+    window.history.replaceState(
+      null,
+      '',
+      '/trazyar' + target.pathname
+        + target.search
+        + target.hash
+    );
+  })();
+</script>
+```
