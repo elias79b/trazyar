@@ -1,0 +1,33 @@
+
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>در حال انتقال به ترازیار</title>
+</head>
+<body>
+<p>در حال انتقال به ترازیار...</p>
+<script>
+    (function () {
+      var basePath = "/trazyar/";
+      var currentPath = window.location.pathname;
+
+      if (!currentPath.startsWith(basePath)) {
+        window.location.replace(basePath);
+        return;
+      }
+
+      var appPath = currentPath.substring(basePath.length);
+      var originalPath = "/" + appPath + window.location.search;
+
+      var target = basePath
+        + "?__gh_pages_path="
+        + encodeURIComponent(originalPath)
+        + window.location.hash;
+
+      window.location.replace(target);
+    })();
+</script>
+</body>
+</html>
