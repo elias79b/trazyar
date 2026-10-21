@@ -1,48 +1,64 @@
 <!DOCTYPE html>
 <html lang="fa">
 <head>
-  <base href="$FLUTTER_BASE_HREF">
+    <base href="$FLUTTER_BASE_HREF">
 
-  <meta charset="UTF-8">
-  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="سامانه ترازیار">
+    <meta charset="UTF-8">
+    <meta content="IE=Edge" http-equiv="X-UA-Compatible">
+    <meta name="description" content="سامانه ترازیار">
 
-  <title>ترازیار</title>
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="ترازیار">
+    <meta name="application-name" content="ترازیار">
 
-  <script>
-    (function () {
-      var params = new URLSearchParams(window.location.search);
-      var savedPath = params.get('__gh_pages_path');
+    <link rel="apple-touch-icon" href="icons/Icon-192.png">
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="manifest" href="manifest.json">
 
-      if (!savedPath) return;
+    <title>ترازیار</title>
 
-      var target;
+    <script>
+        (function () {
+          var params = new URLSearchParams(window.location.search);
+          var savedPath = params.get('__gh_pages_path');
 
-      try {
-        target = new URL(savedPath, window.location.origin);
-      } catch (_) {
-        return;
-      }
+          if (!savedPath) {
+            return;
+          }
 
-      if (
-        target.origin !== window.location.origin ||
-        !(
-          target.pathname === '/auth/invite' ||
-          target.pathname === '/' ||
-          target.pathname === '/login'
-        )
-      ) {
-        return;
-      }
+          var target;
 
-      window.history.replaceState(
-        null,
-        '',
-        '/trazyar' + target.pathname +
-          target.search +
-          target.hash
-      );
-    })();
-  </script>
+          try {
+            target = new URL(savedPath, window.location.origin);
+          } catch (_) {
+            return;
+          }
+
+          if (
+            target.origin !== window.location.origin ||
+            !(
+              target.pathname === '/auth/invite' ||
+              target.pathname === '/' ||
+              target.pathname === '/login'
+            )
+          ) {
+            return;
+          }
+
+          window.history.replaceState(
+            null,
+            '',
+            '/trazyar' + target.pathname +
+              target.search +
+              target.hash
+          );
+        })();
+    </script>
 </head>
-```
+
+<body>
+<script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
